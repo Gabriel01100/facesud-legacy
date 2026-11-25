@@ -79,7 +79,7 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 
 ### D-018 — Métodos de acceso y requisito de membresía
 - **Estado:** confirmada por el propietario.
-- **Métodos de autenticación:** registro e inicio de sesión con correo electrónico y contraseña como método propio; inicio de sesión con Google como proveedor adicional mediante OpenID Connect. Ambos métodos deben resolver a una única cuenta interna de FaceSud.
+- **Métodos de autenticación:** el correo electrónico será el identificador único de la cuenta y la contraseña el método local de autenticación; Google será un proveedor adicional mediante OpenID Connect. Ambos métodos deben resolver a una única cuenta interna de FaceSud.
 - **Vinculación de identidades:** no vincular automáticamente cuentas existentes solo porque coincida una dirección de correo. La vinculación de Google con una cuenta existente requerirá una prueba de control de la cuenta y un flujo explícito.
 - **Requisito de elegibilidad:** para participar en la comunidad FaceSud, la persona debe tener cédula de miembro de La Iglesia de Jesucristo de los Santos de los Últimos Días. La autenticación por Google o por contraseña no acredita esa condición.
 - **Implementación diferida:** durante las etapas actuales no se exigirá ni verificará la cédula porque todavía no están disponibles los datos ni el procedimiento autorizado. La verificación se diseñará e implementará en una etapa posterior antes de habilitar el acceso comunitario real.
