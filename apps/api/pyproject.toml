@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "facesud-api"
+version = "0.1.0"
+description = "FaceSud API - primera versión ejecutable"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "alembic==1.16.1",
+  "fastapi==0.115.12",
+  "pydantic-settings==2.9.1",
+  "psycopg[binary]==3.2.9",
+  "redis==6.2.0",
+  "sqlalchemy==2.0.41",
+  "uvicorn[standard]==0.34.2",
+]
+
+[project.optional-dependencies]
+dev = ["httpx==0.28.1", "pytest==8.4.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+exclude = ["tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
