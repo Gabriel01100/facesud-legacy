@@ -26,8 +26,8 @@ Redis forma parte obligatoria de la infraestructura inicial, pero no se incorpor
 
 No se implementan colas, workers, sesiones, caché de negocio ni pub/sub. La adopción de esos patrones requiere una necesidad y una decisión específicas.
 
-## Módulos de producto previstos
-Los límites de dominio conceptuales son Identity, Community, Social, Trust & Safety y Notifications. Donations queda para una etapa posterior. Estos módulos todavía no están implementados en la primera versión ejecutable; su alcance no debe inferirse desde los nombres.
+## Módulos y capacidades de producto previstas
+Los límites de dominio conceptuales son Identity, Community, Social, Trust & Safety y Notifications. El MVP también contempla chat bajo modalidad `request` y aportes voluntarios bajo modalidad `both`, según D-015 y D-016. Estas capacidades no están implementadas en la primera versión ejecutable y sus detalles deben especificarse antes de desarrollarlas.
 
 ## Comunicación y contratos
 REST para operaciones síncronas. FastAPI publica OpenAPI. Los contratos actualmente implementados se describen en [API_CONTRACTS.md](API_CONTRACTS.md). No se incorpora Kafka ni RabbitMQ.
