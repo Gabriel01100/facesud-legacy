@@ -15,6 +15,16 @@ class Settings(BaseSettings):
     def allowed_origins(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
+    @property
+    def session_cookie_name(self) -> str:
+        if self.app_env.lower() == "production":
+            return "__Host-facesud_session"
+        return "facesud_session"
+
+    @property
+    def csrf_cookie_name(self) -> str:
+        return "facesud_csrf"
+
     @model_validator(mode="after")
     def reject_development_defaults_in_production(self):
         if self.app_env.lower() == "production":
@@ -22,6 +32,8 @@ class Settings(BaseSettings):
             configured = f"{self.database_url} {self.redis_url} {self.cors_origins}".lower()
             if any(value in configured for value in placeholders):
                 raise ValueError("Production configuration contains development/example values")
+            if not self.allowed_origins or any(not origin.startswith("https://") for origin in self.allowed_origins):
+                raise ValueError("Production CORS origins must use HTTPS")
         return self
 
 
