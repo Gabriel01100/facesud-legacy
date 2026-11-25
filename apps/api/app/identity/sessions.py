@@ -1,3 +1,4 @@
+import hmac
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -51,6 +52,10 @@ def get_active_session(db: Session, raw_token: str, *, now: datetime | None = No
         )
     )
     return db.scalar(statement)
+
+
+def verify_csrf_token(session: UserSession, raw_token: str) -> bool:
+    return hmac.compare_digest(session.csrf_token_hash, token_digest(raw_token))
 
 
 def revoke_session(db: Session, raw_token: str, *, now: datetime | None = None) -> bool:
