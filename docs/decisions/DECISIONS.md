@@ -22,6 +22,7 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 | D-014 | Primera versión ejecutable sin funcionalidades de negocio | Confirmada para Etapa 1 |
 | D-015 | Chat en el MVP bajo modalidad `request` | Confirmada por el propietario; fuera de Etapa 1 |
 | D-016 | Aportes voluntarios bajo modalidad `both` | Confirmada por el propietario; fuera de Etapa 1 |
+| D-017 | Autenticación web mediante cookies HttpOnly y sesiones opacas persistidas en PostgreSQL | Confirmada por el propietario |
 
 ## Historial y contexto de cambios
 
@@ -63,6 +64,17 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 ### D-016 — Aportes voluntarios bajo modalidad both
 - **Estado:** confirmada por el propietario.
 - **Alcance:** registra la modalidad elegida; no define proveedor de pagos, flujos, comisiones ni tratamiento contable.
+
+### D-017 — Autenticación web mediante cookies HttpOnly y sesiones opacas
+- **Estado:** confirmada por el propietario.
+- **Decisión:** la aplicación web autenticará mediante una cookie de sesión `HttpOnly` que contendrá un identificador opaco, aleatorio y no derivado de datos del usuario. El servidor validará la sesión contra un registro persistido en PostgreSQL.
+- **Protección de la cookie:** configurar `HttpOnly`, `Secure` en entornos HTTPS, `SameSite=Lax` como valor inicial, `Path=/` y omitir `Domain`. El nombre con prefijo `__Host-` se utilizará en entornos que cumplan sus requisitos; desarrollo local deberá contemplar HTTP sin debilitar producción.
+- **Protección de sesiones:** generar identificadores con un generador criptográficamente seguro; almacenar solo un hash del identificador, nunca el valor de la cookie; establecer expiración; invalidar en logout; rotar el identificador al autenticar y ante cambios sensibles.
+- **CSRF y origen:** las operaciones que modifican estado deberán incorporar defensa CSRF y validación estricta del origen. `SameSite` no se considera la única defensa.
+- **Persistencia:** PostgreSQL será el almacén inicial de sesiones. Redis conserva exclusivamente el uso de infraestructura/readiness aprobado por D-013.
+- **Límites:** esta decisión no define todavía el identificador de inicio de sesión, verificación de correo, recuperación de contraseña, duración exacta de sesiones ni política de dispositivos concurrentes. Esos puntos deben resolverse antes de completar el flujo de cuentas.
+- **Justificación:** reducir la exposición del identificador de sesión a JavaScript y permitir revocación del lado servidor, manteniendo una implementación web adecuada al navegador.
+- **Evolución:** una futura aplicación móvil o integración externa podrá tener un mecanismo de autenticación separado, sin cambiar el mecanismo de sesión web.
 
 ## Decisiones técnicas anteriores
 Las decisiones técnicas confirmadas para esta base no aprueban automáticamente herramientas o funcionalidades futuras. Las decisiones abiertas siguen listadas en [OPEN_DECISIONS.md](OPEN_DECISIONS.md).
