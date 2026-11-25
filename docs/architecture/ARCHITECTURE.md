@@ -29,6 +29,13 @@ No se implementan colas, workers, sesiones, caché de negocio ni pub/sub. La ado
 ## Módulos y capacidades de producto previstas
 Los límites de dominio conceptuales son Identity, Community, Social, Trust & Safety y Notifications. El MVP también contempla chat bajo modalidad `request` y aportes voluntarios bajo modalidad `both`, según D-015 y D-016. Estas capacidades no están implementadas en la primera versión ejecutable y sus detalles deben especificarse antes de desarrollarlas.
 
+## Autenticación web — decisión aprobada para la siguiente etapa
+Conforme a D-017, el navegador utilizará una cookie `HttpOnly` con un identificador opaco de sesión. El backend generará el identificador con aleatoriedad criptográfica, persistirá únicamente su hash en PostgreSQL y validará la sesión en cada petición protegida. La cookie tendrá `Secure` en HTTPS, `HttpOnly`, `SameSite=Lax`, `Path=/` y no tendrá atributo `Domain`. El prefijo `__Host-` se reservará para entornos compatibles con sus requisitos.
+
+Las sesiones tendrán expiración y revocación del lado servidor. El logout invalidará la sesión antes de borrar la cookie. Las operaciones que modifican estado deberán validar el origen y usar una defensa CSRF explícita. No se guardarán credenciales de sesión en `localStorage` ni `sessionStorage`.
+
+PostgreSQL será el almacén de sesiones inicial. Redis no se utilizará para sesiones, de acuerdo con el límite de D-013. Los detalles de expiración, concurrencia de dispositivos, verificación y recuperación de cuentas siguen pendientes.
+
 ## Comunicación y contratos
 REST para operaciones síncronas. FastAPI publica OpenAPI. Los contratos actualmente implementados se describen en [API_CONTRACTS.md](API_CONTRACTS.md). No se incorpora Kafka ni RabbitMQ.
 
