@@ -10,13 +10,21 @@
 - Flujos completos de grupos y eventos.
 
 ## Comunidad y privacidad
-- Evidencia mínima para revisión provisional, apelación y revocación.
-- Política de retención y borrado.
+- Procedimiento autorizado y evidencia mínima para verificar la cédula de miembro, apelación, revisión y revocación.
+- Política de retención y borrado, incluyendo datos de identidad y membresía.
 - Edad mínima y salvaguardas; no habilitar menores antes de resolverlo.
+
+## Identidad y autenticación
+- Reglas definitivas de normalización y validación de direcciones de correo.
+- Verificación de correo y reglas para activar una cuenta.
+- Flujo y canal de recuperación de contraseña.
+- Duración de sesiones, expiración por inactividad y límite de sesiones/dispositivos.
+- Política de cierre de sesiones al cambiar contraseña o ante eventos de seguridad.
+- Configuración OAuth/OIDC de Google: credenciales, URI de callback, scopes mínimos y entornos.
+- Proveedor de correo transaccional y plantillas de verificación/recuperación.
 
 ## Técnica y operación
 - Hosting, almacenamiento y correo transaccional.
-- Cookies seguras vs bearer tokens.
 - Herramientas frontend de lint, formato, pruebas y E2E.
 - Backups, monitoreo, alertas y recuperación.
 - Política de versiones y dependencias.

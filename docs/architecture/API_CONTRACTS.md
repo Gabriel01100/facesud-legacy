@@ -39,7 +39,21 @@ Respuesta HTTP 503 si una o ambas dependencias no están disponibles:
 Los valores de disponibilidad reflejan cada comprobación por separado.
 
 ## CORS
-En desarrollo se permite el origen configurado en `CORS_ORIGINS` (por defecto `http://localhost:5173`). La lista debe ajustarse explícitamente al desplegar. No se habilitan credenciales ni métodos de escritura en esta etapa.
+En desarrollo se permite el origen configurado en `CORS_ORIGINS` (por defecto `http://localhost:5173`). La lista debe ajustarse explícitamente al desplegar. La autenticación por cookie requerirá habilitar credenciales solo para orígenes explícitamente permitidos; nunca usar wildcard con credenciales.
 
-## Evolución
-Los contratos de funcionalidades futuras se documentarán cuando esas funcionalidades sean aprobadas e implementadas. No inferir endpoints de producto a partir del alcance conceptual del MVP.
+## Contratos previstos — todavía no implementados
+La siguiente etapa incorporará los contratos de Identity. Los nombres y esquemas definitivos se documentarán junto con su implementación y pruebas; no deben tratarse como endpoints disponibles.
+
+- Registro con correo electrónico y contraseña.
+- Verificación de correo y activación de cuenta.
+- Inicio y cierre de sesión mediante cookie de sesión opaca.
+- Consulta del usuario autenticado.
+- Inicio y callback de Google OpenID Connect.
+- Recuperación y cambio de contraseña.
+- Revocación de sesiones.
+
+Las operaciones protegidas por cookie deberán usar protección CSRF y validación de origen. Los secretos OAuth y las contraseñas nunca se enviarán al frontend salvo el formulario de credenciales durante el transporte TLS; las contraseñas se almacenarán únicamente como hashes resistentes a ataques offline. La cookie no será accesible desde JavaScript.
+
+La elegibilidad comunitaria por cédula de miembro no se implementará en esta etapa de autenticación inicial. Se agregará como verificación separada antes de habilitar la participación comunitaria real, una vez definido el procedimiento. La autenticación de Google no reemplaza esa verificación.
+
+Los detalles pendientes se encuentran en [OPEN_DECISIONS.md](../decisions/OPEN_DECISIONS.md).
