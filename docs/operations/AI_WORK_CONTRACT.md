@@ -6,4 +6,4 @@ Durante: respetar alcance, hacer cambios pequeños, justificar dependencias, no 
 
 Al finalizar informar archivos cambiados, decisiones, pruebas realmente ejecutadas, pruebas no ejecutadas, riesgos y pasos manuales.
 
-Nunca afirmar tests, despliegues, integraciones o autorizaciones que no se verificaron. No implementar número de miembro, mensajería privada, marketplace, anuncios, pagos ni verificación institucional en tareas del MVP.
+Nunca afirmar tests, despliegues, integraciones o autorizaciones que no se verificaron. En la Etapa 1 no implementar número de miembro, chat, marketplace, anuncios, aportes/pagos ni verificación institucional. Para etapas posteriores, respetar las decisiones aprobadas y no inferir detalles funcionales todavía pendientes.

@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, "feat/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    # Pin the runner image: ubuntu-latest moved to 26.04, where the
+    # setup-python manifest does not currently provide Python 3.12.11.
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17.5-alpine
+        env:
+          POSTGRES_DB: facesud
+          POSTGRES_USER: facesud
+          POSTGRES_PASSWORD: facesud_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U facesud -d facesud"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7.4.3-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.11"
+          cache: pip
+          cache-dependency-path: apps/api/pyproject.toml
+      - name: Install API and test dependencies
+        working-directory: apps/api
+        run: python -m pip install -e ".[dev]"
+      - name: Run database migrations
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql+psycopg://facesud:facesud_ci@localhost:5432/facesud
+        run: alembic upgrade head
+      - name: Run API tests
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql+psycopg://facesud:facesud_ci@localhost:5432/facesud
+          REDIS_URL: redis://localhost:6379/0
+        run: pytest
+
+  frontend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.15.0"
+          cache: npm
+          cache-dependency-path: apps/web/package.json
+      - name: Install frontend dependencies
+        working-directory: apps/web
+        run: npm install --no-audit --no-fund
+      - name: Build frontend
+        working-directory: apps/web
+        run: npm run build
+
+  containers:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+      - name: Build application images
+        run: docker compose build
