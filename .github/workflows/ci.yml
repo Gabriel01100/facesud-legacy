@@ -11,7 +11,9 @@ permissions:
 
 jobs:
   backend:
-    runs-on: ubuntu-latest
+    # Pin the runner image: ubuntu-latest moved to 26.04, where the
+    # setup-python manifest does not currently provide Python 3.12.11.
+    runs-on: ubuntu-24.04
     services:
       postgres:
         image: postgres:17.5-alpine
@@ -58,7 +60,7 @@ jobs:
         run: pytest
 
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -74,7 +76,7 @@ jobs:
         run: npm run build
 
   containers:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Validate Compose configuration
