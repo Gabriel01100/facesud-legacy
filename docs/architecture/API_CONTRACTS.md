@@ -42,4 +42,6 @@ Los valores de disponibilidad reflejan cada comprobación por separado.
 En desarrollo se permite el origen configurado en `CORS_ORIGINS` (por defecto `http://localhost:5173`). La lista debe ajustarse explícitamente al desplegar. No se habilitan credenciales ni métodos de escritura en esta etapa.
 
 ## Evolución
-Los contratos de funcionalidades futuras se documentarán cuando esas funcionalidades sean aprobadas e implementadas. No inferir endpoints de producto a partir del alcance conceptual del MVP.
+La autenticación web se implementará en una etapa posterior conforme a D-017: cookie de sesión HttpOnly con identificador opaco, sesiones persistidas en PostgreSQL, expiración y revocación del lado servidor, y protección CSRF/origen para operaciones que modifican estado. No se deben implementar tokens de sesión en almacenamiento web accesible a JavaScript.
+
+Los contratos de registro, login, logout, recuperación y verificación de cuenta todavía no están definidos; requieren resolver los puntos de identidad listados en [OPEN_DECISIONS.md](../decisions/OPEN_DECISIONS.md).
