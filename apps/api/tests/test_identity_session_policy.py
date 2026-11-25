@@ -42,13 +42,6 @@ def test_sixth_session_revokes_oldest_active_session():
         db.flush()
         assert get_active_session(db, issued[0], now=start + timedelta(seconds=6)) is None
         assert get_active_session(db, issued[-1], now=start + timedelta(seconds=6)) is not None
-        active_count = db.scalar(
-            select(UserSession).where(
-                UserSession.account_id == account.id,
-                UserSession.revoked_at.is_(None),
-                UserSession.expires_at > start + timedelta(seconds=6),
-            ).count()
-        ) if False else None
         assert sum(get_active_session(db, token, now=start + timedelta(seconds=7)) is not None for token in issued) == MAX_ACTIVE_SESSIONS
 
 
