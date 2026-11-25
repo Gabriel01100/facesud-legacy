@@ -16,7 +16,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    account_status = sa.Enum("PENDING_EMAIL", "ACTIVE", "DISABLED", name="accountstatus", native_enum=False, length=32)
+    account_status = sa.Enum(
+        "PENDING_EMAIL", "ACTIVE", "DISABLED", name="accountstatus", native_enum=False, length=32
+    )
     op.create_table(
         "identity_accounts",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
@@ -26,7 +28,6 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.UniqueConstraint("email_normalized", name="uq_identity_accounts_email_normalized"),
     )
-    op.create_index("ix_identity_accounts_email_normalized", "identity_accounts", ["email_normalized"], unique=True)
 
     op.create_table(
         "identity_password_credentials",
@@ -75,5 +76,4 @@ def downgrade() -> None:
     op.drop_index("ix_identity_external_identities_account_id", table_name="identity_external_identities")
     op.drop_table("identity_external_identities")
     op.drop_table("identity_password_credentials")
-    op.drop_index("ix_identity_accounts_email_normalized", table_name="identity_accounts")
     op.drop_table("identity_accounts")
