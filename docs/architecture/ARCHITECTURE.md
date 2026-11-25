@@ -29,12 +29,16 @@ No se implementan colas, workers, sesiones, caché de negocio ni pub/sub. La ado
 ## Módulos y capacidades de producto previstas
 Los límites de dominio conceptuales son Identity, Community, Social, Trust & Safety y Notifications. El MVP también contempla chat bajo modalidad `request` y aportes voluntarios bajo modalidad `both`, según D-015 y D-016. Estas capacidades no están implementadas en la primera versión ejecutable y sus detalles deben especificarse antes de desarrollarlas.
 
-## Autenticación web — decisión aprobada para la siguiente etapa
-Conforme a D-017, el navegador utilizará una cookie `HttpOnly` con un identificador opaco de sesión. El backend generará el identificador con aleatoriedad criptográfica, persistirá únicamente su hash en PostgreSQL y validará la sesión en cada petición protegida. La cookie tendrá `Secure` en HTTPS, `HttpOnly`, `SameSite=Lax`, `Path=/` y no tendrá atributo `Domain`. El prefijo `__Host-` se reservará para entornos compatibles con sus requisitos.
+## Identidad, autenticación y membresía
+Identity administra cuentas internas, credenciales locales, identidades externas vinculadas y sesiones. La autenticación web tendrá dos métodos: correo electrónico/contraseña y Google mediante OpenID Connect (D-018). Google es un proveedor de identidad, no una prueba de membresía.
+
+Las sesiones web usarán cookie `HttpOnly` con identificador opaco. El backend generará el identificador con aleatoriedad criptográfica, persistirá únicamente su hash en PostgreSQL y validará la sesión en cada petición protegida. La cookie tendrá `Secure` en HTTPS, `HttpOnly`, `SameSite=Lax`, `Path=/` y no tendrá atributo `Domain`. El prefijo `__Host-` se reservará para entornos compatibles con sus requisitos.
 
 Las sesiones tendrán expiración y revocación del lado servidor. El logout invalidará la sesión antes de borrar la cookie. Las operaciones que modifican estado deberán validar el origen y usar una defensa CSRF explícita. No se guardarán credenciales de sesión en `localStorage` ni `sessionStorage`.
 
-PostgreSQL será el almacén de sesiones inicial. Redis no se utilizará para sesiones, de acuerdo con el límite de D-013. Los detalles de expiración, concurrencia de dispositivos, verificación y recuperación de cuentas siguen pendientes.
+PostgreSQL será el almacén inicial de sesiones. Redis no se utilizará para sesiones, de acuerdo con D-013.
+
+La elegibilidad comunitaria se modelará separadamente de la cuenta y la autenticación. La cédula de miembro será un requisito obligatorio para participar en FaceSud, pero la verificación queda diferida hasta disponer de un procedimiento y fuentes de datos legítimos. No se presume integración institucional ni se almacenará el número de cédula hasta aprobar su necesidad, protección y ciclo de vida.
 
 ## Comunicación y contratos
 REST para operaciones síncronas. FastAPI publica OpenAPI. Los contratos actualmente implementados se describen en [API_CONTRACTS.md](API_CONTRACTS.md). No se incorpora Kafka ni RabbitMQ.
