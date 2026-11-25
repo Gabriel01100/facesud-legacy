@@ -8,6 +8,24 @@ Implementar el primer módulo Identity de FaceSud con registro e inicio de sesi�
 - D-018: correo/contraseña y Google son métodos de autenticación válidos. Ambos resuelven a una cuenta interna de FaceSud.
 - La cédula de miembro de La Iglesia de Jesucristo de los Santos de los Últimos Días será requisito obligatorio de elegibilidad comunitaria, pero su verificación queda fuera de esta tarea porque no se dispone aún del procedimiento ni de las fuentes de datos.
 
+## Estado de implementación
+
+### Base implementada en esta rama
+- [x] Modelos SQLAlchemy para cuentas, credenciales locales, identidades externas y sesiones.
+- [x] Migración Alembic `0002_identity_foundation`.
+- [x] Hash de contraseñas con Argon2 y validación básica de política de longitud.
+- [x] Generación de tokens opacos de sesión y CSRF; solo se persisten sus hashes.
+- [x] Servicios de creación, consulta de sesión activa, validación CSRF y revocación.
+- [x] Cuenta `pending_email` no puede utilizar una sesión activa.
+- [x] Pruebas unitarias de hashing, normalización, CSRF, expiración y revocación.
+
+### Pendiente para completar la tarea
+- [ ] Registro, login, logout y endpoint de identidad actual.
+- [ ] Verificación de correo y recuperación de contraseña con proveedor configurado.
+- [ ] Google OpenID Connect y vinculación explícita de cuentas.
+- [ ] Middleware/dependencias HTTP, cookies y defensa CSRF/origen integradas a FastAPI.
+- [ ] Frontend de autenticación y pruebas de integración/E2E.
+
 ## Alcance de esta tarea
 1. Definir entidades y migraciones para cuentas, credenciales locales, identidades externas y sesiones.
 2. Implementar registro con correo/contraseña, login, logout y endpoint de identidad actual.
