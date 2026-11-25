@@ -15,7 +15,7 @@
 - Edad mínima y salvaguardas; no habilitar menores antes de resolverlo.
 
 ## Identidad y autenticación
-- Identificador de acceso: correo electrónico único (decisión recomendada) y reglas de normalización.
+- Reglas definitivas de normalización y validación de direcciones de correo.
 - Verificación de correo y reglas para activar una cuenta.
 - Flujo y canal de recuperación de contraseña.
 - Duración de sesiones, expiración por inactividad y límite de sesiones/dispositivos.
