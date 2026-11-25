@@ -14,9 +14,15 @@
 - Política de retención y borrado.
 - Edad mínima y salvaguardas; no habilitar menores antes de resolverlo.
 
+## Identidad y autenticación
+- Identificador de acceso: correo electrónico, nombre de usuario u otra combinación.
+- Verificación de correo y reglas para activar una cuenta.
+- Flujo y canal de recuperación de contraseña.
+- Duración de sesiones, expiración por inactividad y límite de sesiones/dispositivos.
+- Política de cierre de sesiones al cambiar contraseña o ante eventos de seguridad.
+
 ## Técnica y operación
 - Hosting, almacenamiento y correo transaccional.
-- Cookies seguras vs bearer tokens.
 - Herramientas frontend de lint, formato, pruebas y E2E.
 - Backups, monitoreo, alertas y recuperación.
 - Política de versiones y dependencias.
