@@ -1,25 +1,81 @@
 # FaceSud
 
-Plataforma social independiente orientada a la comunidad SUD. No es un producto oficial ni implica respaldo o integración con La Iglesia de Jesucristo de los Santos de los Últimos Días.
+FaceSud es una plataforma social independiente orientada a la comunidad SUD. No es un producto oficial ni implica respaldo o integración con La Iglesia de Jesucristo de los Santos de los Últimos Días.
 
-**Repositorio previsto:** `facesud-legacy` · **Visibilidad:** privada · **Frontend:** reconstrucción desde cero.
+**Repositorio:** `facesud-legacy` · **Visibilidad:** público por decisión vigente del propietario · **Frontend:** reconstruido desde cero.
 
-## Stack acordado en principio
-- Backend: Python + FastAPI, Pydantic.
-- Datos: PostgreSQL, SQLAlchemy, Alembic.
-- Frontend: React (TypeScript recomendado).
-- Pruebas: Pytest; pruebas de componentes y E2E por definir.
-- Entorno: Docker Compose; Nginx/reverse proxy.
-- Media: almacenamiento compatible con S3.
-- API: REST + OpenAPI.
+## Estado del proyecto
 
-## Alcance inicial
-Cuentas, perfiles, unidades comunitarias y membresías provisionales, publicaciones de texto/imagen, feed, reacciones, comentarios, amistades, notificaciones, reportes, bloqueos y moderación.
+La rama `feat/first-executable-version` contiene la primera base ejecutable: frontend React conectado a API FastAPI, PostgreSQL y Redis mediante Docker Compose. Esta etapa no implementa funcionalidades de negocio.
 
-Fuera del MVP: mensajería privada, marketplace, publicidad, pagos/donaciones, integración institucional y verificación automática. Grupos y eventos requieren especificación antes de implementarse. No habilitar menores hasta resolver requisitos legales y salvaguardas.
+## Stack de la primera versión ejecutable
 
-## Estructura
-`apps/api` · `apps/web` · `services` · `contracts` · `infra` · `docs` · `tests`
+- Backend: Python 3.12, FastAPI, Pydantic Settings.
+- Persistencia: PostgreSQL 17, SQLAlchemy 2, Alembic.
+- Servicio Redis 7 para infraestructura inicial y comprobación de disponibilidad.
+- Frontend: React 19, TypeScript 5, Vite 6.
+- Pruebas backend: Pytest.
+- Entorno local: Docker Compose v2.
 
-## Primeros pasos
-Leer `docs/product/PRODUCT_SCOPE.md`, `docs/architecture/ARCHITECTURE.md`, `docs/security/SECURITY_BASELINE.md` y `docs/decisions/OPEN_DECISIONS.md`. Este paquete es documentación y scaffold: todavía no es una aplicación ejecutable.
+Las versiones de dependencias e imágenes están fijadas en los manifiestos correspondientes.
+
+## Servicios locales
+
+| Servicio | Dirección |
+|---|---|
+| Frontend | http://localhost:5173 |
+| API | http://localhost:8000 |
+| OpenAPI | http://localhost:8000/docs |
+| PostgreSQL | Red interna Compose: `db:5432` |
+| Redis | Red interna Compose: `redis:6379` |
+
+PostgreSQL y Redis no publican puertos en el host.
+
+## Inicio rápido
+
+Requisitos: Docker Engine/Docker Desktop y Docker Compose v2.
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+En PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+docker compose up --build
+```
+
+La API aplica la revisión inicial de Alembic al iniciar.
+
+## Endpoints de comprobación
+
+- `GET /api/v1/health`: comprueba que la API HTTP responde.
+- `GET /api/v1/health/ready`: comprueba conectividad con PostgreSQL y Redis; devuelve HTTP 503 si alguna dependencia no está disponible.
+
+```bash
+curl http://localhost:8000/api/v1/health
+curl http://localhost:8000/api/v1/health/ready
+```
+
+## Alcance de esta etapa
+
+Incluye infraestructura local, migración inicial vacía, endpoints de salud y una pantalla inicial que informa el estado de conexión con la API.
+
+No incluye registro, autenticación, usuarios, perfiles, publicaciones, feed, comentarios, reacciones, amistades, chat, notificaciones de producto, almacenamiento de medios, aportes/pagos ni integraciones externas. El alcance conceptual del producto se mantiene documentado en `docs/product/PRODUCT_SCOPE.md`; no implica que esas funciones estén implementadas.
+
+## Documentación
+
+- [Arquitectura](docs/architecture/ARCHITECTURE.md)
+- [Contratos API](docs/architecture/API_CONTRACTS.md)
+- [Guías frontend](docs/architecture/FRONTEND_GUIDELINES.md)
+- [Estrategia de pruebas](docs/operations/TESTING_STRATEGY.md)
+- [Desarrollo local](docs/operations/LOCAL_DEVELOPMENT.md)
+- [Registro de decisiones](docs/decisions/DECISIONS.md)
+- [Decisiones pendientes](docs/decisions/OPEN_DECISIONS.md)
+- [Auditoría documental](docs/operations/DOCUMENTATION_AUDIT.md)
+
+## Aviso sobre configuración
+
+`.env.example` contiene valores solo para desarrollo local. No usar credenciales de ejemplo en producción ni subir archivos `.env`.
