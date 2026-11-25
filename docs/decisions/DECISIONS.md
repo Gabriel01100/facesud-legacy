@@ -7,15 +7,15 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 | ID | Decisión | Estado |
 |---|---|---|
 | D-001 | Repositorio `facesud-legacy` | Confirmada |
-| D-002 | Visibilidad privada | Supersedida por D-012 |
+| D-002 | Visibilidad privada | Supersidida por D-012 |
 | D-003 | Frontend reconstruido desde cero | Confirmada |
 | D-004 | FastAPI + Python | Confirmada para la base técnica |
 | D-005 | PostgreSQL | Confirmada para la base técnica |
 | D-006 | React + TypeScript | Confirmada para la base técnica |
 | D-007 | Monorepo con límites modulares | Confirmada |
-| D-008 | Sin mensajes privados en MVP conceptual inicial | Supersedida por D-015 |
+| D-008 | Sin mensajes privados en MVP conceptual inicial | Supersidida por D-015 |
 | D-009 | Sin marketplace ni publicidad en MVP | Confirmada |
-| D-010 | Donaciones en etapa posterior | Supersedida por D-016 |
+| D-010 | Donaciones en etapa posterior | Supersidida por D-016 |
 | D-011 | Verificación de unidad provisional, sin integración institucional | Restricción vigente |
 | D-012 | Repositorio público por ahora | Confirmada por el propietario |
 | D-013 | Redis obligatorio en la infraestructura inicial | Confirmada por el propietario |
@@ -23,6 +23,7 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 | D-015 | Chat en el MVP bajo modalidad `request` | Confirmada por el propietario; fuera de Etapa 1 |
 | D-016 | Aportes voluntarios bajo modalidad `both` | Confirmada por el propietario; fuera de Etapa 1 |
 | D-017 | Autenticación web mediante cookies HttpOnly y sesiones opacas persistidas en PostgreSQL | Confirmada por el propietario |
+| D-018 | Acceso con correo/contraseña y Google; membresía SUD obligatoria | Confirmada por el propietario; verificación diferida |
 
 ## Historial y contexto de cambios
 
@@ -50,7 +51,7 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 ### D-008 — Sin mensajería privada (decisión anterior)
 - **Decisión anterior:** el registro inicial excluía mensajes privados del MVP.
 - **Nueva decisión:** el chat forma parte del MVP bajo el modelo `request`, según la elección posterior del propietario.
-- **Efecto:** D-008 queda supersedida por D-015. El chat no se implementa en la primera versión ejecutable.
+- **Efecto:** D-008 queda supersidida por D-015. El chat no se implementa en la primera versión ejecutable.
 
 ### D-015 — Chat bajo modalidad request
 - **Estado:** confirmada por el propietario.
@@ -59,7 +60,7 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 ### D-010 — Aportes/donaciones posteriores (decisión anterior)
 - **Decisión anterior:** el registro inicial postergaba las donaciones.
 - **Nueva decisión:** los aportes voluntarios se modelan bajo la modalidad `both`, según la elección posterior del propietario.
-- **Efecto:** D-010 queda supersedida por D-016. Los aportes no se implementan en esta etapa.
+- **Efecto:** D-010 queda supersidida por D-016. Los aportes no se implementan en esta etapa.
 
 ### D-016 — Aportes voluntarios bajo modalidad both
 - **Estado:** confirmada por el propietario.
@@ -72,9 +73,18 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 - **Protección de sesiones:** generar identificadores con un generador criptográficamente seguro; almacenar solo un hash del identificador, nunca el valor de la cookie; establecer expiración; invalidar en logout; rotar el identificador al autenticar y ante cambios sensibles.
 - **CSRF y origen:** las operaciones que modifican estado deberán incorporar defensa CSRF y validación estricta del origen. `SameSite` no se considera la única defensa.
 - **Persistencia:** PostgreSQL será el almacén inicial de sesiones. Redis conserva exclusivamente el uso de infraestructura/readiness aprobado por D-013.
-- **Límites:** esta decisión no define todavía el identificador de inicio de sesión, verificación de correo, recuperación de contraseña, duración exacta de sesiones ni política de dispositivos concurrentes. Esos puntos deben resolverse antes de completar el flujo de cuentas.
-- **Justificación:** reducir la exposición del identificador de sesión a JavaScript y permitir revocación del lado servidor, manteniendo una implementación web adecuada al navegador.
-- **Evolución:** una futura aplicación móvil o integración externa podrá tener un mecanismo de autenticación separado, sin cambiar el mecanismo de sesión web.
+- **Límites:** no define todavía duración exacta de sesiones ni política de dispositivos concurrentes.
+- **Justificación:** reducir la exposición del identificador de sesión a JavaScript y permitir revocación del lado servidor.
+- **Evolución:** una futura aplicación móvil o integración externa podrá tener un mecanismo separado.
+
+### D-018 — Métodos de acceso y requisito de membresía
+- **Estado:** confirmada por el propietario.
+- **Métodos de autenticación:** registro e inicio de sesión con correo electrónico y contraseña como método propio; inicio de sesión con Google como proveedor adicional mediante OpenID Connect. Ambos métodos deben resolver a una única cuenta interna de FaceSud.
+- **Vinculación de identidades:** no vincular automáticamente cuentas existentes solo porque coincida una dirección de correo. La vinculación de Google con una cuenta existente requerirá una prueba de control de la cuenta y un flujo explícito.
+- **Requisito de elegibilidad:** para participar en la comunidad FaceSud, la persona debe tener cédula de miembro de La Iglesia de Jesucristo de los Santos de los Últimos Días. La autenticación por Google o por contraseña no acredita esa condición.
+- **Implementación diferida:** durante las etapas actuales no se exigirá ni verificará la cédula porque todavía no están disponibles los datos ni el procedimiento autorizado. La verificación se diseñará e implementará en una etapa posterior antes de habilitar el acceso comunitario real.
+- **Separación de dominios:** identidad/autenticación y membresía/verificación serán conceptos y estados separados. No asumir integración institucional, consulta automática ni almacenar/exponer el número de cédula sin una decisión específica y un diseño de privacidad.
+- **Justificación:** admitir métodos de acceso convenientes sin confundir autenticación con pertenencia o elegibilidad comunitaria.
 
 ## Decisiones técnicas anteriores
 Las decisiones técnicas confirmadas para esta base no aprueban automáticamente herramientas o funcionalidades futuras. Las decisiones abiertas siguen listadas en [OPEN_DECISIONS.md](OPEN_DECISIONS.md).
