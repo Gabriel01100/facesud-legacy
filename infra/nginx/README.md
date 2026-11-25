@@ -1,0 +1,1 @@
+# Nginx\n\nReverse proxy futuro. Revisar TLS y hardening antes de producción.\n

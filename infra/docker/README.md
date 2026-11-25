@@ -1,0 +1,1 @@
+# Docker\n\nSiguiente tarea: Dockerfiles y compose para API, web y PostgreSQL con healthchecks y volúmenes locales.\n

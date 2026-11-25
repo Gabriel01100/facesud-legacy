@@ -1,0 +1,1 @@
+# API\n\nReservado para FastAPI. Siguiente tarea: pyproject.toml, app/main.py, configuración, health check y pruebas.\n

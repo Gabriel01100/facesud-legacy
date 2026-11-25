@@ -1,0 +1,1 @@
+# Contratos\n\nGuardar especificaciones OpenAPI versionadas y, más adelante, esquemas de eventos.\n

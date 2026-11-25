@@ -1,0 +1,1 @@
+# Web\n\nFrontend nuevo. Siguiente tarea: React + TypeScript, router, estilos, cliente API y pruebas de componentes.\n

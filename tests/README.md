@@ -1,0 +1,1 @@
+# Tests\n\nOrganizar pruebas unitarias, integración y E2E; priorizar autorización, privacidad y membresías.\n
