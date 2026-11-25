@@ -7,15 +7,15 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 | ID | Decisión | Estado |
 |---|---|---|
 | D-001 | Repositorio `facesud-legacy` | Confirmada |
-| D-002 | Visibilidad privada | Supersidida por D-012 |
+| D-002 | Visibilidad privada | Supersedida por D-012 |
 | D-003 | Frontend reconstruido desde cero | Confirmada |
 | D-004 | FastAPI + Python | Confirmada para la base técnica |
 | D-005 | PostgreSQL | Confirmada para la base técnica |
 | D-006 | React + TypeScript | Confirmada para la base técnica |
 | D-007 | Monorepo con límites modulares | Confirmada |
-| D-008 | Sin mensajes privados en MVP conceptual inicial | Supersidida por D-015 |
+| D-008 | Sin mensajes privados en MVP conceptual inicial | Supersedida por D-015 |
 | D-009 | Sin marketplace ni publicidad en MVP | Confirmada |
-| D-010 | Donaciones en etapa posterior | Supersidida por D-016 |
+| D-010 | Donaciones en etapa posterior | Supersedida por D-016 |
 | D-011 | Verificación de unidad provisional, sin integración institucional | Restricción vigente |
 | D-012 | Repositorio público por ahora | Confirmada por el propietario |
 | D-013 | Redis obligatorio en la infraestructura inicial | Confirmada por el propietario |
@@ -51,7 +51,7 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 ### D-008 — Sin mensajería privada (decisión anterior)
 - **Decisión anterior:** el registro inicial excluía mensajes privados del MVP.
 - **Nueva decisión:** el chat forma parte del MVP bajo el modelo `request`, según la elección posterior del propietario.
-- **Efecto:** D-008 queda supersidida por D-015. El chat no se implementa en la primera versión ejecutable.
+- **Efecto:** D-008 queda supersedida por D-015. El chat no se implementa en la primera versión ejecutable.
 
 ### D-015 — Chat bajo modalidad request
 - **Estado:** confirmada por el propietario.
@@ -60,7 +60,7 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 ### D-010 — Aportes/donaciones posteriores (decisión anterior)
 - **Decisión anterior:** el registro inicial postergaba las donaciones.
 - **Nueva decisión:** los aportes voluntarios se modelan bajo la modalidad `both`, según la elección posterior del propietario.
-- **Efecto:** D-010 queda supersidida por D-016. Los aportes no se implementan en esta etapa.
+- **Efecto:** D-010 queda supersedida por D-016. Los aportes no se implementan en esta etapa.
 
 ### D-016 — Aportes voluntarios bajo modalidad both
 - **Estado:** confirmada por el propietario.
