@@ -47,7 +47,7 @@ Implementar el primer módulo Identity de FaceSud con registro e inicio de sesi�
 - Uso de Redis para sesiones, rate limiting o tareas en segundo plano sin decisión específica.
 
 ## Condiciones previas / decisiones aún necesarias
-- Definir correo como identificador único y reglas de normalización.
+- Definir reglas estrictas de validación y normalización de correo.
 - Elegir proveedor de correo transaccional y configurar secretos.
 - Definir duración de sesión, expiración por inactividad y política de dispositivos.
 - Definir flujo de recuperación y verificación de correo.
