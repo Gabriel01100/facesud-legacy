@@ -6,7 +6,9 @@ FaceSud es una plataforma social independiente orientada a la comunidad SUD. No 
 
 ## Estado del proyecto
 
-La rama `feat/first-executable-version` contiene la primera base ejecutable: frontend React conectado a API FastAPI, PostgreSQL y Redis mediante Docker Compose. Esta etapa no implementa funcionalidades de negocio.
+La rama `feat/first-executable-version` implementa la base de la primera versión ejecutable: frontend React conectado a API FastAPI, PostgreSQL y Redis mediante Docker Compose. Esta etapa no implementa funcionalidades de negocio.
+
+**Validación pendiente:** el código y el workflow de CI están preparados, pero el build y el arranque todavía deben verificarse en GitHub Actions y en un entorno Docker local antes de considerar cerrada la etapa.
 
 ## Stack de la primera versión ejecutable
 
