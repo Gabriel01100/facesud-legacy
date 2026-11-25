@@ -37,4 +37,4 @@ Autenticación, usuarios, perfiles, publicaciones/feed, comentarios/reacciones, 
 - No agregar funcionalidades adicionales a Redis en esta tarea.
 
 ## Entrega
-Rama `feat/first-executable-version`, PR hacia `main), sin merge. Informar pruebas ejecutadas y no ejecutadas por separado.
+Rama `feat/first-executable-version`, PR hacia `main`, sin merge. Informar pruebas ejecutadas y no ejecutadas por separado.
