@@ -73,7 +73,13 @@ def create_session(
     return session, raw_session_token, raw_csrf_token
 
 
-def get_active_session(db: Session, raw_token: str, *, now: datetime | None = None) -> UserSession | None:
+def get_active_session(
+    db: Session,
+    raw_token: str,
+    *,
+    now: datetime | None = None,
+    touch: bool = True,
+) -> UserSession | None:
     current_time = now or datetime.now(timezone.utc)
     statement = (
         select(UserSession)
@@ -95,9 +101,14 @@ def get_active_session(db: Session, raw_token: str, *, now: datetime | None = No
         db.flush()
         return None
 
-    session.last_seen_at = current_time
-    db.flush()
+    if touch:
+        touch_session(db, session, now=current_time)
     return session
+
+
+def touch_session(db: Session, session: UserSession, *, now: datetime | None = None) -> None:
+    session.last_seen_at = now or datetime.now(timezone.utc)
+    db.flush()
 
 
 def verify_csrf_token(session: UserSession, raw_token: str) -> bool:
