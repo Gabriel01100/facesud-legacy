@@ -9,6 +9,7 @@ from app.models.identity import (
     PasswordResetToken,
     UserSession,
 )
+from app.models.profile import UserProfile
 
 __all__ = [
     "Account",
@@ -19,5 +20,6 @@ __all__ = [
     "LoginRateLimit",
     "PasswordCredential",
     "PasswordResetToken",
+    "UserProfile",
     "UserSession",
 ]

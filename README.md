@@ -6,9 +6,9 @@ FaceSud es una plataforma social independiente orientada a la comunidad SUD. No 
 
 ## Estado del proyecto
 
-`main` contiene la infraestructura ejecutable, los flujos de identidad/autenticación y una base inicial del frontend. La interfaz de autenticación está conectada a la API; el shell social y las funcionalidades de comunidad todavía están en desarrollo.
+`main` contiene la infraestructura ejecutable, los flujos de identidad/autenticación y la base inicial del Social Core. El titular de una cuenta autenticada puede consultar y editar su perfil básico (nombre visible, username y biografía). Los perfiles ajenos siguen privados y no hay directorio ni búsqueda de usuarios.
 
-La base visual FaceSud v1.0 está documentada y sus tokens CSS se están incorporando antes de construir el shell autenticado y los módulos del Social Core.
+La fotografía de perfil y la unidad comunitaria se incorporarán cuando estén implementados, respectivamente, el almacenamiento protegido de medios y el procedimiento de aprobación de vinculación comunitaria. La base visual FaceSud v1.0 orienta las pantallas.
 
 ## Stack de la primera versión ejecutable
 
@@ -49,7 +49,7 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
-La API aplica la revisión inicial de Alembic al iniciar.
+La API aplica las revisiones Alembic al iniciar.
 
 ## Endpoints de comprobación
 
@@ -61,11 +61,11 @@ curl http://localhost:8000/api/v1/health
 curl http://localhost:8000/api/v1/health/ready
 ```
 
-## Alcance de esta etapa
+## Alcance funcional actual
 
-Incluye infraestructura local, identidad y autenticación por correo/contraseña, verificación de correo, recuperación de contraseña y pantallas frontend asociadas.
+Incluye infraestructura local, identidad y autenticación por correo/contraseña, verificación y recuperación de correo, cambio de contraseña y perfil básico propio.
 
-Todavía no incluye perfiles sociales, publicaciones, feed, comentarios, reacciones, amistades, chat, notificaciones de producto, almacenamiento de medios, aportes/pagos ni integraciones externas. El alcance conceptual del producto se mantiene documentado en `docs/product/PRODUCT_SCOPE.md`; no implica que esas funciones estén implementadas.
+Todavía no incluye perfiles ajenos, publicaciones, feed, comentarios, reacciones, amistades, chat, notificaciones de producto, carga de fotografías, aprobación de unidad comunitaria, aportes/pagos ni integraciones externas. El alcance conceptual del producto se mantiene documentado en `docs/product/PRODUCT_SCOPE.md`; no implica que esas funciones estén implementadas.
 
 ## Documentación
 
