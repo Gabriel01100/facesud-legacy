@@ -114,7 +114,9 @@ No se implementan perfiles ajenos ni se interpreta autenticación como aprobaci�
 Las operaciones mutables validan Origin y CSRF. Ante 403 con detalle CSRF validation failed, el cliente solicita un token nuevo y reintenta la solicitud una sola vez. El reintento debe usar un cuerpo reproducible.
 
 ## Correo
-El transporte es SMTP configurable y compartido por verificación de correo y recuperación de contraseña. Variables: SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_STARTTLS, EMAIL_FROM, FRONTEND_BASE_URL. Registro y recuperación devuelven HTTP 503 si falta configuración.\n\nEn desarrollo Compose, Mailpit captura correos en `mailpit:1025`, sin TLS ni autenticación; su UI se publica únicamente en `127.0.0.1:8025`. En producción se exige SMTP autenticado con STARTTLS y credenciales reales. El proveedor sugerido es Resend mediante SMTP; requiere dominio emisor verificado y registros DNS de autenticación. Mailpit nunca debe usarse como proveedor de producción.
+El transporte es SMTP configurable y compartido por verificación de correo y recuperación de contraseña. Variables: SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_STARTTLS, EMAIL_FROM, FRONTEND_BASE_URL. Registro y recuperación devuelven HTTP 503 si falta configuración.
+
+En desarrollo Compose, Mailpit captura correos en `mailpit:1025`, sin TLS ni autenticación; su UI se publica únicamente en `127.0.0.1:8025`. En producción se exige SMTP autenticado con STARTTLS y credenciales reales. El proveedor sugerido es Resend mediante SMTP; requiere dominio emisor verificado y registros DNS de autenticación. Mailpit nunca debe usarse como proveedor de producción.
 
 Las direcciones se normalizan en NFC y se validan con email-validator antes de persistir; se conserva el comportamiento case-insensitive vigente.
 
