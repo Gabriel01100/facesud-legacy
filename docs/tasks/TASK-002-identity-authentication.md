@@ -28,7 +28,7 @@ Implementar el módulo Identity de FaceSud con autenticación local por correo/c
 - [x] Token CSRF devuelto por JSON, enviado por encabezado y validado contra el hash almacenado; no depende de una segunda cookie ni del dominio del frontend.
 - [x] Validación estricta del encabezado Origin para operaciones mutables.
 - [x] CORS con credenciales y lista explícita de orígenes.
-- [x] Pruebas HTTP y de política de sesiones; GitHub Actions CI pasó en el commit `1686435a2978bd457c11e4068468be36ce147d6e`, incluidos los cambios finales del flujo CSRF.
+- [x] Pruebas HTTP y de política de sesiones; GitHub Actions CI pasó en el commit `567bd7aa8f840f79a6b364906d4226d5f2557650`, incluidos los cambios finales del flujo CSRF y la expiración exacta a los 30 minutos.
 
 ### Pendiente
 - [ ] Registro de cuentas y verificación de correo (requiere definir/configurar proveedor transaccional).
