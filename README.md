@@ -29,8 +29,8 @@ Las versiones de dependencias e imágenes están fijadas en los manifiestos corr
 | Frontend | http://localhost:5173 |
 | API | http://localhost:8000 |
 | OpenAPI | http://localhost:8000/docs |
-| PostgreSQL | Red interna Compose: `db:5432` |
 | Mailpit | http://localhost:8025 | Captura local de correos de verificación y recuperación |
+| PostgreSQL | Red interna Compose: `db:5432` |
 | Redis | Red interna Compose: `redis:6379` |
 
 PostgreSQL y Redis no publican puertos en el host.
