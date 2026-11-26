@@ -230,3 +230,47 @@ def test_me_requires_authentication_and_does_not_cache_401():
         assert response.headers["cache-control"] == "no-store"
     finally:
         teardown_client(client, engine)
+
+
+def test_authenticated_password_change_requires_csrf_and_revokes_all_sessions():
+    client, engine = build_client()
+    try:
+        seed_account(engine)
+        headers = {"Origin": "http://localhost:5173"}
+        login = client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers=headers,
+        )
+        assert login.status_code == 200
+        csrf_token = login.json()["csrf_token"]
+
+        rejected = client.post(
+            "/api/v1/auth/password/change",
+            json={"current_password": "a-long-test-password", "new_password": "a-new-long-password"},
+            headers=headers,
+        )
+        assert rejected.status_code == 403
+
+        changed = client.post(
+            "/api/v1/auth/password/change",
+            json={"current_password": "a-long-test-password", "new_password": "a-new-long-password"},
+            headers={**headers, "X-CSRF-Token": csrf_token},
+        )
+        assert changed.status_code == 204
+        assert client.get("/api/v1/auth/me").status_code == 401
+
+        old_login = client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers=headers,
+        )
+        new_login = client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "a-new-long-password"},
+            headers=headers,
+        )
+        assert old_login.status_code == 401
+        assert new_login.status_code == 200
+    finally:
+        teardown_client(client, engine)
