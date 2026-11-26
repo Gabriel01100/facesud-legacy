@@ -4,15 +4,13 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, "feat/**"]
+    branches: [main, "feat/**", "fix/**"]
 
 permissions:
   contents: read
 
 jobs:
   backend:
-    # Pin the runner image: ubuntu-latest moved to 26.04, where the
-    # setup-python manifest does not currently provide Python 3.12.11.
     runs-on: ubuntu-24.04
     services:
       postgres:
@@ -47,15 +45,23 @@ jobs:
       - name: Install API and test dependencies
         working-directory: apps/api
         run: python -m pip install -e ".[dev]"
+      - name: Lint backend
+        working-directory: apps/api
+        run: ruff check app tests migrations
       - name: Run database migrations
         working-directory: apps/api
         env:
           DATABASE_URL: postgresql+psycopg://facesud:facesud_ci@localhost:5432/facesud
         run: alembic upgrade head
+      - name: Create isolated identity test database
+        env:
+          PGPASSWORD: facesud_ci
+        run: createdb -h localhost -U facesud facesud_identity_test
       - name: Run API tests
         working-directory: apps/api
         env:
           DATABASE_URL: postgresql+psycopg://facesud:facesud_ci@localhost:5432/facesud
+          IDENTITY_TEST_DATABASE_URL: postgresql+psycopg://facesud:facesud_ci@localhost:5432/facesud_identity_test
           REDIS_URL: redis://localhost:6379/0
         run: pytest
 
@@ -74,6 +80,17 @@ jobs:
       - name: Build frontend
         working-directory: apps/web
         run: npm run build
+
+  secret-scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan repository for secrets
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   containers:
     runs-on: ubuntu-24.04

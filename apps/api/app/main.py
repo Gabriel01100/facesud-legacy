@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
@@ -6,6 +6,16 @@ from app.api.health import router as health_router
 from app.core.config import settings
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
+
+
+@app.middleware("http")
+async def prevent_auth_response_caching(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/api/v1/auth/"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,

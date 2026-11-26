@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
@@ -14,12 +15,18 @@ from app.models.identity import Account, AccountStatus, EmailVerificationToken, 
 
 
 def build_client(monkeypatch):
-    engine = create_engine(
-        "sqlite+pysqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    Base.metadata.create_all(engine)
+    database_url = os.getenv("IDENTITY_TEST_DATABASE_URL")
+    if database_url:
+        engine = create_engine(database_url, pool_pre_ping=True)
+        Base.metadata.drop_all(engine)
+        Base.metadata.create_all(engine)
+    else:
+        engine = create_engine(
+            "sqlite+pysqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        Base.metadata.create_all(engine)
 
     def override_get_db():
         with Session(engine, expire_on_commit=False) as db:

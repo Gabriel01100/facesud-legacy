@@ -12,12 +12,15 @@ def authenticate_local_account(db: Session, email: str, password: str) -> Accoun
     except ValueError:
         normalized_email = ""
 
-    account = db.scalar(
-        select(Account)
-        .join(PasswordCredential)
-        .where(Account.email_normalized == normalized_email)
-        .with_for_update()
-    ) if normalized_email else None
+    account = (
+        db.scalar(
+            select(Account)
+            .join(PasswordCredential)
+            .where(Account.email_normalized == normalized_email)
+        )
+        if normalized_email
+        else None
+    )
 
     if account is None:
         verify_password(DUMMY_PASSWORD_HASH, password[:1024])

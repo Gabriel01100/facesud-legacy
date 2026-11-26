@@ -1,3 +1,5 @@
+import os
+
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
@@ -11,12 +13,18 @@ from app.models.identity import Account, AccountStatus, PasswordCredential, User
 
 
 def build_client():
-    engine = create_engine(
-        "sqlite+pysqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    Base.metadata.create_all(engine)
+    database_url = os.getenv("IDENTITY_TEST_DATABASE_URL")
+    if database_url:
+        engine = create_engine(database_url, pool_pre_ping=True)
+        Base.metadata.drop_all(engine)
+        Base.metadata.create_all(engine)
+    else:
+        engine = create_engine(
+            "sqlite+pysqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        Base.metadata.create_all(engine)
 
     def override_get_db():
         with Session(engine, expire_on_commit=False) as db:
@@ -63,10 +71,62 @@ def test_login_sets_httponly_session_cookie_and_me_returns_account():
         assert any("facesud_session=" in item and "HttpOnly" in item for item in cookies)
         assert all("facesud_csrf=" not in item for item in cookies)
         assert response.json()["csrf_token"]
+        assert response.headers["cache-control"] == "no-store"
 
         me = client.get("/api/v1/auth/me")
         assert me.status_code == 200
         assert me.json()["email"] == "person@example.com"
+    finally:
+        teardown_client(client, engine)
+
+
+def test_successful_new_login_revokes_the_incoming_session():
+    client, engine = build_client()
+    try:
+        seed_account(engine)
+        first = client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers={"Origin": "http://localhost:5173"},
+        )
+        first_token = client.cookies.get("facesud_session")
+        second = client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers={"Origin": "http://localhost:5173"},
+        )
+        assert first.status_code == second.status_code == 200
+        with Session(engine) as db:
+            sessions = list(db.scalars(select(UserSession).order_by(UserSession.created_at)))
+            assert len(sessions) == 2
+            assert sum(session.revoked_at is not None for session in sessions) == 1
+            assert sum(session.revoked_at is None for session in sessions) == 1
+        assert client.get("/api/v1/auth/me").status_code == 200
+        assert first_token
+    finally:
+        teardown_client(client, engine)
+
+
+def test_login_rate_limit_returns_429_after_five_attempts(monkeypatch):
+    client, engine = build_client()
+    try:
+        monkeypatch.setattr("app.api.auth.authenticate_local_account", lambda *_args: None)
+        headers = {"Origin": "http://localhost:5173"}
+        for _ in range(5):
+            response = client.post(
+                "/api/v1/auth/login",
+                json={"email": "person@example.com", "password": "wrong-password"},
+                headers=headers,
+            )
+            assert response.status_code == 401
+        limited = client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "wrong-password"},
+            headers=headers,
+        )
+        assert limited.status_code == 429
+        assert int(limited.headers["retry-after"]) > 0
+        assert limited.headers["cache-control"] == "no-store"
     finally:
         teardown_client(client, engine)
 
@@ -81,6 +141,7 @@ def test_login_rejects_inactive_account_and_invalid_credentials_generically():
             headers={"Origin": "http://localhost:5173"},
         )
         assert response.status_code == 401
+        assert response.headers["cache-control"] == "no-store"
         assert response.json()["detail"] == "Email or password is incorrect, or the account is not active."
     finally:
         teardown_client(client, engine)
@@ -111,7 +172,6 @@ def test_logout_requires_csrf_and_revokes_session():
         )
         assert login.status_code == 200
 
-        csrf = login.json()["csrf_token"]
         with Session(engine) as db:
             last_seen_before = db.scalar(select(UserSession)).last_seen_at
 
@@ -125,13 +185,10 @@ def test_logout_requires_csrf_and_revokes_session():
         assert last_seen_after == last_seen_before
         assert client.get("/api/v1/auth/me").status_code == 200
 
-        refreshed = client.post(
+        csrf = client.post(
             "/api/v1/auth/csrf",
             headers={"Origin": "http://localhost:5173"},
-        )
-        assert refreshed.status_code == 200
-        csrf = refreshed.json()["csrf_token"]
-
+        ).json()["csrf_token"]
         logged_out = client.post(
             "/api/v1/auth/logout",
             headers={"Origin": "http://localhost:5173", "X-CSRF-Token": csrf},
@@ -142,10 +199,34 @@ def test_logout_requires_csrf_and_revokes_session():
         teardown_client(client, engine)
 
 
-def test_me_requires_authentication():
+def test_logout_with_expired_session_still_returns_204_and_clears_cookie():
+    from datetime import datetime, timedelta, timezone
+
+    client, engine = build_client()
+    try:
+        seed_account(engine)
+        client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers={"Origin": "http://localhost:5173"},
+        )
+        with Session(engine) as db:
+            session = db.scalar(select(UserSession))
+            session.expires_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+            db.commit()
+
+        response = client.post("/api/v1/auth/logout", headers={"Origin": "http://localhost:5173"})
+        assert response.status_code == 204
+        assert any("facesud_session=" in item and "Max-Age=0" in item for item in response.headers.get_list("set-cookie"))
+    finally:
+        teardown_client(client, engine)
+
+
+def test_me_requires_authentication_and_does_not_cache_401():
     client, engine = build_client()
     try:
         response = client.get("/api/v1/auth/me")
         assert response.status_code == 401
+        assert response.headers["cache-control"] == "no-store"
     finally:
         teardown_client(client, engine)

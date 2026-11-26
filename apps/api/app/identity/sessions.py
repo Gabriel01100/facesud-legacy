@@ -1,7 +1,9 @@
 import hmac
+import unicodedata
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
+from email_validator import EmailNotValidError, validate_email
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -10,7 +12,12 @@ from app.models.identity import Account, AccountStatus, UserSession
 
 SESSION_ABSOLUTE_TTL = timedelta(days=7)
 SESSION_IDLE_TTL = timedelta(minutes=30)
+SESSION_TOUCH_INTERVAL = timedelta(minutes=1)
 MAX_ACTIVE_SESSIONS = 5
+
+
+class AccountNotActiveError(RuntimeError):
+    pass
 
 
 def _utc(value: datetime) -> datetime:
@@ -18,8 +25,15 @@ def _utc(value: datetime) -> datetime:
 
 
 def normalize_email(email: str) -> str:
-    normalized = email.strip().casefold()
-    if not normalized or len(normalized) > 320 or "@" not in normalized:
+    candidate = unicodedata.normalize("NFC", email.strip())
+    if not candidate or len(candidate) > 320:
+        raise ValueError("A valid email address is required")
+    try:
+        validated = validate_email(candidate, check_deliverability=False, allow_smtputf8=True)
+    except EmailNotValidError as exc:
+        raise ValueError("A valid email address is required") from exc
+    normalized = unicodedata.normalize("NFC", validated.normalized).casefold()
+    if len(normalized) > 320:
         raise ValueError("A valid email address is required")
     return normalized
 
@@ -39,8 +53,14 @@ def create_session(
     if _utc(expires_at) > _utc(current_time) + SESSION_ABSOLUTE_TTL:
         raise ValueError("Session expiration exceeds the absolute session lifetime")
 
-    # Serialize session issuance per account on databases that support row locks.
-    db.scalar(select(Account).where(Account.id == account_id).with_for_update())
+    account = db.scalar(
+        select(Account)
+        .where(Account.id == account_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if account is None or account.status != AccountStatus.ACTIVE:
+        raise AccountNotActiveError("Account is not active")
 
     active_sessions = list(
         db.scalars(
@@ -108,9 +128,14 @@ def get_active_session(
     return session
 
 
-def touch_session(db: Session, session: UserSession, *, now: datetime | None = None) -> None:
-    session.last_seen_at = now or datetime.now(timezone.utc)
+def touch_session(db: Session, session: UserSession, *, now: datetime | None = None) -> bool:
+    current_time = now or datetime.now(timezone.utc)
+    last_activity = _utc(session.last_seen_at or session.created_at)
+    if _utc(current_time) - last_activity <= SESSION_TOUCH_INTERVAL:
+        return False
+    session.last_seen_at = current_time
     db.flush()
+    return True
 
 
 def rotate_csrf_token(db: Session, session: UserSession) -> str:

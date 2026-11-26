@@ -96,5 +96,16 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 - **Actividad:** una solicitud autenticada válida actualiza `last_seen_at`; solicitudes rechazadas por CSRF no deben considerarse actividad de negocio.
 - **Persistencia:** los tiempos y revocaciones se controlan en PostgreSQL, no en Redis.
 
+### D-020 — Rate limiting inicial de login
+- **Estado:** decisión técnica adoptada para el endurecimiento de Identity.
+- **Almacenamiento:** PostgreSQL, no Redis, para evitar una nueva dependencia operativa en la ruta de autenticación.
+- **Ventana y límites iniciales:** 5 intentos por 15 minutos para cada combinación IP+correo y 30 intentos por 15 minutos por IP.
+- **Respuesta:** HTTP 429 con Retry-After al superar el límite.
+- **Privacidad:** se almacenan hashes SHA-256 de las claves de bucket; no se persisten IP ni correo en claro en la tabla de rate limiting.
+- **Recuperación:** un login correcto elimina ambos buckets asociados a esa IP y correo.
+- **Alcance:** limita login; registro y reenvío de verificación requieren una política separada.
+- **Justificación:** el límite combinado dificulta ataques automatizados sin crear un bloqueo global por correo que permita a terceros denegar el acceso a una víctima.
+- **Revisión:** observar métricas y ajustar umbrales antes de habilitar registro público a gran escala.
+
 ## Decisiones técnicas anteriores
 Las decisiones técnicas confirmadas para esta base no aprueban automáticamente herramientas o funcionalidades futuras. Las decisiones abiertas siguen listadas en [OPEN_DECISIONS.md](OPEN_DECISIONS.md).

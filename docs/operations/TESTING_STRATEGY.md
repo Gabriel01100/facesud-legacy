@@ -1,26 +1,33 @@
 # Estrategia de pruebas
 
 ## Backend
-- Pytest como runner.
+- Pytest como runner; Ruff para lint.
 - Pruebas HTTP con FastAPI TestClient.
-- Cubrir los endpoints de salud y readiness.
-- Cubrir Identity: login válido/incorrecto, cuenta pendiente, cookies, token CSRF, sesión actual, logout, Origin, expiración absoluta, inactividad y límite de sesiones.
-- Las pruebas HTTP de Identity usan una base SQLite aislada. Los tests de migraciones y el arranque del stack se validan con PostgreSQL en CI; deben agregarse pruebas concurrentes de sesiones sobre PostgreSQL antes de un despliegue público.
-- SQLite puede utilizarse para pruebas unitarias cuando no altera la semántica bajo prueba.
-- Validar migraciones Alembic contra una base vacía y contra una base con migraciones previas.
+- Cubrir salud/readiness, login, registro, verificación, cookies, CSRF, sesiones, rate limiting, logout, Origin, expiración, inactividad y limpieza.
+- Los tests HTTP de Identity usan PostgreSQL aislado en CI mediante IDENTITY_TEST_DATABASE_URL. SQLite queda como fallback local y para pruebas unitarias que no dependen de semántica de concurrencia/SQL.
+- CI aplica migraciones Alembic a PostgreSQL y ejecuta tests de Identity contra una segunda base PostgreSQL aislada.
+- Agregar pruebas concurrentes de creación/revocación de sesiones y rate limiting bajo carga antes de despliegue público.
+- Validar migraciones Alembic contra una base vacía y una base con migraciones previas.
 
 ## Frontend
-- El criterio actual es el build TypeScript/Vite sin errores.
-- Las integraciones de autenticación requieren pruebas de navegador/E2E cuando se implemente el frontend.
+- Build TypeScript/Vite.
+- authenticatedFetch renueva token CSRF y reintenta una vez ante el error específico de CSRF.
+- Pruebas E2E y pruebas multi-pestaña pendientes hasta implementar pantallas de autenticación.
 
 ## Infraestructura
-- Validar construcción y arranque de los cuatro servicios con Docker Compose.
+- Validar configuración y build de Docker Compose.
 - Verificar healthchecks de PostgreSQL, Redis y API.
-- Comprobar los endpoints de salud y readiness.
-- Confirmar que detener PostgreSQL o Redis provoca readiness HTTP 503.
+- API ejecutada como usuario sin privilegios.
+- Producción exige Redis con contraseña y cookies Secure.
+- La imagen optimizada de producción para frontend queda diferida a la etapa de despliegue.
+
+## Seguridad de cadena de suministro
+- Gitleaks escanea el historial del repositorio en CI.
+- Ruff analiza backend.
+- El frontend continúa con npm install hasta que package-lock.json se genere y se versione; no migrar a npm ci sin lockfile completo.
 
 ## CI
-El workflow ejecuta pruebas backend, build frontend y validación/build de Docker Compose. Los resultados deben verificarse en el run correspondiente antes de declarar una tarea validada.
+El workflow ejecuta backend (PostgreSQL, migraciones, tests y Ruff), build frontend, escaneo de secretos y validación/build de contenedores.
 
 ## Reporte
-Distinguir pruebas ejecutadas, pruebas que pasaron, fallaron y no se pudieron ejecutar. No declarar cobertura ni resultados no medidos.
+Distinguir pruebas ejecutadas, pasadas, fallidas y no ejecutadas. No declarar cobertura ni resultados no medidos.

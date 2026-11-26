@@ -103,3 +103,11 @@ class EmailVerificationToken(Base):
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     account: Mapped[Account] = relationship(back_populates="email_verification_tokens")
+
+
+class LoginRateLimit(Base):
+    __tablename__ = "identity_login_rate_limits"
+
+    bucket_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    window_started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    attempts: Mapped[int] = mapped_column(nullable=False, default=0)

@@ -16,11 +16,13 @@ services:
 
   redis:
     image: redis:7.4.3-alpine
-    command: ["redis-server", "--appendonly", "yes"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-facesud_dev}
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -32,8 +34,8 @@ services:
     environment:
       APP_ENV: ${APP_ENV:-development}
       DATABASE_URL: postgresql+psycopg://facesud:${POSTGRES_PASSWORD:-facesud_dev}@db:5432/facesud
-      REDIS_URL: redis://redis:6379/0
-      CORS_ORIGINS: http://localhost:5173
+      REDIS_URL: ${REDIS_URL:-redis://:${REDIS_PASSWORD:-facesud_dev}@redis:6379/0}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:5173}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}

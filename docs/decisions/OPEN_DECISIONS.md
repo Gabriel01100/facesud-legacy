@@ -15,11 +15,10 @@
 - Edad mínima y salvaguardas; no habilitar menores antes de resolverlo.
 
 ## Identidad y autenticación
-- Reglas definitivas de normalización y validación de direcciones de correo.
 - Flujo y canal de recuperación de contraseña.
 - Política de cierre de sesiones al cambiar contraseña o ante eventos de seguridad.
 - Configuración OAuth/OIDC de Google: credenciales, URI de callback, scopes mínimos y entornos.
-- Límites de intentos de autenticación y estrategia de rate limiting.
+- Límites definitivos de rate limiting de registro y reenvío; los límites iniciales de login ya están implementados.
 - Política de limpieza/retención de tokens de verificación expirados y usados.
 
 ## Técnica y operación
