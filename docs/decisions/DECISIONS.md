@@ -103,7 +103,7 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 - **Respuesta:** HTTP 429 con Retry-After al superar el límite.
 - **Privacidad:** se almacenan hashes SHA-256 de las claves de bucket; no se persisten IP ni correo en claro en la tabla de rate limiting.
 - **Recuperación:** un login correcto elimina ambos buckets asociados a esa IP y correo.
-- **Alcance:** limita login; registro y reenvío de verificación requieren una política separada.
+- **Alcance:** limita login. Registro y reenvío de verificación se regulan por separado mediante D-021.
 - **Justificación:** el límite combinado dificulta ataques automatizados sin crear un bloqueo global por correo que permita a terceros denegar el acceso a una víctima.
 - **Revisión:** observar métricas y ajustar umbrales antes de habilitar registro público a gran escala.
 
