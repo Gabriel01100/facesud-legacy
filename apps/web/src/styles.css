@@ -130,7 +130,7 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) {
   display: grid;
   grid-template-columns: 244px minmax(0, 1fr);
   flex: 1;
-  min-height: calc(100vh - 145px);
+  min-height: calc(100vh - 210px);
   margin: 30px 0 42px;
   overflow: hidden;
   border: 1px solid var(--fs-color-border);
@@ -322,33 +322,6 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) {
   font-size: 12px;
   line-height: 1.7;
   overflow-wrap: anywhere;
-}
-.workspace-progress {
-  height: 6px;
-  margin-top: 25px;
-  overflow: hidden;
-  border-radius: 20px;
-  background: var(--fs-color-background);
-}
-.workspace-progress span {
-  display: block;
-  width: 36%;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--fs-color-primary);
-}
-.workspace-progress-caption {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 10px;
-  color: var(--fs-color-text-muted);
-  font-size: 9px;
-}
-.workspace-progress-caption strong {
-  color: var(--fs-color-primary);
-  font-weight: 650;
-  text-align: right;
 }
 .account-settings h2 { margin-bottom: 0; }
 .account-settings .password-change-form {
