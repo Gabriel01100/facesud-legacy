@@ -274,3 +274,27 @@ def test_authenticated_password_change_requires_csrf_and_revokes_all_sessions():
         assert new_login.status_code == 200
     finally:
         teardown_client(client, engine)
+
+
+def test_password_change_rate_limit_blocks_repeated_wrong_current_password():
+    client, engine = build_client()
+    try:
+        seed_account(engine)
+        headers = {"Origin": "http://localhost:5173"}
+        login = client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers=headers,
+        )
+        csrf = login.json()["csrf_token"]
+        protected_headers = {**headers, "X-CSRF-Token": csrf}
+        payload = {"current_password": "incorrect-password", "new_password": "a-new-long-password"}
+
+        for _ in range(5):
+            response = client.post("/api/v1/auth/password/change", json=payload, headers=protected_headers)
+            assert response.status_code == 400
+        limited = client.post("/api/v1/auth/password/change", json=payload, headers=protected_headers)
+        assert limited.status_code == 429
+        assert int(limited.headers["Retry-After"]) > 0
+    finally:
+        teardown_client(client, engine)
