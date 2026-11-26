@@ -16,15 +16,14 @@
 
 ## Identidad y autenticación
 - Reglas definitivas de normalización y validación de direcciones de correo.
-- Verificación de correo y reglas para activar una cuenta.
 - Flujo y canal de recuperación de contraseña.
 - Política de cierre de sesiones al cambiar contraseña o ante eventos de seguridad.
 - Configuración OAuth/OIDC de Google: credenciales, URI de callback, scopes mínimos y entornos.
-- Proveedor de correo transaccional y plantillas de verificación/recuperación.
 - Límites de intentos de autenticación y estrategia de rate limiting.
+- Política de limpieza/retención de tokens de verificación expirados y usados.
 
 ## Técnica y operación
-- Hosting, almacenamiento y correo transaccional.
+- Hosting, almacenamiento y correo transaccional (proveedor SMTP/API definitivo y credenciales por entorno).
 - Herramientas frontend de lint, formato, pruebas y E2E.
 - Backups, monitoreo, alertas y recuperación.
 - Política de versiones y dependencias.

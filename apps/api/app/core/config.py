@@ -8,6 +8,13 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://facesud:facesud_dev@db:5432/facesud"
     redis_url: str = "redis://redis:6379/0"
     cors_origins: str = "http://localhost:5173"
+    frontend_base_url: str = "http://localhost:5173"
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    email_from: str | None = None
+    smtp_timeout_seconds: int = 10
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -21,15 +28,21 @@ class Settings(BaseSettings):
             return "__Host-facesud_session"
         return "facesud_session"
 
+    @property
+    def email_delivery_configured(self) -> bool:
+        return bool(self.smtp_host and self.email_from and self.frontend_base_url)
+
     @model_validator(mode="after")
     def reject_development_defaults_in_production(self):
         if self.app_env.lower() == "production":
             placeholders = ("facesud_dev", "localhost", "example", "changeme")
-            configured = f"{self.database_url} {self.redis_url} {self.cors_origins}".lower()
+            configured = f"{self.database_url} {self.redis_url} {self.cors_origins} {self.frontend_base_url}".lower()
             if any(value in configured for value in placeholders):
                 raise ValueError("Production configuration contains development/example values")
             if not self.allowed_origins or any(not origin.startswith("https://") for origin in self.allowed_origins):
                 raise ValueError("Production CORS origins must use HTTPS")
+            if not self.frontend_base_url.startswith("https://"):
+                raise ValueError("Production frontend URL must use HTTPS")
         return self
 
 
