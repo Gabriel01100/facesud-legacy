@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta, timezone
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from app.identity.sessions import (
+    AccountNotActiveError,
     create_session,
     get_active_session,
     normalize_email,
@@ -39,7 +41,7 @@ def test_create_and_revoke_session():
         assert get_active_session(db, raw_token) is None
 
 
-def test_pending_email_account_cannot_use_session():
+def test_pending_email_account_cannot_create_session():
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
     with Session(engine) as db:
@@ -47,12 +49,12 @@ def test_pending_email_account_cannot_use_session():
         db.add(account)
         db.flush()
 
-        _, raw_token, _ = create_session(
-            db,
-            account_id=account.id,
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
-        )
-        assert get_active_session(db, raw_token) is None
+        with pytest.raises(AccountNotActiveError):
+            create_session(
+                db,
+                account_id=account.id,
+                expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            )
 
 
 def test_expired_session_is_not_active():
