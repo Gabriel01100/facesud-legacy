@@ -67,3 +67,7 @@ footer { padding: 22px 0 27px; border-top: 1px solid #e5eaed; color: #89969e; fo
   h1 { font-size: 43px; }
   .auth-card { padding: 25px 21px; border-radius: 15px; }
 }
+
+.password-change-form { margin-top: 25px; padding-top: 20px; border-top: 1px solid #e5eaed; }
+.password-change-form h3 { margin: 0 0 17px; color: #172f43; font-size: 15px; letter-spacing: -.02em; }
+.logout-button { display: inline-block; margin-top: 18px; }
