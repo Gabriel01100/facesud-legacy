@@ -52,3 +52,6 @@ class Settings(BaseSettings):
             if not urlsplit(self.redis_url).password:
                 raise ValueError("Production Redis URL must include a password")
         return self
+
+
+settings = Settings()
