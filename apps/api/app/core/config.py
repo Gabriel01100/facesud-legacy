@@ -54,6 +54,8 @@ class Settings(BaseSettings):
                 raise ValueError("Production REDIS_URL must include a password")
             if not all((self.smtp_host, self.smtp_username, self.smtp_password, self.email_from)):
                 raise ValueError("Production requires authenticated SMTP credentials and EMAIL_FROM")
+            if "mailpit" in (self.smtp_host or "").lower() or ".local" in (self.email_from or "").lower():
+                raise ValueError("Production cannot use local Mailpit SMTP settings")
             if not self.smtp_starttls:
                 raise ValueError("Production SMTP must use STARTTLS")
         return self
