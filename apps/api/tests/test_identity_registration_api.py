@@ -38,7 +38,7 @@ def build_client(monkeypatch):
                 raise
 
     app.dependency_overrides[get_db] = override_get_db
-    monkeypatch.setattr("app.api.auth.settings", SimpleNamespace(email_delivery_configured=True))
+    monkeypatch.setattr("app.api.auth.settings", SimpleNamespace(email_delivery_configured=True, session_cookie_name="facesud_session", secure_cookies=False))
     sent = []
 
     def fake_send(recipient, token):
