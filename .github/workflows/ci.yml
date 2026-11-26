@@ -83,8 +83,8 @@ jobs:
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/identity-hardening'
         working-directory: apps/web
         run: |
-          if [ -f package-lock.json ]; then
-            echo "package-lock.json already exists; nothing to bootstrap."
+          if git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
+            echo "package-lock.json is already tracked; nothing to bootstrap."
             exit 0
           fi
           git config user.name "github-actions[bot]"
