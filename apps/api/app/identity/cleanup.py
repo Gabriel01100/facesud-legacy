@@ -4,7 +4,7 @@ from sqlalchemy import delete, func, or_
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
-from app.identity.rate_limit import LOGIN_WINDOW, REGISTRATION_WINDOW, RESEND_WINDOW, REGISTRATION_WINDOW, RESEND_WINDOW
+from app.identity.rate_limit import LOGIN_WINDOW, REGISTRATION_WINDOW, RESEND_WINDOW
 from app.identity.sessions import SESSION_IDLE_TTL
 from app.models.identity import LoginRateLimit, UserSession
 
