@@ -76,13 +76,16 @@ def login(
     )
     db.commit()
     _set_auth_cookies(response, raw_session_token, raw_csrf_token)
+    response.headers["Cache-Control"] = "no-store"
     return AuthenticatedAccount(id=account.id, email=account.email_normalized)
 
 
 @router.get("/me", response_model=AuthenticatedAccount)
 def me(
+    response: Response,
     session=Depends(get_current_session),
 ) -> AuthenticatedAccount:
+    response.headers["Cache-Control"] = "no-store"
     account = session.account
     return AuthenticatedAccount(id=account.id, email=account.email_normalized)
 
@@ -100,5 +103,6 @@ def logout(
         revoke_session(db, raw_token)
         db.commit()
     _clear_auth_cookies(response)
+    response.headers["Cache-Control"] = "no-store"
     response.status_code = status.HTTP_204_NO_CONTENT
     return response
