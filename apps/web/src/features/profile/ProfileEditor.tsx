@@ -133,7 +133,7 @@ export default function ProfileEditor() {
               </div>
               <div>
                 <span>Unidad comunitaria</span>
-                <strong>{profile?.community_unit ? "Vinculación aprobada" : "Sin unidad aprobada"}</strong>
+                <strong>{profile?.community_unit ? `${profile.community_unit.kind === "branch" ? "Rama" : profile.community_unit.kind === "ward" ? "Barrio" : "Estaca"} · ${profile.community_unit.name}` : "Sin unidad aprobada"}</strong>
               </div>
             </div>
             {!profile?.community_unit && (
