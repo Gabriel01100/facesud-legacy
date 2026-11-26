@@ -10,7 +10,7 @@ app = FastAPI(title=settings.app_name, version="0.1.0")
 
 
 @app.middleware("http")
-async def prevent_auth_response_caching(request: Request, call_next):
+async def prevent_private_response_caching(request: Request, call_next):
     response = await call_next(request)
     if request.url.path.startswith(("/api/v1/auth/", "/api/v1/profile/")):
         response.headers["Cache-Control"] = "no-store"
