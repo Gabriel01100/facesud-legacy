@@ -321,7 +321,6 @@ export default function App() {
 
           <section className="auth-card" aria-labelledby="auth-title">
             <>
-              <>
                 <div className="card-heading">
                   <div className="eyebrow">{mode === "register" ? "SUMATE A LA COMUNIDAD" : mode === "verify" ? "CONFIRMÁ TU CORREO" : mode.startsWith("reset") ? "RECUPERÁ TU ACCESO" : "BIENVENIDO DE NUEVO"}</div>
                   <h2 id="auth-title">{mode === "register" ? "Crear cuenta" : mode === "verify" ? "Verificá tu correo" : mode === "reset-request" ? "Recuperar contraseña" : mode === "reset-confirm" ? "Elegí una nueva contraseña" : "Iniciar sesión"}</h2>
@@ -372,8 +371,7 @@ export default function App() {
                   {mode !== "login" && <button type="button" className="text-button muted" onClick={() => switchMode("login")}>Volver al inicio de sesión</button>}
                 </div>
                 {mode === "register" && <p className="password-hint">La contraseña debe tener al menos 12 caracteres.</p>}
-              </>
-            )}
+            </>
           </section>
         </section>
       )}
