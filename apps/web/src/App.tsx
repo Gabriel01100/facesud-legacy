@@ -34,6 +34,8 @@ export default function App() {
         if (active) setApiState("error");
       }
 
+      if (new URLSearchParams(window.location.search).has("token")) return;
+
       try {
         const response = await authenticatedFetch(`${AUTH_URL}/me`);
         if (response.ok) {
