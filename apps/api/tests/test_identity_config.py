@@ -14,6 +14,12 @@ def test_cookie_security_is_enabled_outside_development_and_test():
             database_url="postgresql+psycopg://user:strong-password@db.internal/facesud",
             cors_origins="https://facesud.org",
             frontend_base_url="https://facesud.org",
+            smtp_host="smtp.example.net",
+            smtp_port=587,
+            smtp_username="facesud",
+            smtp_password="smtp-secret",
+            smtp_starttls=True,
+            email_from="FaceSud <no-reply@example.net>",
         )
         assert config.secure_cookies
         assert config.session_cookie_name == "__Host-facesud_session"
