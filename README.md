@@ -6,7 +6,7 @@ FaceSud es una plataforma social independiente orientada a la comunidad SUD. No 
 
 ## Estado del proyecto
 
-`main` contiene la infraestructura ejecutable, los flujos de identidad/autenticación y la base inicial del Social Core. El titular de una cuenta autenticada puede consultar y editar su perfil básico (nombre visible, username y biografía). Los perfiles ajenos siguen privados y no hay directorio ni búsqueda de usuarios.
+`main` contiene la infraestructura ejecutable, los flujos de identidad/autenticación y la base inicial del Social Core. El registro local y la verificación de correo funcionan mediante Mailpit, que captura los mensajes sin enviarlos a destinatarios reales. El titular de una cuenta autenticada puede consultar y editar su perfil básico (nombre visible, username y biografía). Los perfiles ajenos siguen privados y no hay directorio ni búsqueda de usuarios.
 
 La fotografía de perfil y la unidad comunitaria se incorporarán cuando estén implementados, respectivamente, el almacenamiento protegido de medios y el procedimiento de aprobación de vinculación comunitaria. La base visual FaceSud v1.0 orienta las pantallas.
 
@@ -29,7 +29,7 @@ Las versiones de dependencias e imágenes están fijadas en los manifiestos corr
 | API | http://localhost:8000 |
 | OpenAPI | http://localhost:8000/docs |
 | PostgreSQL | Red interna Compose: `db:5432` |
-| Redis | Red interna Compose: `redis:6379` |
+| Mailpit | http://localhost:8025 | Captura local de correos de verificación y recuperación |\n| Redis | Red interna Compose: `redis:6379` |
 
 PostgreSQL y Redis no publican puertos en el host.
 
