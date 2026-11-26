@@ -320,25 +320,7 @@ export default function App() {
           </div>
 
           <section className="auth-card" aria-labelledby="auth-title">
-            {account ? (
-              <div className="signed-in">
-                <div className="success-mark">✓</div>
-                <div className="eyebrow">SESIÓN ACTIVA</div>
-                <h2 id="auth-title">¡Qué bueno verte!</h2>
-                <p>Iniciaste sesión como <strong>{account.email}</strong>.</p>
-                {error && <div className="feedback error" role="alert">{error}</div>}
-                {notice && <div className="feedback success" role="status">{notice}</div>}
-                <form onSubmit={updatePassword} className="password-change-form">
-                  <h3>Cambiar contraseña</h3>
-                  <label htmlFor="current-password">Contraseña actual</label>
-                  <input id="current-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required />
-                  <label htmlFor="new-password">Nueva contraseña</label>
-                  <input id="new-password" type="password" autoComplete="new-password" minLength={12} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required />
-                  <button className="primary-button" type="submit" disabled={changingPassword}>{changingPassword ? "Actualizando…" : "Cambiar contraseña"}</button>
-                </form>
-                <button className="text-button muted logout-button" type="button" onClick={logout} disabled={loading}>Cerrar sesión</button>
-              </div>
-            ) : (
+            <>
               <>
                 <div className="card-heading">
                   <div className="eyebrow">{mode === "register" ? "SUMATE A LA COMUNIDAD" : mode === "verify" ? "CONFIRMÁ TU CORREO" : mode.startsWith("reset") ? "RECUPERÁ TU ACCESO" : "BIENVENIDO DE NUEVO"}</div>
