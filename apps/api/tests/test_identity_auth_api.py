@@ -61,7 +61,8 @@ def test_login_sets_httponly_session_cookie_and_me_returns_account():
         assert response.json()["email"] == "person@example.com"
         cookies = response.headers.get_list("set-cookie")
         assert any("facesud_session=" in item and "HttpOnly" in item for item in cookies)
-        assert any("facesud_csrf=" in item and "HttpOnly" not in item for item in cookies)
+        assert all("facesud_csrf=" not in item for item in cookies)
+        assert response.json()["csrf_token"]
 
         me = client.get("/api/v1/auth/me")
         assert me.status_code == 200
@@ -110,7 +111,7 @@ def test_logout_requires_csrf_and_revokes_session():
         )
         assert login.status_code == 200
 
-        csrf = client.cookies.get("facesud_csrf")
+        csrf = login.json()["csrf_token"]
         with Session(engine) as db:
             last_seen_before = db.scalar(select(UserSession)).last_seen_at
 
@@ -123,6 +124,13 @@ def test_logout_requires_csrf_and_revokes_session():
             last_seen_after = db.scalar(select(UserSession)).last_seen_at
         assert last_seen_after == last_seen_before
         assert client.get("/api/v1/auth/me").status_code == 200
+
+        refreshed = client.post(
+            "/api/v1/auth/csrf",
+            headers={"Origin": "http://localhost:5173"},
+        )
+        assert refreshed.status_code == 200
+        csrf = refreshed.json()["csrf_token"]
 
         logged_out = client.post(
             "/api/v1/auth/logout",
