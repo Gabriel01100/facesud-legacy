@@ -16,6 +16,7 @@ def authenticate_local_account(db: Session, email: str, password: str) -> Accoun
         select(Account)
         .join(PasswordCredential)
         .where(Account.email_normalized == normalized_email)
+        .with_for_update()
     ) if normalized_email else None
 
     if account is None:
