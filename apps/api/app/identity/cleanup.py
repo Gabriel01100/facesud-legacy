@@ -1,12 +1,12 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete, func, or_
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
-from app.identity.rate_limit import LOGIN_WINDOW, REGISTRATION_WINDOW, RESEND_WINDOW
+from app.identity.rate_limit import LOGIN_WINDOW, PASSWORD_RESET_WINDOW, REGISTRATION_WINDOW, RESEND_WINDOW
 from app.identity.sessions import SESSION_IDLE_TTL
-from app.models.identity import LoginRateLimit, UserSession
+from app.models.identity import EmailVerificationToken, LoginRateLimit, PasswordResetToken, UserSession
 
 
 def cleanup_identity_data(db: Session, *, now: datetime | None = None) -> tuple[int, int]:
@@ -21,7 +21,26 @@ def cleanup_identity_data(db: Session, *, now: datetime | None = None) -> tuple[
             )
         )
     )
-    rate_limit_retention = max(LOGIN_WINDOW, REGISTRATION_WINDOW, RESEND_WINDOW)
+    token_retention_cutoff = current_time - timedelta(days=7)
+    db.execute(
+        delete(EmailVerificationToken).where(
+            EmailVerificationToken.created_at < token_retention_cutoff,
+            or_(
+                EmailVerificationToken.used_at.is_not(None),
+                EmailVerificationToken.expires_at <= current_time,
+            ),
+        )
+    )
+    db.execute(
+        delete(PasswordResetToken).where(
+            PasswordResetToken.created_at < token_retention_cutoff,
+            or_(
+                PasswordResetToken.used_at.is_not(None),
+                PasswordResetToken.expires_at <= current_time,
+            ),
+        )
+    )
+    rate_limit_retention = max(LOGIN_WINDOW, REGISTRATION_WINDOW, RESEND_WINDOW, PASSWORD_RESET_WINDOW)
     rate_limits_result = db.execute(
         delete(LoginRateLimit).where(
             LoginRateLimit.window_started_at <= current_time - rate_limit_retention
