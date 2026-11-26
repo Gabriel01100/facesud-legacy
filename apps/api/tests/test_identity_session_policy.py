@@ -59,4 +59,4 @@ def test_idle_session_is_revoked_after_thirty_minutes():
             expires_at=start + SESSION_ABSOLUTE_TTL,
             now=start,
         )
-        assert get_active_session(db, token, now=start + SESSION_IDLE_TTL + timedelta(seconds=1)) is None
+        assert get_active_session(db, token, now=start + SESSION_IDLE_TTL) is None
