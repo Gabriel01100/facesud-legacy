@@ -109,3 +109,15 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 
 ## Decisiones técnicas anteriores
 Las decisiones técnicas confirmadas para esta base no aprueban automáticamente herramientas o funcionalidades futuras. Las decisiones abiertas siguen listadas en [OPEN_DECISIONS.md](OPEN_DECISIONS.md).
+
+
+### D-021 — Rate limiting inicial de registro y reenvío de verificación
+- **Estado:** política técnica inicial implementada; requiere revisión con métricas antes de habilitar registro público a gran escala.
+- **Almacenamiento:** se reutilizan los buckets persistidos en PostgreSQL y sus claves hash; no se guardan correos ni direcciones IP en claro.
+- **Registro:** máximo de 2 intentos por hora por combinación IP+correo y 5 intentos por hora por IP.
+- **Reenvío de verificación:** máximo de 3 intentos por hora por combinación IP+correo y 10 intentos por hora por IP.
+- **Respuesta al superar el límite:** HTTP 429 con encabezado Retry-After. Dentro del límite, el endpoint mantiene una respuesta genérica para no revelar si una cuenta existe o está pendiente de verificación.
+- **Separación de operaciones:** los buckets de login, registro y reenvío utilizan prefijos de alcance distintos; un límite en una operación no consume el cupo de otra.
+- **Privacidad y abuso:** no se aplica un bloqueo global por correo, para evitar que terceros puedan impedir que una víctima registre o verifique su cuenta desde otras redes.
+- **Operación:** la limpieza de buckets conserva los registros durante la ventana máxima configurada.
+- **Consideración de proxy:** la IP usada debe ser la que entregue el servidor/proxy confiable. No se debe confiar en encabezados X-Forwarded-For suministrados directamente por clientes.
