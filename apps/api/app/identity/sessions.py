@@ -36,6 +36,8 @@ def create_session(
         raise ValueError("Session expiration must be timezone-aware")
     if _utc(expires_at) <= _utc(current_time):
         raise ValueError("Session expiration must be in the future")
+    if _utc(expires_at) > _utc(current_time) + SESSION_ABSOLUTE_TTL:
+        raise ValueError("Session expiration exceeds the absolute session lifetime")
 
     # Serialize session issuance per account on databases that support row locks.
     db.scalar(select(Account).where(Account.id == account_id).with_for_update())
