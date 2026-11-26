@@ -20,6 +20,15 @@ def issue_password_reset_token(
     db: Session, account: Account, *, now: datetime | None = None
 ) -> str:
     current_time = now or datetime.now(timezone.utc)
+    locked_account = db.scalar(
+        select(Account)
+        .where(Account.id == account.id, Account.status == AccountStatus.ACTIVE)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if locked_account is None:
+        raise ValueError("Only active accounts can request a password reset")
+    account = locked_account
     for existing in db.scalars(
         select(PasswordResetToken).where(
             PasswordResetToken.account_id == account.id,
