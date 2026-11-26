@@ -6,6 +6,7 @@
 - OpenAPI: /docs y /openapi.json.
 - Rutas autenticadas: cookies de sesión opacas; no se aceptan tokens Bearer para la aplicación web.
 - Todas las respuestas de /api/v1/auth/* llevan Cache-Control: no-store, incluso errores de autenticación.
+- Los endpoints de perfiles también usan Cache-Control: no-store y Vary: Cookie.
 
 ## Salud
 ### GET /api/v1/health
@@ -69,6 +70,37 @@ Requiere sesión y Origin permitido. Rota el token CSRF y devuelve el valor nuev
 ### POST /api/v1/auth/logout
 Requiere Origin permitido. Si la sesión sigue activa, exige X-CSRF-Token válido. Si no hay sesión vigente o ya venció, devuelve igualmente HTTP 204. Siempre elimina la cookie cuando la solicitud tiene Origin permitido. Una sesión activa con CSRF incorrecto devuelve 403 y no revoca la sesión.
 
+## Profiles
+
+Los perfiles se consultan exclusivamente por el titular en esta etapa, conforme a D-023. No existen rutas por ID, username, listados, búsquedas ni directorios.
+
+### GET /api/v1/profile/me
+Requiere sesión válida. Devuelve el perfil propio o valores vacíos si todavía no se guardó información. No crea un registro de perfil al consultar.
+
+Campos de respuesta permitidos:
+- display_name: nombre visible o null.
+- username: identificador normalizado sin @ o null.
+- bio: biografía o null.
+- account_created_at: fecha de creación derivada de Identity.Account; solo lectura.
+- avatar_url: null hasta implementar almacenamiento protegido de fotografías.
+- community_unit: null hasta implementar el dominio Community y su flujo de aprobación.
+
+Respuesta privada: Cache-Control: no-store y Vary: Cookie.
+
+### PATCH /api/v1/profile/me
+Requiere sesión válida, Origin permitido y X-CSRF-Token válido. Solo admite display_name, username y bio; los campos desconocidos se rechazan.
+
+Validaciones:
+- display_name: 2 a 60 caracteres después de normalizar espacios; null permite dejarlo sin configurar.
+- username: 3 a 24 caracteres ASCII entre letras, números y guion bajo; se normaliza a minúsculas y se acepta un @ inicial opcional. Debe ser único; conflicto: HTTP 409 genérico.
+- bio: máximo 280 caracteres; null permite limpiarla.
+- Debe enviarse al menos un campo.
+- No se aceptan avatar_url, account_created_at, community_unit, account_id ni campos internos.
+
+La fila de perfil se crea al guardar por primera vez. La unicidad se garantiza también mediante restricción de base de datos. Respuesta limitada a los campos permitidos indicados en GET.
+
+No se implementan perfiles ajenos ni se interpreta autenticación como aprobación de vinculación comunitaria. La unidad comunitaria no puede editarse desde este endpoint.
+
 ## Política de sesiones
 - Expiración absoluta: 7 días.
 - Inactividad: 30 minutos.
@@ -94,6 +126,8 @@ REDIS_URL debe contener contraseña; REDIS_PASSWORD protege el servicio Redis en
 
 ## Pendientes
 - Google OpenID Connect y vinculación explícita.
+- Almacenamiento protegido, validación y entrega de fotografías de perfil.
+- Implementación del dominio Community y flujo autorizado de aprobación de vinculación a unidad.
 - Proveedor transaccional definitivo, credenciales y configuración SPF/DKIM/DMARC.
 - Pruebas E2E de navegador para registro, verificación, login, logout, recuperación, cambio de contraseña y CSRF multi-pestaña.
 - Pruebas de concurrencia del rate limiting y carga sostenida.
