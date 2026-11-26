@@ -32,6 +32,7 @@ def require_csrf(
     session: UserSession = Depends(get_current_session),
     db: Session = Depends(get_db),
 ) -> UserSession:
+    require_allowed_origin(request)
     csrf_cookie = request.cookies.get(settings.csrf_cookie_name)
     csrf_header = request.headers.get("x-csrf-token")
     if (
