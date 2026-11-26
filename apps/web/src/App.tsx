@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { authenticatedFetch, getApiHealth, setCsrfToken } from "./api/client";
 
 type ApiState = "loading" | "connected" | "error";
-type AuthMode = "login" | "register" | "verify";
+type AuthMode = "login" | "register" | "verify" | "reset-request" | "reset-confirm";
 type Account = { id: string; email: string };
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
@@ -11,9 +11,12 @@ const AUTH_URL = `${API_BASE_URL}/api/v1/auth`;
 
 export default function App() {
   const [apiState, setApiState] = useState<ApiState>("loading");
-  const [mode, setMode] = useState<AuthMode>(() =>
-    new URLSearchParams(window.location.search).has("token") ? "verify" : "login",
-  );
+  const [mode, setMode] = useState<AuthMode>(() => {
+    const path = window.location.pathname;
+    if (path.endsWith("/reset-password")) return "reset-confirm";
+    if (path.endsWith("/verify-email") || new URLSearchParams(window.location.search).has("token")) return "verify";
+    return "login";
+  });
   const [account, setAccount] = useState<Account | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -93,20 +96,40 @@ export default function App() {
         setNotice(result.message);
         setMode("verify");
         setPassword("");
-      } else {
+      } else if (mode === "verify") {
         const response = await fetch(`${AUTH_URL}/email-verification/verify`, {
-          method: "POST",
-          credentials: "include",
+          method: "POST", credentials: "include",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
           body: JSON.stringify({ token: verificationToken }),
         });
-        if (!response.ok) {
-          throw new Error("El enlace no es válido, venció o ya fue utilizado.");
-        }
+        if (!response.ok) throw new Error("El enlace no es válido, venció o ya fue utilizado.");
         const result = (await response.json()) as { message: string };
         setNotice(result.message);
         setMode("login");
         setVerificationToken("");
+        window.history.replaceState({}, "", "/");
+      } else if (mode === "reset-request") {
+        const response = await fetch(`${AUTH_URL}/password-reset/request`, {
+          method: "POST", credentials: "include",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        if (!response.ok) throw new Error(response.status === 429 ? "Demasiadas solicitudes. Probá más tarde." : "No se pudo procesar la solicitud.");
+        const result = (await response.json()) as { message: string };
+        setNotice(result.message);
+      } else {
+        const response = await fetch(`${AUTH_URL}/password-reset/confirm`, {
+          method: "POST", credentials: "include",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ token: verificationToken, new_password: password }),
+        });
+        if (!response.ok) throw new Error(response.status === 429 ? "Demasiados intentos. Probá más tarde." : "El enlace no es válido, venció o ya fue utilizado.");
+        const result = (await response.json()) as { message: string };
+        setNotice(result.message);
+        setMode("login");
+        setPassword("");
+        setVerificationToken("");
+        window.history.replaceState({}, "", "/");
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Ocurrió un error inesperado.");
