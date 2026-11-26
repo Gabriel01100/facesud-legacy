@@ -35,14 +35,8 @@ def require_csrf(
     db: Session = Depends(get_db),
 ) -> UserSession:
     require_allowed_origin(request)
-    csrf_cookie = request.cookies.get(settings.csrf_cookie_name)
     csrf_header = request.headers.get("x-csrf-token")
-    if (
-        not csrf_cookie
-        or not csrf_header
-        or csrf_cookie != csrf_header
-        or not verify_csrf_token(session, csrf_header)
-    ):
+    if not csrf_header or not verify_csrf_token(session, csrf_header):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="CSRF validation failed")
 
     touch_session(db, session)
