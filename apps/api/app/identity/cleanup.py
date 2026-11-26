@@ -4,7 +4,7 @@ from sqlalchemy import delete, func, or_
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
-from app.identity.rate_limit import LOGIN_WINDOW
+from app.identity.rate_limit import LOGIN_WINDOW, REGISTRATION_WINDOW, RESEND_WINDOW
 from app.identity.sessions import SESSION_IDLE_TTL
 from app.models.identity import LoginRateLimit, UserSession
 
@@ -34,7 +34,7 @@ def main() -> None:
     with SessionLocal() as db:
         deleted_sessions, deleted_buckets = cleanup_identity_data(db)
         db.commit()
-    print(f"Deleted {deleted_sessions} expired/revoked sessions and {deleted_buckets} stale login buckets")
+    print(f"Deleted {deleted_sessions} expired/revoked sessions and {deleted_buckets} stale identity rate-limit buckets")
 
 
 if __name__ == "__main__":
