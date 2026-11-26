@@ -22,6 +22,10 @@ RESEND_WINDOW = timedelta(hours=1)
 RESEND_EMAIL_IP_LIMIT = 3
 RESEND_IP_LIMIT = 10
 
+PASSWORD_RESET_WINDOW = timedelta(hours=1)
+PASSWORD_RESET_EMAIL_IP_LIMIT = 3
+PASSWORD_RESET_IP_LIMIT = 10
+
 
 def _bucket_hash(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
@@ -168,3 +172,22 @@ def clear_login_attempts(db: Session, *, ip_address: str, email: str) -> None:
         _bucket_hash(f"login:ip:{ip_address}"),
     ]
     db.execute(delete(LoginRateLimit).where(LoginRateLimit.bucket_hash.in_(keys)))
+
+
+def consume_password_reset_attempt(
+    db: Session,
+    *,
+    ip_address: str,
+    email: str,
+    now: datetime | None = None,
+) -> int | None:
+    return _consume_scoped_attempts(
+        db,
+        scope="password-reset",
+        ip_address=ip_address,
+        email=email,
+        window=PASSWORD_RESET_WINDOW,
+        email_ip_limit=PASSWORD_RESET_EMAIL_IP_LIMIT,
+        ip_limit=PASSWORD_RESET_IP_LIMIT,
+        now=now,
+    )
