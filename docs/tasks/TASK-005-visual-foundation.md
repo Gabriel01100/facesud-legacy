@@ -14,8 +14,9 @@ Establecer una base visual y de accesibilidad consistente para FaceSud antes de 
 - [x] Definir tokens iniciales de tipografía, radios, sombra y foco.
 - [x] Establecer foco visible, selección de texto coherente y respeto por movimiento reducido.
 - [x] Documentar convenciones para evitar controles ficticios y estilos inconsistentes.
-- [ ] Implementar shell autenticado de escritorio y móvil.
-- [ ] Aplicar navegación real solo a destinos que ya tengan funcionalidad.
+- [x] Implementar shell autenticado de escritorio y móvil.
+- [x] Mantener solo la navegación de Inicio, sin enlaces a destinos sociales todavía inexistentes.
+- [x] Ofrecer cierre de sesión tanto en escritorio como en móvil.
 - [ ] Añadir pruebas visuales y de teclado en navegador.
 
 ## Fuera de alcance
@@ -33,4 +34,4 @@ Establecer una base visual y de accesibilidad consistente para FaceSud antes de 
 6. El build TypeScript/Vite y las pruebas correspondientes pasan en CI.
 
 ## Estado
-Parcial: tokens visuales y lineamientos implementados. El shell autenticado y sus pruebas quedan como siguiente incremento de esta etapa.
+Parcial: tokens visuales, lineamientos y shell autenticado responsive implementados. Las pruebas E2E de navegador y la revisión visual en distintos tamaños quedan pendientes.
