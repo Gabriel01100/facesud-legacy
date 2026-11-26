@@ -18,7 +18,7 @@
 - Flujo y canal de recuperación de contraseña.
 - Política de cierre de sesiones al cambiar contraseña o ante eventos de seguridad.
 - Configuración OAuth/OIDC de Google: credenciales, URI de callback, scopes mínimos y entornos.
-- Límites definitivos de rate limiting de registro y reenvío; los límites iniciales de login ya están implementados.
+- Revisión de los límites iniciales de rate limiting de login, registro y reenvío con métricas reales antes de habilitar el registro público a gran escala.
 - Política de limpieza/retención de tokens de verificación expirados y usados.
 
 ## Técnica y operación
