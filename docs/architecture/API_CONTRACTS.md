@@ -58,7 +58,7 @@ Requiere Origin permitido. Recibe email y devuelve HTTP 202 con respuesta genér
 Requiere Origin permitido. Recibe token y new_password (mínimo 12 caracteres). Token válido actualiza la credencial, invalida tokens de recuperación pendientes y revoca todas las sesiones. Token inválido, vencido o usado: HTTP 400 genérico.
 
 ### POST /api/v1/auth/password/change
-Requiere sesión válida, Origin permitido, CSRF y contraseña actual. Recibe current_password y new_password (mínimo 12 caracteres). Actualiza la credencial, invalida tokens de recuperación pendientes y revoca todas las sesiones; devuelve HTTP 204 y elimina la cookie actual.
+Requiere sesión válida, Origin permitido, CSRF y contraseña actual. Recibe current_password y new_password (mínimo 12 caracteres). Límite: 5 intentos/15 minutos por IP+correo y 20/15 minutos por IP. Actualiza la credencial, invalida tokens de recuperación pendientes y revoca todas las sesiones; devuelve HTTP 204 y elimina la cookie actual.
 
 ### GET /api/v1/auth/me
 Requiere sesión válida; devuelve UUID y correo normalizado. last_seen_at se persiste como máximo una vez por minuto.
