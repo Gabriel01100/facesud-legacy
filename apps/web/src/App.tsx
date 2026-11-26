@@ -236,92 +236,145 @@ export default function App() {
         <span className={`service-status ${apiState}`}><i />{statusText}</span>
       </header>
 
-      <section className="auth-layout">
-        <div className="intro-panel">
-          <div className="eyebrow">COMUNIDAD · CONEXIÓN · ENCUENTRO</div>
-          <h1>Un espacio para <span>conectar</span> y compartir.</h1>
-          <p className="intro">Una comunidad digital para acercar personas, compartir experiencias y fortalecer vínculos.</p>
-          <div className="intro-note">
-            <span className="note-icon">✦</span>
-            <p>FaceSud es un proyecto independiente. No representa ni está integrado oficialmente con ninguna institución religiosa.</p>
-          </div>
-        </div>
-
-        <section className="auth-card" aria-labelledby="auth-title">
-          {account ? (
-            <div className="signed-in">
-              <div className="success-mark">✓</div>
-              <div className="eyebrow">SESIÓN ACTIVA</div>
-              <h2 id="auth-title">¡Qué bueno verte!</h2>
-              <p>Iniciaste sesión como <strong>{account.email}</strong>.</p>
-              {error && <div className="feedback error" role="alert">{error}</div>}
-              {notice && <div className="feedback success" role="status">{notice}</div>}
-              <form onSubmit={updatePassword} className="password-change-form">
-                <h3>Cambiar contraseña</h3>
-                <label htmlFor="current-password">Contraseña actual</label>
-                <input id="current-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required />
-                <label htmlFor="new-password">Nueva contraseña</label>
-                <input id="new-password" type="password" autoComplete="new-password" minLength={12} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required />
-                <button className="primary-button" type="submit" disabled={changingPassword}>{changingPassword ? "Actualizando…" : "Cambiar contraseña"}</button>
-              </form>
-              <button className="text-button muted logout-button" type="button" onClick={logout} disabled={loading}>Cerrar sesión</button>
+      {account ? (
+        <section className="workspace-shell" aria-label="Espacio de FaceSud">
+          <aside className="workspace-sidebar">
+            <div className="workspace-sidebar-heading">
+              <span className="brand-mark">F</span>
+              <span className="workspace-brand">FaceSud</span>
             </div>
-          ) : (
-            <>
-              <div className="card-heading">
-                <div className="eyebrow">{mode === "register" ? "SUMATE A LA COMUNIDAD" : mode === "verify" ? "CONFIRMÁ TU CORREO" : mode.startsWith("reset") ? "RECUPERÁ TU ACCESO" : "BIENVENIDO DE NUEVO"}</div>
-                <h2 id="auth-title">{mode === "register" ? "Crear cuenta" : mode === "verify" ? "Verificá tu correo" : mode === "reset-request" ? "Recuperar contraseña" : mode === "reset-confirm" ? "Elegí una nueva contraseña" : "Iniciar sesión"}</h2>
-                <p>{mode === "register" ? "Completá tus datos para comenzar." : mode === "verify" ? "Ingresá el código del enlace que recibiste por correo." : mode === "reset-request" ? "Te enviaremos un enlace si existe una cuenta asociada a ese correo." : mode === "reset-confirm" ? "El enlace vence en 30 minutos y solo puede utilizarse una vez." : "Ingresá con tu correo y contraseña."}</p>
+            <div className="workspace-nav-label">TU ESPACIO</div>
+            <div className="workspace-nav-item" aria-current="page">
+              <span aria-hidden="true">⌂</span>
+              <span>Inicio</span>
+            </div>
+            <div className="workspace-sidebar-account">
+              <span className="account-avatar" aria-hidden="true">{account.email.charAt(0).toUpperCase()}</span>
+              <span className="account-email" title={account.email}>{account.email}</span>
+              
+            </div>
+          </aside>
+
+          <div className="workspace-main">
+            <header className="workspace-header">
+              <div>
+                <div className="eyebrow">FACE SUD · COMUNIDAD</div>
+                <h1 className="workspace-title">Inicio</h1>
               </div>
+              <div className="workspace-header-actions"><span className="workspace-user">{account.email}</span><button className="text-button" type="button" onClick={logout} disabled={loading}>Cerrar sesión</button></div>
+            </header>
 
-              {["login", "register"].includes(mode) && (
-                <div className="mode-switch" role="tablist" aria-label="Tipo de acceso">
-                  <button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} onClick={() => switchMode("login")}>Ingresar</button>
-                  <button type="button" role="tab" aria-selected={mode === "register"} className={mode === "register" ? "active" : ""} onClick={() => switchMode("register")}>Crear cuenta</button>
+            <section className="workspace-welcome">
+              <div>
+                <div className="eyebrow">BIENVENIDO A FACESUD</div>
+                <h2>Tu comunidad empieza acá.</h2>
+                <p>Estamos preparando el espacio para conectar, compartir experiencias y fortalecer vínculos.</p>
+              </div>
+              <div className="workspace-welcome-mark" aria-hidden="true">F</div>
+            </section>
+
+            <div className="workspace-content-grid">
+              <section className="workspace-panel" aria-labelledby="community-status-title">
+                <div className="workspace-panel-heading">
+                  <div>
+                    <div className="eyebrow">ESTADO DEL PROYECTO</div>
+                    <h2 id="community-status-title">Estamos construyendo FaceSud</h2>
+                  </div>
+                  <span className="status-pill">En desarrollo</span>
                 </div>
-              )}
+                <p className="workspace-panel-copy">La cuenta y el acceso seguro ya están disponibles. Las publicaciones, perfiles y el feed se incorporarán en próximas etapas.</p>
+                <ul className="workspace-stage-list">
+                  <li><span className="stage-indicator complete" aria-hidden="true">✓</span><span><strong>Cuenta y acceso seguro</strong><small>Disponible</small></span></li>
+                  <li><span className="stage-indicator pending" aria-hidden="true">•</span><span><strong>Funciones sociales</strong><small>En preparación</small></span></li>
+                </ul>
+              </section>
 
-              <form onSubmit={submit}>
-                {["login", "register", "reset-request"].includes(mode) && (
-                  <>
-                    <label htmlFor="email">Correo electrónico</label>
-                    <input id="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nombre@correo.com" required />
-                  </>
-                )}
-                {["login", "register", "reset-confirm"].includes(mode) && (
-                  <>
-                    <label htmlFor="password">{mode === "reset-confirm" ? "Nueva contraseña" : "Contraseña"}</label>
-                    <input id="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={mode === "login" ? "Tu contraseña" : "Mínimo 12 caracteres"} minLength={mode === "login" ? 1 : 12} required />
-                  </>
-                )}
-                {["verify", "reset-confirm"].includes(mode) && (
-                  <div className="field-group">
-                    <label htmlFor="verification-token">Código de seguridad</label>
-                    <input id="verification-token" type="text" autoComplete="one-time-code" value={verificationToken} onChange={(event) => setVerificationToken(event.target.value)} placeholder="Pegá el código del correo" minLength={32} required />
-                    {mode === "verify" && <>
-                      <label htmlFor="resend-email">Correo electrónico para reenviar</label>
-                      <input id="resend-email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nombre@correo.com" />
-                    </>}
+              <section className="workspace-panel account-settings" aria-labelledby="account-settings-title">
+                <div className="eyebrow">SEGURIDAD</div>
+                <h2 id="account-settings-title">Tu cuenta</h2>
+                <p className="workspace-panel-copy">Sesión iniciada con <strong>{account.email}</strong>.</p>
+                {error && <div className="feedback error" role="alert">{error}</div>}
+                {notice && <div className="feedback success" role="status">{notice}</div>}
+                <form onSubmit={updatePassword} className="password-change-form">
+                  <h3>Cambiar contraseña</h3>
+                  <label htmlFor="current-password">Contraseña actual</label>
+                  <input id="current-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required />
+                  <label htmlFor="new-password">Nueva contraseña</label>
+                  <input id="new-password" type="password" autoComplete="new-password" minLength={12} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required />
+                  <button className="primary-button" type="submit" disabled={changingPassword}>{changingPassword ? "Actualizando…" : "Cambiar contraseña"}</button>
+                </form>
+              </section>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="auth-layout">
+          <div className="intro-panel">
+            <div className="eyebrow">COMUNIDAD · CONEXIÓN · ENCUENTRO</div>
+            <h1>Un espacio para <span>conectar</span> y compartir.</h1>
+            <p className="intro">Una comunidad digital para acercar personas, compartir experiencias y fortalecer vínculos.</p>
+            <div className="intro-note">
+              <span className="note-icon">✦</span>
+              <p>FaceSud es un proyecto independiente. No representa ni está integrado oficialmente con ninguna institución religiosa.</p>
+            </div>
+          </div>
+
+          <section className="auth-card" aria-labelledby="auth-title">
+            <>
+                <div className="card-heading">
+                  <div className="eyebrow">{mode === "register" ? "SUMATE A LA COMUNIDAD" : mode === "verify" ? "CONFIRMÁ TU CORREO" : mode.startsWith("reset") ? "RECUPERÁ TU ACCESO" : "BIENVENIDO DE NUEVO"}</div>
+                  <h2 id="auth-title">{mode === "register" ? "Crear cuenta" : mode === "verify" ? "Verificá tu correo" : mode === "reset-request" ? "Recuperar contraseña" : mode === "reset-confirm" ? "Elegí una nueva contraseña" : "Iniciar sesión"}</h2>
+                  <p>{mode === "register" ? "Completá tus datos para comenzar." : mode === "verify" ? "Ingresá el código del enlace que recibiste por correo." : mode === "reset-request" ? "Te enviaremos un enlace si existe una cuenta asociada a ese correo." : mode === "reset-confirm" ? "El enlace vence en 30 minutos y solo puede utilizarse una vez." : "Ingresá con tu correo y contraseña."}</p>
+                </div>
+
+                {["login", "register"].includes(mode) && (
+                  <div className="mode-switch" role="tablist" aria-label="Tipo de acceso">
+                    <button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} onClick={() => switchMode("login")}>Ingresar</button>
+                    <button type="button" role="tab" aria-selected={mode === "register"} className={mode === "register" ? "active" : ""} onClick={() => switchMode("register")}>Crear cuenta</button>
                   </div>
                 )}
 
-                {error && <div className="feedback error" role="alert">{error}</div>}
-                {notice && <div className="feedback success" role="status">{notice}</div>}
-                <button className="primary-button" type="submit" disabled={loading}>
-                  {loading ? "Procesando…" : mode === "register" ? "Crear cuenta" : mode === "verify" ? "Verificar correo" : mode === "reset-request" ? "Enviar enlace" : mode === "reset-confirm" ? "Restablecer contraseña" : "Ingresar"}
-                </button>
-              </form>
+                <form onSubmit={submit}>
+                  {["login", "register", "reset-request"].includes(mode) && (
+                    <>
+                      <label htmlFor="email">Correo electrónico</label>
+                      <input id="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nombre@correo.com" required />
+                    </>
+                  )}
+                  {["login", "register", "reset-confirm"].includes(mode) && (
+                    <>
+                      <label htmlFor="password">{mode === "reset-confirm" ? "Nueva contraseña" : "Contraseña"}</label>
+                      <input id="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={mode === "login" ? "Tu contraseña" : "Mínimo 12 caracteres"} minLength={mode === "login" ? 1 : 12} required />
+                    </>
+                  )}
+                  {["verify", "reset-confirm"].includes(mode) && (
+                    <div className="field-group">
+                      <label htmlFor="verification-token">Código de seguridad</label>
+                      <input id="verification-token" type="text" autoComplete="one-time-code" value={verificationToken} onChange={(event) => setVerificationToken(event.target.value)} placeholder="Pegá el código del correo" minLength={32} required />
+                      {mode === "verify" && <>
+                        <label htmlFor="resend-email">Correo electrónico para reenviar</label>
+                        <input id="resend-email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nombre@correo.com" />
+                      </>}
+                    </div>
+                  )}
 
-              <div className="secondary-actions">
-                {mode === "login" && <button type="button" className="text-button" onClick={() => switchMode("reset-request")}>¿Olvidaste tu contraseña?</button>}
-                {mode === "verify" && <button type="button" className="text-button" onClick={resendVerification} disabled={loading || !email}>Reenviar correo de verificación</button>}
-                {mode !== "login" && <button type="button" className="text-button muted" onClick={() => switchMode("login")}>Volver al inicio de sesión</button>}
-              </div>
-              {mode === "register" && <p className="password-hint">La contraseña debe tener al menos 12 caracteres.</p>}
+                  {error && <div className="feedback error" role="alert">{error}</div>}
+                  {notice && <div className="feedback success" role="status">{notice}</div>}
+                  <button className="primary-button" type="submit" disabled={loading}>
+                    {loading ? "Procesando…" : mode === "register" ? "Crear cuenta" : mode === "verify" ? "Verificar correo" : mode === "reset-request" ? "Enviar enlace" : mode === "reset-confirm" ? "Restablecer contraseña" : "Ingresar"}
+                  </button>
+                </form>
+
+                <div className="secondary-actions">
+                  {mode === "login" && <button type="button" className="text-button" onClick={() => switchMode("reset-request")}>¿Olvidaste tu contraseña?</button>}
+                  {mode === "verify" && <button type="button" className="text-button" onClick={resendVerification} disabled={loading || !email}>Reenviar correo de verificación</button>}
+                  {mode !== "login" && <button type="button" className="text-button muted" onClick={() => switchMode("login")}>Volver al inicio de sesión</button>}
+                </div>
+                {mode === "register" && <p className="password-hint">La contraseña debe tener al menos 12 caracteres.</p>}
             </>
-          )}
+          </section>
         </section>
-      </section>
+      )}
       <footer>FaceSud es un proyecto independiente y no representa ni está integrado oficialmente con ninguna institución religiosa.</footer>
     </main>
   );

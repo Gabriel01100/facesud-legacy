@@ -6,9 +6,9 @@ FaceSud es una plataforma social independiente orientada a la comunidad SUD. No 
 
 ## Estado del proyecto
 
-La rama `feat/first-executable-version` implementa la base de la primera versión ejecutable: frontend React conectado a API FastAPI, PostgreSQL y Redis mediante Docker Compose. Esta etapa no implementa funcionalidades de negocio.
+`main` contiene la infraestructura ejecutable, los flujos de identidad/autenticación y una base inicial del frontend. La interfaz de autenticación está conectada a la API; el shell social y las funcionalidades de comunidad todavía están en desarrollo.
 
-**Validación pendiente:** el código y el workflow de CI están preparados, pero el build y el arranque todavía deben verificarse en GitHub Actions y en un entorno Docker local antes de considerar cerrada la etapa.
+La base visual FaceSud v1.0 está documentada y sus tokens CSS se están incorporando antes de construir el shell autenticado y los módulos del Social Core.
 
 ## Stack de la primera versión ejecutable
 
@@ -63,9 +63,9 @@ curl http://localhost:8000/api/v1/health/ready
 
 ## Alcance de esta etapa
 
-Incluye infraestructura local, migración inicial vacía, endpoints de salud y una pantalla inicial que informa el estado de conexión con la API.
+Incluye infraestructura local, identidad y autenticación por correo/contraseña, verificación de correo, recuperación de contraseña y pantallas frontend asociadas.
 
-No incluye registro, autenticación, usuarios, perfiles, publicaciones, feed, comentarios, reacciones, amistades, chat, notificaciones de producto, almacenamiento de medios, aportes/pagos ni integraciones externas. El alcance conceptual del producto se mantiene documentado en `docs/product/PRODUCT_SCOPE.md`; no implica que esas funciones estén implementadas.
+Todavía no incluye perfiles sociales, publicaciones, feed, comentarios, reacciones, amistades, chat, notificaciones de producto, almacenamiento de medios, aportes/pagos ni integraciones externas. El alcance conceptual del producto se mantiene documentado en `docs/product/PRODUCT_SCOPE.md`; no implica que esas funciones estén implementadas.
 
 ## Documentación
 
