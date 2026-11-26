@@ -294,7 +294,7 @@ export default function App() {
                     <input id="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={mode === "login" ? "Tu contraseña" : "Mínimo 12 caracteres"} minLength={mode === "login" ? 1 : 12} required />
                   </>
                 )}
-                {["verify", "reset-confirm"].includes(mode) ? (
+                {["verify", "reset-confirm"].includes(mode) && (
                   <div className="field-group">
                     <label htmlFor="verification-token">Código de seguridad</label>
                     <input id="verification-token" type="text" autoComplete="one-time-code" value={verificationToken} onChange={(event) => setVerificationToken(event.target.value)} placeholder="Pegá el código del correo" minLength={32} required />
