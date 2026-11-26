@@ -44,7 +44,6 @@ def reset_password(
     db: Session, *, raw_token: str, new_password: str, now: datetime | None = None
 ) -> bool:
     current_time = now or datetime.now(timezone.utc)
-    new_password_hash = hash_password(new_password)
     token = db.scalar(
         select(PasswordResetToken)
         .where(
@@ -57,6 +56,7 @@ def reset_password(
     if token is None:
         return False
 
+    new_password_hash = hash_password(new_password)
     account = db.scalar(
         select(Account)
         .where(Account.id == token.account_id)
