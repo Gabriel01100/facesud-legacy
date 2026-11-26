@@ -12,7 +12,7 @@
 - Cliente frontend exporta authenticatedFetch: ante 403 específico de CSRF, solicita token nuevo y reintenta una sola vez.
 - Cache-Control: no-store para todas las respuestas bajo /api/v1/auth, incluidos 401.
 - last_seen_at se actualiza como máximo una vez por minuto.
-- Comando de limpieza: python -m app.identity.cleanup. Elimina sesiones vencidas/revocadas y buckets de rate limiting antiguos.
+- Comando de limpieza: python -m app.identity.cleanup. Elimina sesiones vencidas/revocadas, buckets de rate limiting antiguos y tokens de verificación/recuperación usados o expirados con más de 7 días.
 - Normalización NFC y validación de email con email-validator.
 - Ruff, escaneo Gitleaks, usuario no privilegiado para la API y tests PostgreSQL en CI.
 
@@ -27,7 +27,16 @@ Programar python -m app.identity.cleanup mediante cron o scheduler externo, idea
 En producción definir REDIS_URL con contraseña URL-encoded y la misma contraseña mediante REDIS_PASSWORD.
 
 ## Pendientes explícitos
-- Interfaz inicial de autenticación integrada con login, registro, verificación y reenvío de correo; queda pendiente agregar pruebas frontend y completar los flujos de recuperación de contraseña.
+- Interfaz inicial integrada con login, registro, verificación, reenvío, solicitud/restablecimiento de contraseña y cambio autenticado de contraseña. Pendientes pruebas frontend automatizadas y pruebas E2E reales.
 - package-lock.json no se generó en este cambio porque requiere resolver el árbol de dependencias contra el registro npm. Hasta entonces CI mantiene npm install; no cambiar a npm ci sin un lockfile real y versionado.
 - La imagen de producción del frontend se difiere hasta la etapa de despliegue.
-- Pruebas de concurrencia PostgreSQL de creación/revocación de sesiones y rate limiting bajo carga siguen pendientes.
+- Se agregó una prueba concurrente PostgreSQL para verificar el máximo de 5 sesiones por cuenta. Sigue pendiente prueba de concurrencia del rate limiting y carga sostenida.
+
+
+## Recuperación y cambio de contraseña (implementación inicial)
+- `POST /api/v1/auth/password-reset/request`: respuesta genérica para no revelar si existe una cuenta; emite token opaco de 30 minutos para cuentas activas.
+- `POST /api/v1/auth/password-reset/confirm`: consume token de un solo uso, actualiza Argon2 y revoca todas las sesiones.
+- `POST /api/v1/auth/password/change`: exige sesión, Origin, CSRF y contraseña actual; cambia la credencial, invalida tokens pendientes y revoca todas las sesiones.
+- El token se almacena solo como SHA-256. Se invalida al solicitar uno nuevo.
+- Rate limiting de recuperación: 3 intentos por hora por IP+correo y 10 por IP.
+- SMTP STARTTLS reutiliza la configuración existente; no se eligió proveedor definitivo ni se configuraron credenciales reales.
