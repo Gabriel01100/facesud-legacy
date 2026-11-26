@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
@@ -8,11 +8,9 @@ from app.api.schemas.identity import AuthenticatedAccount, LoginRequest
 from app.core.config import settings
 from app.core.database import get_db
 from app.identity.authentication import authenticate_local_account
-from app.identity.sessions import create_session, revoke_session
+from app.identity.sessions import SESSION_ABSOLUTE_TTL, create_session, revoke_session
 
 router = APIRouter(prefix="/api/v1/auth", tags=["identity"])
-
-SESSION_ABSOLUTE_TTL = timedelta(days=7)
 
 
 def _set_auth_cookies(response: Response, session_token: str, csrf_token: str) -> None:
