@@ -5,7 +5,8 @@
 - Logout devuelve 204 y limpia la cookie cuando no existe sesión vigente o ya venció. Si existe sesión activa, sigue exigiendo Origin permitido y CSRF válido.
 - Cookies Secure y prefijo __Host- en todo entorno salvo development y test.
 - Tests HTTP de autenticación y registro ejecutables contra PostgreSQL mediante IDENTITY_TEST_DATABASE_URL; SQLite queda como fallback local y para pruebas unitarias.
-- Rate limiting de login persistido en PostgreSQL: 5 intentos por 15 minutos por combinación IP/correo y 30 por IP en 15 minutos. Ventana fija, respuesta 429 y Retry-After. Un login exitoso limpia ambos buckets.\n- Rate limiting de registro: 2 intentos por hora por IP/correo y 5 por hora por IP. Reenvío de verificación: 3 por hora por IP/correo y 10 por hora por IP. Los buckets usan claves hash y scopes separados; ver D-021.
+- Rate limiting de login persistido en PostgreSQL: 5 intentos por 15 minutos por combinación IP/correo y 30 por IP en 15 minutos. Ventana fija, respuesta 429 y Retry-After. Un login exitoso limpia ambos buckets.
+- Rate limiting de registro: 2 intentos por hora por IP/correo y 5 por hora por IP. Reenvío de verificación: 3 por hora por IP/correo y 10 por hora por IP. Los buckets usan claves hash y scopes separados; ver D-021.
 - La autenticación no bloquea la fila de cuenta mientras calcula Argon2. create_session toma el bloqueo y vuelve a comprobar que la cuenta exista y siga ACTIVE.
 - En producción, REDIS_URL debe contener contraseña.
 - Cliente frontend exporta authenticatedFetch: ante 403 específico de CSRF, solicita token nuevo y reintenta una sola vez.
@@ -26,7 +27,7 @@ Programar python -m app.identity.cleanup mediante cron o scheduler externo, idea
 En producción definir REDIS_URL con contraseña URL-encoded y la misma contraseña mediante REDIS_PASSWORD.
 
 ## Pendientes explícitos
-- La interfaz de autenticación aún no está construida; authenticatedFetch queda como cliente base y debe integrarse en las pantallas.
+- Interfaz inicial de autenticación integrada con login, registro, verificación y reenvío de correo; queda pendiente agregar pruebas frontend y completar los flujos de recuperación de contraseña.
 - package-lock.json no se generó en este cambio porque requiere resolver el árbol de dependencias contra el registro npm. Hasta entonces CI mantiene npm install; no cambiar a npm ci sin un lockfile real y versionado.
 - La imagen de producción del frontend se difiere hasta la etapa de despliegue.
 - Pruebas de concurrencia PostgreSQL de creación/revocación de sesiones y rate limiting bajo carga siguen pendientes.
