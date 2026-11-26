@@ -80,6 +80,13 @@ jobs:
       - name: Build frontend
         working-directory: apps/web
         run: npm run build
+      - name: Export generated npm lockfile for bootstrap
+        uses: actions/upload-artifact@v4
+        with:
+          name: facesud-web-package-lock
+          path: apps/web/package-lock.json
+          if-no-files-found: error
+          retention-days: 1
 
   secret-scan:
     runs-on: ubuntu-24.04
