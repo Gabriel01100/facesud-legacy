@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_username: str | None = None
     smtp_password: str | None = None
+    smtp_starttls: bool = True
     email_from: str | None = None
     smtp_timeout_seconds: int = 10
 
@@ -50,7 +51,11 @@ class Settings(BaseSettings):
             if not self.frontend_base_url.startswith("https://"):
                 raise ValueError("Production frontend URL must use HTTPS")
             if not urlsplit(self.redis_url).password:
-                raise ValueError("Production Redis URL must include a password")
+                raise ValueError("Production REDIS_URL must include a password")
+            if not all((self.smtp_host, self.smtp_username, self.smtp_password, self.email_from)):
+                raise ValueError("Production requires authenticated SMTP credentials and EMAIL_FROM")
+            if not self.smtp_starttls:
+                raise ValueError("Production SMTP must use STARTTLS")
         return self
 
 
