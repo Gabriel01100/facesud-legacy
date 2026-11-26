@@ -398,3 +398,61 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) {
   .workspace-progress-caption { flex-direction: column; }
   .workspace-progress-caption strong { text-align: left; }
 }
+
+.workspace-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.workspace-header-actions .text-button {
+  flex: 0 0 auto;
+  font-size: 11px;
+}
+.workspace-stage-list {
+  display: grid;
+  gap: 15px;
+  margin: 24px 0 0;
+  padding: 18px 0 0;
+  border-top: 1px solid var(--fs-color-border);
+  list-style: none;
+}
+.workspace-stage-list li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.stage-indicator {
+  display: grid;
+  flex: 0 0 25px;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 800;
+}
+.stage-indicator.complete {
+  color: var(--fs-color-success);
+  background: var(--fs-color-success-surface);
+}
+.stage-indicator.pending {
+  color: var(--fs-color-primary);
+  background: var(--fs-color-primary-soft);
+}
+.workspace-stage-list li > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.workspace-stage-list strong {
+  color: var(--fs-color-navy);
+  font-size: 11px;
+}
+.workspace-stage-list small {
+  color: var(--fs-color-text-muted);
+  font-size: 10px;
+}
+@media (max-width: 680px) {
+  .workspace-header-actions { gap: 10px; }
+  .workspace-header-actions .text-button { font-size: 10px; }
+}
