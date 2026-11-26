@@ -54,26 +54,36 @@ def reset_password(
     db: Session, *, raw_token: str, new_password: str, now: datetime | None = None
 ) -> bool:
     current_time = now or datetime.now(timezone.utc)
+    token_snapshot = db.scalar(
+        select(PasswordResetToken).where(
+            PasswordResetToken.token_hash == token_digest(raw_token),
+            PasswordResetToken.used_at.is_(None),
+            PasswordResetToken.expires_at > current_time,
+        )
+    )
+    if token_snapshot is None:
+        return False
+
+    new_password_hash = hash_password(new_password)
+    account = db.scalar(
+        select(Account)
+        .where(Account.id == token_snapshot.account_id, Account.status == AccountStatus.ACTIVE)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if account is None:
+        return False
+
     token = db.scalar(
         select(PasswordResetToken)
         .where(
-            PasswordResetToken.token_hash == token_digest(raw_token),
+            PasswordResetToken.id == token_snapshot.id,
             PasswordResetToken.used_at.is_(None),
             PasswordResetToken.expires_at > current_time,
         )
         .with_for_update()
     )
     if token is None:
-        return False
-
-    new_password_hash = hash_password(new_password)
-    account = db.scalar(
-        select(Account)
-        .where(Account.id == token.account_id)
-        .with_for_update()
-        .execution_options(populate_existing=True)
-    )
-    if account is None or account.status != AccountStatus.ACTIVE:
         return False
 
     credential = db.scalar(
