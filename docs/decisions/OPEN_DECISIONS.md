@@ -15,14 +15,14 @@
 - Edad mínima y salvaguardas; no habilitar menores antes de resolverlo.
 
 ## Identidad y autenticación
-- Flujo y canal de recuperación de contraseña.
+- Política de sesiones ante eventos adicionales de seguridad (p. ej. sospecha de compromiso y cierre remoto de sesiones).
 - Política de cierre de sesiones al cambiar contraseña o ante eventos de seguridad.
 - Configuración OAuth/OIDC de Google: credenciales, URI de callback, scopes mínimos y entornos.
 - Revisión de los límites iniciales de rate limiting de login, registro y reenvío con métricas reales antes de habilitar el registro público a gran escala.
-- Política de limpieza/retención de tokens de verificación expirados y usados.
+- Política de limpieza/retención de tokens de verificación y recuperación: implementación inicial elimina tokens usados/expirados después de 7 días; validar el plazo con política de privacidad.
 
 ## Técnica y operación
-- Hosting, almacenamiento y correo transaccional (proveedor SMTP/API definitivo y credenciales por entorno).
+- Hosting, almacenamiento y correo transaccional (proveedor SMTP/API definitivo, credenciales por entorno, SPF, DKIM, DMARC y monitoreo de entrega).
 - Herramientas frontend de lint, formato, pruebas y E2E.
 - Backups, monitoreo, alertas y recuperación.
 - Política de versiones y dependencias.
