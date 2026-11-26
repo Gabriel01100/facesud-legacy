@@ -62,12 +62,8 @@ def send_password_reset_email(recipient: str, raw_token: str) -> None:
     message["To"] = recipient
     message.set_content(
         "Recibimos una solicitud para restablecer la contraseña de tu cuenta de FaceSud. "
-        "Si la realizaste, abrí este enlace:
-
-"
-        f"{reset_url}
-
-"
+        "Si la realizaste, abrí este enlace:\n\n"
+        f"{reset_url}\n\n"
         "El enlace vence en 30 minutos y solo puede utilizarse una vez. "
         "Si no solicitaste este cambio, ignorá este mensaje; tu contraseña seguirá igual."
     )
