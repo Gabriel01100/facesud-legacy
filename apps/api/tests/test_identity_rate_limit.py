@@ -121,3 +121,36 @@ def test_resend_rate_limit_is_separate_from_registration_and_login():
             db, ip_address="192.0.2.12", email="person@example.com", now=start
         ) is None
     engine.dispose()
+
+
+def test_concurrent_postgres_login_attempts_apply_limits_atomically():
+    import os
+    from concurrent.futures import ThreadPoolExecutor
+
+    import pytest
+
+    database_url = os.getenv("IDENTITY_TEST_DATABASE_URL")
+    if not database_url:
+        pytest.skip("Requires the PostgreSQL identity integration database")
+
+    engine = create_engine(database_url, pool_size=20, max_overflow=0)
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+
+    def consume(_index: int):
+        with Session(engine) as db:
+            result = consume_login_attempt(
+                db,
+                ip_address="192.0.2.88",
+                email="parallel@example.com",
+            )
+            db.commit()
+            return result
+
+    try:
+        with ThreadPoolExecutor(max_workers=12) as executor:
+            outcomes = list(executor.map(consume, range(20)))
+        assert outcomes.count(None) == LOGIN_EMAIL_IP_LIMIT
+        assert sum(value is not None for value in outcomes) == 20 - LOGIN_EMAIL_IP_LIMIT
+    finally:
+        engine.dispose()
