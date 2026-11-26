@@ -11,7 +11,7 @@ const AUTH_URL = `${API_BASE_URL}/api/v1/auth`;
 
 export default function App() {
   const [apiState, setApiState] = useState<ApiState>("loading");
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [mode, setMode] = useState<AuthMode>(() =>\n    new URLSearchParams(window.location.search).has("token") ? "verify" : "login",\n  );
   const [account, setAccount] = useState<Account | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
