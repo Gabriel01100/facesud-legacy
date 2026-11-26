@@ -38,3 +38,17 @@ class LoginResponse(AuthenticatedAccount):
 
 class CsrfTokenResponse(BaseModel):
     csrf_token: str
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    token: str = Field(min_length=32, max_length=128)
+    new_password: str = Field(min_length=12, max_length=1024)
+
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=1024)
+    new_password: str = Field(min_length=12, max_length=1024)
