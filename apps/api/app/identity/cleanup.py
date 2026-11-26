@@ -4,7 +4,7 @@ from sqlalchemy import delete, func, or_
 from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
-from app.identity.rate_limit import LOGIN_WINDOW, REGISTRATION_WINDOW, RESEND_WINDOW
+from app.identity.rate_limit import LOGIN_WINDOW, REGISTRATION_WINDOW, RESEND_WINDOW, REGISTRATION_WINDOW, RESEND_WINDOW
 from app.identity.sessions import SESSION_IDLE_TTL
 from app.models.identity import LoginRateLimit, UserSession
 
@@ -21,9 +21,10 @@ def cleanup_identity_data(db: Session, *, now: datetime | None = None) -> tuple[
             )
         )
     )
+    rate_limit_retention = max(LOGIN_WINDOW, REGISTRATION_WINDOW, RESEND_WINDOW)
     rate_limits_result = db.execute(
         delete(LoginRateLimit).where(
-            LoginRateLimit.window_started_at < current_time - LOGIN_WINDOW
+            LoginRateLimit.window_started_at < current_time - rate_limit_retention
         )
     )
     db.flush()
