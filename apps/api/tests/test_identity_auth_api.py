@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.identity.security import hash_password
 from app.main import app
 from app.models.base import Base
-from app.models.identity import Account, AccountStatus, PasswordCredential
+from app.models.identity import Account, AccountStatus, PasswordCredential, UserSession
 
 
 def build_client():
@@ -111,11 +111,17 @@ def test_logout_requires_csrf_and_revokes_session():
         assert login.status_code == 200
 
         csrf = client.cookies.get("facesud_csrf")
+        with Session(engine) as db:
+            last_seen_before = db.scalar(select(UserSession)).last_seen_at
+
         rejected = client.post(
             "/api/v1/auth/logout",
             headers={"Origin": "http://localhost:5173", "X-CSRF-Token": "wrong"},
         )
         assert rejected.status_code == 403
+        with Session(engine) as db:
+            last_seen_after = db.scalar(select(UserSession)).last_seen_at
+        assert last_seen_after == last_seen_before
         assert client.get("/api/v1/auth/me").status_code == 200
 
         logged_out = client.post(
