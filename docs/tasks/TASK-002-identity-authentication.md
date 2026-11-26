@@ -22,12 +22,13 @@ Implementar el módulo Identity de FaceSud con autenticación local por correo/c
 ### Integración HTTP de esta subetapa
 - [x] `POST /api/v1/auth/login` para credenciales locales de cuentas activas.
 - [x] `GET /api/v1/auth/me` para consultar la cuenta autenticada.
+- [x] `POST /api/v1/auth/csrf` para obtener/rotar el token CSRF después de una recarga.
 - [x] `POST /api/v1/auth/logout` para revocar la sesión actual.
 - [x] Cookie de sesión HttpOnly, Secure en producción, SameSite=Lax, Path=/ y sin Domain.
-- [x] Cookie CSRF no HttpOnly y validación doble mediante cookie, encabezado y hash almacenado.
-- [x] Validación estricta del encabezado Origin para login/logout.
+- [x] Token CSRF devuelto por JSON, enviado por encabezado y validado contra el hash almacenado; no depende de una segunda cookie ni del dominio del frontend.
+- [x] Validación estricta del encabezado Origin para operaciones mutables.
 - [x] CORS con credenciales y lista explícita de orígenes.
-- [x] Pruebas de integración HTTP y de política de sesiones agregadas; pendientes de ejecución CI.
+- [x] Pruebas HTTP y de política de sesiones; GitHub Actions CI pasó en el commit `b1f2f5f3b3644c3cc5d379a1d990569933f89c84` antes del ajuste de CSRF entre subdominios. El ajuste actual requiere un nuevo run.
 
 ### Pendiente
 - [ ] Registro de cuentas y verificación de correo (requiere definir/configurar proveedor transaccional).
