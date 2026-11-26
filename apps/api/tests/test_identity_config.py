@@ -74,3 +74,20 @@ def test_production_rejects_placeholder_sender_domain():
             smtp_starttls=True,
             email_from="FaceSud <no-reply@example.net>",
         )
+
+
+def test_production_rejects_local_mailpit_transport():
+    with pytest.raises(ValidationError, match="cannot use local Mailpit"):
+        Settings(
+            app_env="production",
+            redis_url="redis://:strong-password@redis.internal:6379/0",
+            database_url="postgresql+psycopg://user:strong-password@db.internal/facesud",
+            cors_origins="https://facesud.org",
+            frontend_base_url="https://facesud.org",
+            smtp_host="mailpit",
+            smtp_port=1025,
+            smtp_username="facesud",
+            smtp_password="smtp-secret",
+            smtp_starttls=True,
+            email_from="FaceSud <no-reply@facesud.local>",
+        )
