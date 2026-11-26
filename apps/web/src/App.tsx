@@ -233,7 +233,7 @@ export default function App() {
           <span className="brand-mark">F</span>
           <span>FaceSud</span>
         </a>
-        <span className={`service-status ${apiState}`}><i />{statusText}</span>
+        <span className={`service-status ${apiState}`} role="status" aria-live="polite"><i aria-hidden="true" />{statusText}</span>
       </header>
 
       {account ? (
@@ -243,15 +243,16 @@ export default function App() {
               <span className="brand-mark">F</span>
               <span className="workspace-brand">FaceSud</span>
             </div>
-            <div className="workspace-nav-label">TU ESPACIO</div>
-            <div className="workspace-nav-item" aria-current="page">
-              <span aria-hidden="true">⌂</span>
-              <span>Inicio</span>
-            </div>
+            <nav className="workspace-navigation" aria-label="Navegación principal">
+              <div className="workspace-nav-label">TU ESPACIO</div>
+              <a className="workspace-nav-item" href="/" aria-current="page">
+                <span aria-hidden="true">⌂</span>
+                <span>Inicio</span>
+              </a>
+            </nav>
             <div className="workspace-sidebar-account">
               <span className="account-avatar" aria-hidden="true">{account.email.charAt(0).toUpperCase()}</span>
               <span className="account-email" title={account.email}>{account.email}</span>
-              
             </div>
           </aside>
 
