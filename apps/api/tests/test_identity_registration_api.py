@@ -278,3 +278,20 @@ def test_password_reset_is_generic_single_use_and_revokes_existing_sessions(monk
         assert reused.status_code == 400
     finally:
         teardown(client, engine)
+
+
+def test_password_reset_requests_are_rate_limited(monkeypatch):
+    client, engine, _ = build_client(monkeypatch)
+    try:
+        headers = {"Origin": "http://localhost:5173"}
+        payload = {"email": "unknown@example.com"}
+        responses = [
+            client.post("/api/v1/auth/password-reset/request", json=payload, headers=headers)
+            for _ in range(4)
+        ]
+        assert [response.status_code for response in responses[:3]] == [202, 202, 202]
+        assert responses[0].json() == responses[1].json() == responses[2].json()
+        assert responses[3].status_code == 429
+        assert int(responses[3].headers["Retry-After"]) > 0
+    finally:
+        teardown(client, engine)
