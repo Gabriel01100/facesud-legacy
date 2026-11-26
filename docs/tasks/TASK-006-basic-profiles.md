@@ -83,5 +83,9 @@ La unidad comunitaria no es un dato de autenticación ni un campo editable del p
 6. Conectar la interfaz de perfil propio y verificar responsive/accesibilidad.
 7. Actualizar `DOMAIN_MODEL.md`, `API_CONTRACTS.md` y documentación de producto según el comportamiento realmente implementado.
 
+## Entrega incremental
+
+La primera entrega implementa el perfil propio básico: persistencia separada del módulo Identity, consulta y edición de nombre visible, username y biografía, fecha de creación de cuenta de solo lectura, autorización de servidor, protección CSRF y ausencia de rutas de perfiles ajenos. La fotografía y la unidad comunitaria permanecen sin datos en esta entrega: la primera requiere almacenamiento protegido; la segunda depende del módulo Community y del procedimiento de aprobación. Esta entrega no completa TASK-006.
+
 ## Nota de ejecución
 Este documento define el alcance de la tarea; no declara que las funcionalidades estén implementadas. Las decisiones técnicas aún no especificadas (por ejemplo, límites exactos de longitud, formato/recorte de avatar y backend de almacenamiento) deben resolverse durante el diseño técnico antes de codificar, sin ampliar el alcance de privacidad de D-023.
