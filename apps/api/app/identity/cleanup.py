@@ -24,7 +24,7 @@ def cleanup_identity_data(db: Session, *, now: datetime | None = None) -> tuple[
     rate_limit_retention = max(LOGIN_WINDOW, REGISTRATION_WINDOW, RESEND_WINDOW)
     rate_limits_result = db.execute(
         delete(LoginRateLimit).where(
-            LoginRateLimit.window_started_at < current_time - rate_limit_retention
+            LoginRateLimit.window_started_at <= current_time - rate_limit_retention
         )
     )
     db.flush()
