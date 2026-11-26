@@ -14,12 +14,12 @@ def test_cookie_security_is_enabled_outside_development_and_test():
             database_url="postgresql+psycopg://user:strong-password@db.internal/facesud",
             cors_origins="https://facesud.org",
             frontend_base_url="https://facesud.org",
-            smtp_host="smtp.example.net",
+            smtp_host="smtp.mailprovider.net",
             smtp_port=587,
             smtp_username="facesud",
             smtp_password="smtp-secret",
             smtp_starttls=True,
-            email_from="FaceSud <no-reply@example.net>",
+            email_from="FaceSud <no-reply@facesud.org>",
         )
         assert config.secure_cookies
         assert config.session_cookie_name == "__Host-facesud_session"
@@ -56,4 +56,21 @@ def test_production_requires_authenticated_starttls_smtp():
             database_url="postgresql+psycopg://user:strong-password@db.internal/facesud",
             cors_origins="https://facesud.org",
             frontend_base_url="https://facesud.org",
+        )
+
+
+def test_production_rejects_placeholder_sender_domain():
+    with pytest.raises(ValidationError, match="development/example values"):
+        Settings(
+            app_env="production",
+            redis_url="redis://:strong-password@redis.internal:6379/0",
+            database_url="postgresql+psycopg://user:strong-password@db.internal/facesud",
+            cors_origins="https://facesud.org",
+            frontend_base_url="https://facesud.org",
+            smtp_host="smtp.mailprovider.net",
+            smtp_port=587,
+            smtp_username="facesud",
+            smtp_password="smtp-secret",
+            smtp_starttls=True,
+            email_from="FaceSud <no-reply@example.net>",
         )
