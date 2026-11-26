@@ -3,78 +3,100 @@
 ## Convenciones
 - Base path: /api/v1.
 - Transporte: HTTP; JSON para respuestas.
-- La documentación OpenAPI es generada por FastAPI en /docs y /openapi.json.
-- Los errores usan el formato estándar de FastAPI.
-- Las rutas autenticadas usan cookies de sesión opacas; no se aceptan tokens Bearer para la aplicación web.
+- OpenAPI: /docs y /openapi.json.
+- Rutas autenticadas: cookies de sesión opacas; no se aceptan tokens Bearer para la aplicación web.
+- Todas las respuestas de /api/v1/auth/* llevan Cache-Control: no-store, incluso errores de autenticación.
 
 ## Salud
-
 ### GET /api/v1/health
-Comprueba que el proceso HTTP de la API responde. No verifica dependencias externas.
-
-Respuesta HTTP 200: {"status":"ok"}
+Comprueba que el proceso HTTP responde. Respuesta HTTP 200: {"status":"ok"}.
 
 ### GET /api/v1/health/ready
-Comprueba conectividad con PostgreSQL mediante SELECT 1 y con Redis mediante PING.
-
-Respuesta HTTP 200: {"status":"ready","postgres":"ok","redis":"ok"}
+Comprueba PostgreSQL mediante SELECT 1 y Redis mediante PING. Respuesta HTTP 200: {"status":"ready","postgres":"ok","redis":"ok"}.
 
 ## Identity
 
 ### POST /api/v1/auth/register
-Requiere Origin permitido. Recibe email y password (mínimo 12 caracteres). Crea una cuenta PENDING_EMAIL y envía un enlace de verificación. Devuelve HTTP 202 con un mensaje genérico que no confirma si la dirección ya existe. Si SMTP no está configurado, devuelve HTTP 503 sin crear la cuenta.
+Requiere Origin permitido. Recibe email válido y password de al menos 12 caracteres. Crea cuenta PENDING_EMAIL y envía enlace. HTTP 202 genérico. SMTP no configurado: HTTP 503 sin crear cuenta.
 
 ### POST /api/v1/auth/email-verification/verify
-Requiere Origin permitido. Recibe token; un token válido, no vencido y no utilizado activa la cuenta. Devuelve HTTP 200. No inicia sesión automáticamente. Token inválido, vencido o usado: HTTP 400 con mensaje genérico.
+Requiere Origin permitido. Token válido, no vencido y no usado activa la cuenta. HTTP 200; no inicia sesión. Token inválido/vencido/usado: HTTP 400 genérico.
 
 ### POST /api/v1/auth/email-verification/resend
-Requiere Origin permitido. Recibe email; invalida enlaces anteriores y envía uno nuevo solo si existe una cuenta pendiente. Devuelve HTTP 202 con mensaje genérico, independientemente de que exista la cuenta.
+Requiere Origin permitido. Recibe email; invalida tokens anteriores y envía uno nuevo solo para cuentas pendientes. HTTP 202 genérico.
 
 ### POST /api/v1/auth/login
-Autentica una cuenta activa mediante email y contraseña. Requiere un encabezado Origin que coincida exactamente con un elemento de CORS_ORIGINS.
+Requiere Origin permitido. Autentica cuenta activa por correo/contraseña.
 
 Request: {"email":"persona@example.com","password":"contraseña"}
 
-Respuesta HTTP 200: {"id":"uuid","email":"persona@example.com","csrf_token":"token-aleatorio"}
+Respuesta HTTP 200: {"id":"uuid","email":"persona@example.com","csrf_token":"token-aleatorio"}.
 
-Establece una única cookie:
-- facesud_session en desarrollo o __Host-facesud_session en producción: HttpOnly, SameSite=Lax, Path=/, sin Domain; Secure en producción.
+Límite inicial:
+- Máximo 5 intentos en 15 minutos por combinación IP + correo.
+- Máximo 30 intentos en 15 minutos por IP.
+- Exceso: HTTP 429 y encabezado Retry-After.
+- Un login exitoso limpia los buckets IP+correo e IP.
+- Las claves de bucket se almacenan como SHA-256 en PostgreSQL.
 
-El token CSRF se devuelve en el cuerpo de la respuesta y su hash se guarda en PostgreSQL. El frontend debe conservarlo en memoria y enviarlo como encabezado X-CSRF-Token en operaciones mutables. Las respuestas de autenticación llevan Cache-Control: no-store.
+Un login exitoso revoca la sesión asociada a la cookie entrante (si existe) antes de crear la nueva.
 
-Credenciales incorrectas, cuenta inexistente o cuenta no activa producen el mismo error HTTP 401. Una cuenta pendiente de verificación no puede iniciar sesión.
+Cookie:
+- facesud_session en development/test.
+- __Host-facesud_session en cualquier otro entorno.
+- HttpOnly, SameSite=Lax, Path=/, sin Domain.
+- Secure en cualquier entorno distinto de development/test.
+
+El token CSRF se devuelve en JSON y solo su hash se guarda en PostgreSQL. El cliente lo conserva en memoria y lo envía como X-CSRF-Token.
+
+Credenciales incorrectas, cuenta inexistente o cuenta no activa: HTTP 401 genérico. Cuenta pendiente no puede iniciar sesión.
+
+### POST /api/v1/auth/password-reset/request
+Requiere Origin permitido. Recibe email y devuelve HTTP 202 con respuesta genérica, independientemente de si existe una cuenta activa. Si corresponde, envía un token opaco de un solo uso con TTL de 30 minutos. Rate limit: 3 por hora por IP+correo y 10 por hora por IP.
+
+### POST /api/v1/auth/password-reset/confirm
+Requiere Origin permitido. Recibe token y new_password (mínimo 12 caracteres). Token válido actualiza la credencial, invalida tokens de recuperación pendientes y revoca todas las sesiones. Token inválido, vencido o usado: HTTP 400 genérico.
+
+### POST /api/v1/auth/password/change
+Requiere sesión válida, Origin permitido, CSRF y contraseña actual. Recibe current_password y new_password (mínimo 12 caracteres). Límite: 5 intentos/15 minutos por IP+correo y 20/15 minutos por IP. Actualiza la credencial, invalida tokens de recuperación pendientes y revoca todas las sesiones; devuelve HTTP 204 y elimina la cookie actual.
 
 ### GET /api/v1/auth/me
-Requiere una cookie de sesión válida. Devuelve el UUID y el email normalizado de la cuenta autenticada. Cada solicitud autenticada válida actualiza last_seen_at.
+Requiere sesión válida; devuelve UUID y correo normalizado. last_seen_at se persiste como máximo una vez por minuto.
 
 ### POST /api/v1/auth/csrf
-Requiere cookie de sesión y Origin permitido. Rota el token CSRF, persiste su hash y devuelve el nuevo token. Se utiliza al recargar la aplicación para obtener un token CSRF nuevo sin exponer la cookie HttpOnly. Respuesta Cache-Control: no-store.
+Requiere sesión y Origin permitido. Rota el token CSRF y devuelve el valor nuevo. Cache-Control: no-store.
 
 ### POST /api/v1/auth/logout
-Requiere Origin permitido, cookie de sesión y encabezado X-CSRF-Token válido contra el hash guardado en PostgreSQL. Revoca la sesión actual y elimina la cookie de sesión. Respuesta HTTP 204.
+Requiere Origin permitido. Si la sesión sigue activa, exige X-CSRF-Token válido. Si no hay sesión vigente o ya venció, devuelve igualmente HTTP 204. Siempre elimina la cookie cuando la solicitud tiene Origin permitido. Una sesión activa con CSRF incorrecto devuelve 403 y no revoca la sesión.
 
 ## Política de sesiones
-- Expiración absoluta: 7 días desde la creación.
-- Expiración por inactividad: 30 minutos.
-- Máximo: 5 sesiones activas por cuenta.
-- Al emitir una sexta sesión, se revoca la sesión activa más antigua.
-- PostgreSQL almacena hashes de tokens de sesión y CSRF, nunca los valores originales.
-- Redis no se utiliza para sesiones.
+- Expiración absoluta: 7 días.
+- Inactividad: 30 minutos.
+- Máximo: 5 sesiones activas por cuenta; al crear una sexta se revoca la más antigua.
+- PostgreSQL almacena hashes de sesión y CSRF.
+- El límite de 5 sesiones se valida bajo bloqueo de fila de cuenta; una prueba concurrente PostgreSQL cubre creación paralela.
+- La fila de cuenta se bloquea y revalida al crear sesión, después de verificar Argon2.
+- Redis no almacena sesiones ni rate limits.
 
-## CORS y seguridad del navegador
-En desarrollo se permite el origen configurado en CORS_ORIGINS (por defecto http://localhost:5173). CORS habilita credenciales solo para esa lista explícita; no se permite wildcard con credenciales. Producción requiere orígenes HTTPS explícitos.
+## CSRF y navegador
+Las operaciones mutables validan Origin y CSRF. Ante 403 con detalle CSRF validation failed, el cliente solicita un token nuevo y reintenta la solicitud una sola vez. El reintento debe usar un cuerpo reproducible.
 
-Las operaciones mutables deben validar Origin y CSRF. El token CSRF viaja en un encabezado personalizado y no se envía automáticamente por el navegador. SameSite no se considera la única defensa.
+## Correo
+SMTP STARTTLS con validación TLS. Variables: SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, EMAIL_FROM, FRONTEND_BASE_URL. Registro y recuperación deshabilitados con HTTP 503 si no hay configuración. El proveedor SMTP/API definitivo, SPF, DKIM y DMARC siguen pendientes.
 
-## Configuración de correo
-El adaptador SMTP utiliza STARTTLS con validación de certificados. Variables: SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, EMAIL_FROM, FRONTEND_BASE_URL. El registro se deshabilita con HTTP 503 cuando no existe configuración de correo.
+Las direcciones se normalizan en NFC y se validan con email-validator antes de persistir; se conserva el comportamiento case-insensitive vigente.
+
+## Limpieza de Identity
+Ejecutar python -m app.identity.cleanup periódicamente. El comando elimina sesiones revocadas, vencidas por TTL absoluto o inactivas por más de 30 minutos; tokens de verificación/recuperación usados o vencidos con más de 7 días; y buckets antiguos de login, registro, reenvío y recuperación. Programación sugerida: cada hora mediante cron/scheduler externo.
+
+## Producción
+REDIS_URL debe contener contraseña; REDIS_PASSWORD protege el servicio Redis en Compose. Los valores secretos se inyectan desde el entorno/secret manager.
 
 ## Pendientes
-- Recuperación y cambio de contraseña.
-- Inicio/callback Google OpenID Connect y vinculación explícita.
-- Rate limiting de login, registro y reenvío.
-- Frontend de autenticación y pruebas E2E.
-- Política de revocación ante cambio de contraseña/eventos de seguridad.
-- Pruebas de concurrencia PostgreSQL.
+- Google OpenID Connect y vinculación explícita.
+- Proveedor transaccional definitivo, credenciales y configuración SPF/DKIM/DMARC.
+- Pruebas E2E de navegador para registro, verificación, login, logout, recuperación, cambio de contraseña y CSRF multi-pestaña.
+- Pruebas de concurrencia del rate limiting y carga sostenida.
+- Revisión de umbrales de rate limiting y retención de tokens con métricas/política de privacidad.
 
-La elegibilidad comunitaria por cédula de miembro es una verificación separada de identidad y autenticación. La autenticación de Google o por contraseña no acredita membresía. No se solicita ni almacena el número de cédula en esta etapa.
+La elegibilidad comunitaria por cédula de miembro es independiente de la autenticación. Google o contraseña no acreditan membresía. No se solicita ni almacena el número de cédula en esta etapa.

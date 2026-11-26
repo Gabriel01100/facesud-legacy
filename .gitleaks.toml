@@ -1,0 +1,14 @@
+title = "FaceSud Gitleaks configuration"
+
+[[allowlists]]
+description = "Documented local-only development credentials"
+regexTarget = "match"
+regexes = [
+  '''facesud_dev''',
+  '''facesud_ci''',
+]
+paths = [
+  '''\.env\.example''',
+  '''docker-compose\.yml''',
+  '''\.github/workflows/ci\.yml''',
+]

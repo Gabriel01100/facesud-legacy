@@ -1,3 +1,5 @@
+from urllib.parse import urlsplit
+
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -6,7 +8,7 @@ class Settings(BaseSettings):
     app_name: str = "FaceSud API"
     app_env: str = "development"
     database_url: str = "postgresql+psycopg://facesud:facesud_dev@db:5432/facesud"
-    redis_url: str = "redis://redis:6379/0"
+    redis_url: str = "redis://:facesud_dev@redis:6379/0"
     cors_origins: str = "http://localhost:5173"
     frontend_base_url: str = "http://localhost:5173"
     smtp_host: str | None = None
@@ -23,8 +25,12 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
+    def secure_cookies(self) -> bool:
+        return self.app_env.strip().lower() not in {"development", "test"}
+
+    @property
     def session_cookie_name(self) -> str:
-        if self.app_env.lower() == "production":
+        if self.secure_cookies:
             return "__Host-facesud_session"
         return "facesud_session"
 
@@ -33,8 +39,8 @@ class Settings(BaseSettings):
         return bool(self.smtp_host and self.email_from and self.frontend_base_url)
 
     @model_validator(mode="after")
-    def reject_development_defaults_in_production(self):
-        if self.app_env.lower() == "production":
+    def validate_environment_configuration(self):
+        if self.app_env.strip().lower() in {"production", "prod"}:
             placeholders = ("facesud_dev", "localhost", "example", "changeme")
             configured = f"{self.database_url} {self.redis_url} {self.cors_origins} {self.frontend_base_url}".lower()
             if any(value in configured for value in placeholders):
@@ -43,6 +49,8 @@ class Settings(BaseSettings):
                 raise ValueError("Production CORS origins must use HTTPS")
             if not self.frontend_base_url.startswith("https://"):
                 raise ValueError("Production frontend URL must use HTTPS")
+            if not urlsplit(self.redis_url).password:
+                raise ValueError("Production Redis URL must include a password")
         return self
 
 

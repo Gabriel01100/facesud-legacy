@@ -4,7 +4,9 @@ from app.models.identity import (
     AccountStatus,
     EmailVerificationToken,
     ExternalIdentity,
+    LoginRateLimit,
     PasswordCredential,
+    PasswordResetToken,
     UserSession,
 )
 
@@ -14,6 +16,8 @@ __all__ = [
     "Base",
     "EmailVerificationToken",
     "ExternalIdentity",
+    "LoginRateLimit",
     "PasswordCredential",
+    "PasswordResetToken",
     "UserSession",
 ]

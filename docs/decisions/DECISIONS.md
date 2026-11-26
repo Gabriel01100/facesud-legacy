@@ -96,5 +96,39 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 - **Actividad:** una solicitud autenticada válida actualiza `last_seen_at`; solicitudes rechazadas por CSRF no deben considerarse actividad de negocio.
 - **Persistencia:** los tiempos y revocaciones se controlan en PostgreSQL, no en Redis.
 
+### D-020 — Rate limiting inicial de login
+- **Estado:** decisión técnica adoptada para el endurecimiento de Identity.
+- **Almacenamiento:** PostgreSQL, no Redis, para evitar una nueva dependencia operativa en la ruta de autenticación.
+- **Ventana y límites iniciales:** 5 intentos por 15 minutos para cada combinación IP+correo y 30 intentos por 15 minutos por IP.
+- **Respuesta:** HTTP 429 con Retry-After al superar el límite.
+- **Privacidad:** se almacenan hashes SHA-256 de las claves de bucket; no se persisten IP ni correo en claro en la tabla de rate limiting.
+- **Recuperación:** un login correcto elimina ambos buckets asociados a esa IP y correo.
+- **Alcance:** limita login. Registro y reenvío de verificación se regulan por separado mediante D-021.
+- **Justificación:** el límite combinado dificulta ataques automatizados sin crear un bloqueo global por correo que permita a terceros denegar el acceso a una víctima.
+- **Revisión:** observar métricas y ajustar umbrales antes de habilitar registro público a gran escala.
+
 ## Decisiones técnicas anteriores
 Las decisiones técnicas confirmadas para esta base no aprueban automáticamente herramientas o funcionalidades futuras. Las decisiones abiertas siguen listadas en [OPEN_DECISIONS.md](OPEN_DECISIONS.md).
+
+
+### D-021 — Rate limiting inicial de registro y reenvío de verificación
+- **Estado:** política técnica inicial implementada; requiere revisión con métricas antes de habilitar registro público a gran escala.
+- **Almacenamiento:** se reutilizan los buckets persistidos en PostgreSQL y sus claves hash; no se guardan correos ni direcciones IP en claro.
+- **Registro:** máximo de 2 intentos por hora por combinación IP+correo y 5 intentos por hora por IP.
+- **Reenvío de verificación:** máximo de 3 intentos por hora por combinación IP+correo y 10 intentos por hora por IP.
+- **Respuesta al superar el límite:** HTTP 429 con encabezado Retry-After. Dentro del límite, el endpoint mantiene una respuesta genérica para no revelar si una cuenta existe o está pendiente de verificación.
+- **Separación de operaciones:** los buckets de login, registro y reenvío utilizan prefijos de alcance distintos; un límite en una operación no consume el cupo de otra.
+- **Privacidad y abuso:** no se aplica un bloqueo global por correo, para evitar que terceros puedan impedir que una víctima registre o verifique su cuenta desde otras redes.
+- **Operación:** la limpieza de buckets conserva los registros durante la ventana máxima configurada.
+- **Consideración de proxy:** la IP usada debe ser la que entregue el servidor/proxy confiable. No se debe confiar en encabezados X-Forwarded-For suministrados directamente por clientes.
+
+
+### D-022 — Recuperación y cambio de contraseña
+- **Estado:** política técnica inicial implementada; revisar antes de habilitar registro público.
+- **Solicitud de recuperación:** respuesta genérica para no revelar si el correo corresponde a una cuenta activa.
+- **Token:** valor opaco aleatorio, se almacena únicamente su hash SHA-256, vence a los 30 minutos y es de un solo uso. Una nueva solicitud invalida tokens anteriores de la cuenta.
+- **Restablecimiento:** solo cuentas activas con credencial local pueden restablecer la contraseña. Se invalida el resto de los tokens de recuperación y se revocan todas las sesiones activas de la cuenta.
+- **Cambio autenticado:** requiere contraseña actual y CSRF válido; se revocan todas las sesiones y se solicita iniciar sesión nuevamente.
+- **Rate limiting:** solicitud de recuperación: 3 por hora por IP+correo y 10 por hora por IP. Cambio autenticado: 5 por 15 minutos por IP+correo y 20 por 15 minutos por IP. Se usan claves hash y respuesta 429.
+- **Correo:** se utiliza el adaptador SMTP STARTTLS existente. El proveedor transaccional definitivo y sus credenciales por entorno siguen pendientes.
+- **Justificación:** ofrecer recuperación sin exponer existencia de cuentas ni conservar tokens reutilizables en la base.

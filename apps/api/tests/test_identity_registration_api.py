@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
@@ -14,12 +15,18 @@ from app.models.identity import Account, AccountStatus, EmailVerificationToken, 
 
 
 def build_client(monkeypatch):
-    engine = create_engine(
-        "sqlite+pysqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    Base.metadata.create_all(engine)
+    database_url = os.getenv("IDENTITY_TEST_DATABASE_URL")
+    if database_url:
+        engine = create_engine(database_url, pool_pre_ping=True)
+        Base.metadata.drop_all(engine)
+        Base.metadata.create_all(engine)
+    else:
+        engine = create_engine(
+            "sqlite+pysqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        Base.metadata.create_all(engine)
 
     def override_get_db():
         with Session(engine, expire_on_commit=False) as db:
@@ -31,7 +38,7 @@ def build_client(monkeypatch):
                 raise
 
     app.dependency_overrides[get_db] = override_get_db
-    monkeypatch.setattr("app.api.auth.settings", SimpleNamespace(email_delivery_configured=True))
+    monkeypatch.setattr("app.api.auth.settings", SimpleNamespace(email_delivery_configured=True, session_cookie_name="facesud_session", secure_cookies=False))
     sent = []
 
     def fake_send(recipient, token):
@@ -163,5 +170,128 @@ def test_registration_rejects_untrusted_origin(monkeypatch):
             headers={"Origin": "https://attacker.example"},
         )
         assert response.status_code == 403
+    finally:
+        teardown(client, engine)
+
+
+def test_registration_is_rate_limited_without_disclosing_account_state(monkeypatch):
+    client, engine, _ = build_client(monkeypatch)
+    try:
+        headers = {"Origin": "http://localhost:5173"}
+        payload = {"email": "person@example.com", "password": "a-long-test-password"}
+        first = client.post("/api/v1/auth/register", json=payload, headers=headers)
+        second = client.post("/api/v1/auth/register", json=payload, headers=headers)
+        limited = client.post("/api/v1/auth/register", json=payload, headers=headers)
+
+        assert first.status_code == 202
+        assert second.status_code == 202
+        assert first.json() == second.json()
+        assert limited.status_code == 429
+        assert int(limited.headers["Retry-After"]) > 0
+    finally:
+        teardown(client, engine)
+
+
+def test_verification_resend_is_rate_limited(monkeypatch):
+    client, engine, _ = build_client(monkeypatch)
+    try:
+        headers = {"Origin": "http://localhost:5173"}
+        payload = {"email": "person@example.com"}
+        responses = [
+            client.post("/api/v1/auth/email-verification/resend", json=payload, headers=headers)
+            for _ in range(4)
+        ]
+
+        assert [response.status_code for response in responses[:3]] == [202, 202, 202]
+        assert responses[0].json() == responses[1].json() == responses[2].json()
+        assert responses[3].status_code == 429
+        assert int(responses[3].headers["Retry-After"]) > 0
+    finally:
+        teardown(client, engine)
+
+
+def test_password_reset_is_generic_single_use_and_revokes_existing_sessions(monkeypatch):
+    client, engine, verification_emails = build_client(monkeypatch)
+    reset_emails = []
+    monkeypatch.setattr("app.api.auth.send_password_reset_email", lambda recipient, token: reset_emails.append((recipient, token)))
+    try:
+        headers = {"Origin": "http://localhost:5173"}
+        registered = client.post(
+            "/api/v1/auth/register",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers=headers,
+        )
+        assert registered.status_code == 202
+        verified = client.post(
+            "/api/v1/auth/email-verification/verify",
+            json={"token": verification_emails[0][1]},
+            headers=headers,
+        )
+        assert verified.status_code == 200
+        login = client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers=headers,
+        )
+        assert login.status_code == 200
+
+        request_reset = client.post(
+            "/api/v1/auth/password-reset/request",
+            json={"email": "person@example.com"},
+            headers=headers,
+        )
+        unknown_reset = client.post(
+            "/api/v1/auth/password-reset/request",
+            json={"email": "missing@example.com"},
+            headers=headers,
+        )
+        assert request_reset.status_code == unknown_reset.status_code == 202
+        assert request_reset.json() == unknown_reset.json()
+        assert len(reset_emails) == 1
+
+        reset = client.post(
+            "/api/v1/auth/password-reset/confirm",
+            json={"token": reset_emails[0][1], "new_password": "a-new-long-password"},
+            headers=headers,
+        )
+        assert reset.status_code == 200
+        assert client.get("/api/v1/auth/me").status_code == 401
+
+        old_login = client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers=headers,
+        )
+        new_login = client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "a-new-long-password"},
+            headers=headers,
+        )
+        assert old_login.status_code == 401
+        assert new_login.status_code == 200
+
+        reused = client.post(
+            "/api/v1/auth/password-reset/confirm",
+            json={"token": reset_emails[0][1], "new_password": "another-new-password"},
+            headers=headers,
+        )
+        assert reused.status_code == 400
+    finally:
+        teardown(client, engine)
+
+
+def test_password_reset_requests_are_rate_limited(monkeypatch):
+    client, engine, _ = build_client(monkeypatch)
+    try:
+        headers = {"Origin": "http://localhost:5173"}
+        payload = {"email": "unknown@example.com"}
+        responses = [
+            client.post("/api/v1/auth/password-reset/request", json=payload, headers=headers)
+            for _ in range(4)
+        ]
+        assert [response.status_code for response in responses[:3]] == [202, 202, 202]
+        assert responses[0].json() == responses[1].json() == responses[2].json()
+        assert responses[3].status_code == 429
+        assert int(responses[3].headers["Retry-After"]) > 0
     finally:
         teardown(client, engine)

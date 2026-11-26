@@ -40,6 +40,9 @@ class Account(Base):
     email_verification_tokens: Mapped[list[EmailVerificationToken]] = relationship(
         back_populates="account", cascade="all, delete-orphan"
     )
+    password_reset_tokens: Mapped[list[PasswordResetToken]] = relationship(
+        back_populates="account", cascade="all, delete-orphan"
+    )
 
 
 class PasswordCredential(Base):
@@ -103,3 +106,27 @@ class EmailVerificationToken(Base):
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     account: Mapped[Account] = relationship(back_populates="email_verification_tokens")
+
+
+class LoginRateLimit(Base):
+    __tablename__ = "identity_login_rate_limits"
+
+    bucket_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    window_started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    attempts: Mapped[int] = mapped_column(nullable=False, default=0)
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "identity_password_reset_tokens"
+    __table_args__ = (UniqueConstraint("token_hash", name="uq_identity_password_reset_token_hash"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    account_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("identity_accounts.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    account: Mapped[Account] = relationship(back_populates="password_reset_tokens")
