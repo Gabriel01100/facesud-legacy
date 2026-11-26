@@ -34,3 +34,26 @@ def test_production_rejects_redis_without_password():
             cors_origins="https://facesud.org",
             frontend_base_url="https://facesud.org",
         )
+
+
+def test_local_mailpit_settings_enable_email_delivery_without_tls():
+    config = Settings(
+        app_env="development",
+        smtp_host="mailpit",
+        smtp_port=1025,
+        smtp_starttls=False,
+        email_from="FaceSud <no-reply@facesud.local>",
+    )
+    assert config.email_delivery_configured
+    assert config.smtp_starttls is False
+
+
+def test_production_requires_authenticated_starttls_smtp():
+    with pytest.raises(ValidationError, match="authenticated SMTP credentials"):
+        Settings(
+            app_env="production",
+            redis_url="redis://:strong-password@redis.internal:6379/0",
+            database_url="postgresql+psycopg://user:strong-password@db.internal/facesud",
+            cors_origins="https://facesud.org",
+            frontend_base_url="https://facesud.org",
+        )
