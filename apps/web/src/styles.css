@@ -434,3 +434,13 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) {
   .workspace-header-actions { gap: 10px; }
   .workspace-header-actions .text-button { font-size: 10px; }
 }
+
+.workspace-nav-item {
+  text-decoration: none;
+}
+.workspace-nav-item:hover {
+  background: var(--fs-color-primary-soft);
+}
+.workspace-nav-item:focus-visible {
+  border-radius: var(--fs-radius-md);
+}
