@@ -40,12 +40,9 @@ class ProfileUpdateRequest(BaseModel):
 class ProfileResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID
     display_name: str | None
     username: str | None
     bio: str | None
-    created_at: datetime
-    updated_at: datetime | None
     account_created_at: datetime
     avatar_url: str | None = None
     community_unit: None = None
