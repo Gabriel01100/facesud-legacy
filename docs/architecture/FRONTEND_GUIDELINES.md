@@ -7,10 +7,10 @@
 
 ## Estructura
 - `src/main.tsx`: punto de entrada.
-- `src/App.tsx`: composición de vistas y flujos de autenticación.
-- `src/api/client.ts`: único punto de acceso HTTP para la API.
+- `src/App.tsx`: composición de vistas y flujos de autenticación/workspace.
+- `src/api/client.ts`: único punto de acceso HTTP para la API y gestión CSRF.
+- `src/features/<feature>/`: componentes, tipos y adaptadores API cohesivos por funcionalidad.
 - `src/styles.css`: estilos globales, tokens visuales y responsive.
-- Los componentes reutilizables de producto se incorporarán en módulos propios cuando existan flujos que los utilicen.
 
 ## Sistema visual FaceSud v1.0
 Usar los tokens CSS `--fs-*` definidos en `src/styles.css`; evitar repetir valores hexadecimales en nuevos componentes.
@@ -28,7 +28,7 @@ Usar los tokens CSS `--fs-*` definidos en `src/styles.css`; evitar repetir valor
 La interfaz debe ser minimalista, clara y consistente con los mockups aprobados. No introducir gradientes, sombras intensas ni colores de marca alternativos sin una decisión de diseño explícita.
 
 ## Convenciones
-- Mantener las llamadas HTTP fuera de los componentes cuando puedan centralizarse en `src/api`.
+- Mantener las llamadas HTTP en adaptadores de `src/features/<feature>/api.ts`, usando el cliente centralizado de `src/api/client.ts`.
 - Usar variables de entorno `VITE_*` solo para configuración pública. Nunca colocar secretos en variables expuestas al navegador.
 - Representar explícitamente carga, éxito y error en operaciones asíncronas.
 - Mantener interfaz responsive y accesible: HTML semántico, labels asociados, estados anunciados y foco visible.
@@ -40,10 +40,10 @@ La interfaz debe ser minimalista, clara y consistente con los mockups aprobados.
 ## Estado funcional
 La aplicación incluye registro, login, verificación de correo, reenvío de verificación, recuperación de contraseña y cambio de contraseña. El acceso utiliza cookies de sesión HttpOnly y el cliente HTTP centralizado gestiona CSRF.
 
-La pantalla autenticada todavía no tiene el shell definitivo de producto. No asumir que existen perfiles, publicaciones, feed ni navegación social hasta que sus respectivos módulos estén implementados.
+El módulo Profiles permite al titular consultar y editar nombre visible, username y biografía. No ofrece navegación ni consulta de perfiles ajenos. La fecha de creación se muestra como dato de solo lectura. La foto y la unidad comunitaria se mantienen sin datos hasta implementar almacenamiento protegido y aprobación comunitaria, respectivamente.
 
 ## Dependencias
 No incorporar librerías de UI, iconos, estado global, routing o formularios sin una necesidad concreta, evaluación de mantenimiento y versiones fijadas. Preferir componentes pequeños y nativos mientras el alcance lo permita.
 
 ## Pruebas
-Cada flujo visual debe cubrir estados de carga, error y éxito. Los formularios deben poder operarse con teclado. Incorporar pruebas de navegador al desarrollar el shell y los primeros flujos sociales.
+Cada flujo visual debe cubrir estados de carga, error y éxito. Los formularios deben poder operarse con teclado. Incorporar pruebas de navegador para los primeros flujos de producto.
