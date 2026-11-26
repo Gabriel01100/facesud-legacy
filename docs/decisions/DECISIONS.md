@@ -129,6 +129,6 @@ Las decisiones técnicas confirmadas para esta base no aprueban automáticamente
 - **Token:** valor opaco aleatorio, se almacena únicamente su hash SHA-256, vence a los 30 minutos y es de un solo uso. Una nueva solicitud invalida tokens anteriores de la cuenta.
 - **Restablecimiento:** solo cuentas activas con credencial local pueden restablecer la contraseña. Se invalida el resto de los tokens de recuperación y se revocan todas las sesiones activas de la cuenta.
 - **Cambio autenticado:** requiere contraseña actual y CSRF válido; se revocan todas las sesiones y se solicita iniciar sesión nuevamente.
-- **Rate limiting:** 3 solicitudes por hora por IP+correo y 10 por hora por IP, con claves hash y respuesta 429.
+- **Rate limiting:** solicitud de recuperación: 3 por hora por IP+correo y 10 por hora por IP. Cambio autenticado: 5 por 15 minutos por IP+correo y 20 por 15 minutos por IP. Se usan claves hash y respuesta 429.
 - **Correo:** se utiliza el adaptador SMTP STARTTLS existente. El proveedor transaccional definitivo y sus credenciales por entorno siguen pendientes.
 - **Justificación:** ofrecer recuperación sin exponer existencia de cuentas ni conservar tokens reutilizables en la base.
