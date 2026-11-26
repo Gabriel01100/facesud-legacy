@@ -51,6 +51,15 @@ El token CSRF se devuelve en JSON y solo su hash se guarda en PostgreSQL. El cli
 
 Credenciales incorrectas, cuenta inexistente o cuenta no activa: HTTP 401 genérico. Cuenta pendiente no puede iniciar sesión.
 
+### POST /api/v1/auth/password-reset/request
+Requiere Origin permitido. Recibe email y devuelve HTTP 202 con respuesta genérica, independientemente de si existe una cuenta activa. Si corresponde, envía un token opaco de un solo uso con TTL de 30 minutos. Rate limit: 3 por hora por IP+correo y 10 por hora por IP.
+
+### POST /api/v1/auth/password-reset/confirm
+Requiere Origin permitido. Recibe token y new_password (mínimo 12 caracteres). Token válido actualiza la credencial, invalida tokens de recuperación pendientes y revoca todas las sesiones. Token inválido, vencido o usado: HTTP 400 genérico.
+
+### POST /api/v1/auth/password/change
+Requiere sesión válida, Origin permitido, CSRF y contraseña actual. Recibe current_password y new_password (mínimo 12 caracteres). Actualiza la credencial, invalida tokens de recuperación pendientes y revoca todas las sesiones; devuelve HTTP 204 y elimina la cookie actual.
+
 ### GET /api/v1/auth/me
 Requiere sesión válida; devuelve UUID y correo normalizado. last_seen_at se persiste como máximo una vez por minuto.
 
@@ -65,6 +74,7 @@ Requiere Origin permitido. Si la sesión sigue activa, exige X-CSRF-Token válid
 - Inactividad: 30 minutos.
 - Máximo: 5 sesiones activas por cuenta; al crear una sexta se revoca la más antigua.
 - PostgreSQL almacena hashes de sesión y CSRF.
+- El límite de 5 sesiones se valida bajo bloqueo de fila de cuenta; una prueba concurrente PostgreSQL cubre creación paralela.
 - La fila de cuenta se bloquea y revalida al crear sesión, después de verificar Argon2.
 - Redis no almacena sesiones ni rate limits.
 
@@ -72,22 +82,21 @@ Requiere Origin permitido. Si la sesión sigue activa, exige X-CSRF-Token válid
 Las operaciones mutables validan Origin y CSRF. Ante 403 con detalle CSRF validation failed, el cliente solicita un token nuevo y reintenta la solicitud una sola vez. El reintento debe usar un cuerpo reproducible.
 
 ## Correo
-SMTP STARTTLS con validación TLS. Variables: SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, EMAIL_FROM, FRONTEND_BASE_URL. Registro deshabilitado con HTTP 503 si no hay configuración.
+SMTP STARTTLS con validación TLS. Variables: SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, EMAIL_FROM, FRONTEND_BASE_URL. Registro y recuperación deshabilitados con HTTP 503 si no hay configuración. El proveedor SMTP/API definitivo, SPF, DKIM y DMARC siguen pendientes.
 
 Las direcciones se normalizan en NFC y se validan con email-validator antes de persistir; se conserva el comportamiento case-insensitive vigente.
 
 ## Limpieza de Identity
-Ejecutar python -m app.identity.cleanup periódicamente. El comando elimina sesiones revocadas, vencidas por TTL absoluto o inactivas por más de 30 minutos, y buckets de login que superaron su ventana de 15 minutos. Programación sugerida: cada hora mediante cron/scheduler externo.
+Ejecutar python -m app.identity.cleanup periódicamente. El comando elimina sesiones revocadas, vencidas por TTL absoluto o inactivas por más de 30 minutos; tokens de verificación/recuperación usados o vencidos con más de 7 días; y buckets antiguos de login, registro, reenvío y recuperación. Programación sugerida: cada hora mediante cron/scheduler externo.
 
 ## Producción
 REDIS_URL debe contener contraseña; REDIS_PASSWORD protege el servicio Redis en Compose. Los valores secretos se inyectan desde el entorno/secret manager.
 
 ## Pendientes
-- Recuperación y cambio de contraseña.
 - Google OpenID Connect y vinculación explícita.
-- Rate limiting de registro y reenvío de verificación.
-- Frontend de autenticación y E2E.
-- Política de revocación ante cambio de contraseña/eventos de seguridad.
-- Pruebas de concurrencia PostgreSQL bajo carga.
+- Proveedor transaccional definitivo, credenciales y configuración SPF/DKIM/DMARC.
+- Pruebas E2E de navegador para registro, verificación, login, logout, recuperación, cambio de contraseña y CSRF multi-pestaña.
+- Pruebas de concurrencia del rate limiting y carga sostenida.
+- Revisión de umbrales de rate limiting y retención de tokens con métricas/política de privacidad.
 
 La elegibilidad comunitaria por cédula de miembro es independiente de la autenticación. Google o contraseña no acreditan membresía. No se solicita ni almacena el número de cédula en esta etapa.
