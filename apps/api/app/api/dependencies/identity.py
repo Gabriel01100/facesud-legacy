@@ -17,6 +17,8 @@ def get_current_session(
 
     session = get_active_session(db, raw_token, touch=request.method == "GET")
     if session is None:
+        # Persist inactivity revocation before returning the authentication error.
+        db.commit()
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required")
     return session
 
