@@ -4,8 +4,9 @@
 - Pytest como runner.
 - Pruebas HTTP con FastAPI TestClient.
 - Cubrir los endpoints de salud y readiness.
-- Cubrir Identity: login válido/incorrecto, cuenta pendiente, cookies, sesión actual, logout, CSRF, Origin, expiración absoluta, inactividad y límite de sesiones.
-- Las pruebas de integración principales deben ejecutarse contra PostgreSQL; SQLite puede utilizarse para pruebas unitarias cuando no altera la semántica bajo prueba.
+- Cubrir Identity: login válido/incorrecto, cuenta pendiente, cookies, token CSRF, sesión actual, logout, Origin, expiración absoluta, inactividad y límite de sesiones.
+- Las pruebas HTTP de Identity usan una base SQLite aislada. Los tests de migraciones y el arranque del stack se validan con PostgreSQL en CI; deben agregarse pruebas concurrentes de sesiones sobre PostgreSQL antes de un despliegue público.
+- SQLite puede utilizarse para pruebas unitarias cuando no altera la semántica bajo prueba.
 - Validar migraciones Alembic contra una base vacía y contra una base con migraciones previas.
 
 ## Frontend
