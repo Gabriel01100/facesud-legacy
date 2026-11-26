@@ -26,6 +26,8 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 | D-018 | Acceso con correo/contraseña y Google; membresía SUD obligatoria | Confirmada por el propietario; verificación diferida |
 | D-019 | Política de duración y concurrencia de sesiones | Confirmada por el propietario |
 
+| D-023 | Perfiles privados por defecto y acceso condicionado a vinculación comunitaria aprobada | Confirmada por el propietario |
+
 ## Historial y contexto de cambios
 
 ### D-002 — Visibilidad privada (decisión anterior)
@@ -132,3 +134,13 @@ Las decisiones técnicas confirmadas para esta base no aprueban automáticamente
 - **Rate limiting:** solicitud de recuperación: 3 por hora por IP+correo y 10 por hora por IP. Cambio autenticado: 5 por 15 minutos por IP+correo y 20 por 15 minutos por IP. Se usan claves hash y respuesta 429.
 - **Correo:** se utiliza el adaptador SMTP STARTTLS existente. El proveedor transaccional definitivo y sus credenciales por entorno siguen pendientes.
 - **Justificación:** ofrecer recuperación sin exponer existencia de cuentas ni conservar tokens reutilizables en la base.
+
+
+### D-023 — Visibilidad de perfiles y acceso comunitario
+- **Estado:** confirmada por el propietario.
+- **Decisión:** los perfiles de usuario serán privados por defecto. Un perfil solo podrá ser consultado por su titular y por otros usuarios cuya vinculación comunitaria haya sido aprobada.
+- **Separación de estados:** crear una cuenta o autenticarse correctamente no concede acceso a perfiles ni acredita pertenencia a la comunidad. La identidad de cuenta y la vinculación comunitaria deben mantenerse como dominios y estados separados.
+- **Implementación diferida:** mientras no exista un procedimiento definido y operativo para aprobar la vinculación comunitaria, no habilitar perfiles públicos ni endpoints que expongan perfiles a usuarios no aprobados. El titular podrá acceder a su propio perfil.
+- **Autorización:** la regla debe aplicarse en el servidor/API, no solo ocultando elementos en la interfaz. Las consultas, listados, búsquedas y recursos derivados del perfil deberán respetar la misma política.
+- **Alcance pendiente:** esta decisión no define todavía los campos individuales del perfil, la visibilidad de publicaciones, ni las excepciones de acceso administrativo; esos aspectos requieren decisiones separadas.
+- **Justificación:** reducir la exposición de datos personales y evitar que una cuenta autenticada se interprete como una membresía comunitaria aprobada.
