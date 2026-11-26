@@ -112,15 +112,18 @@ def register(
         if created is None:
             return MessageResponse(message=GENERIC_REGISTRATION_MESSAGE)
         account, raw_token = created
+        send_verification_email(account.email_normalized, raw_token)
         db.commit()
     except IntegrityError:
         db.rollback()
         return MessageResponse(message=GENERIC_REGISTRATION_MESSAGE)
-
-    try:
-        send_verification_email(account.email_normalized, raw_token)
     except EmailDeliveryError:
+        db.rollback()
         logger.warning("Verification email could not be delivered for a new registration")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Could not send verification email. Try again later.",
+        ) from None
     return MessageResponse(message=GENERIC_REGISTRATION_MESSAGE)
 
 
@@ -155,10 +158,11 @@ def resend_verification(
     )
     if account is not None:
         raw_token = issue_new_verification_token(db, account)
-        db.commit()
         try:
             send_verification_email(account.email_normalized, raw_token)
+            db.commit()
         except EmailDeliveryError:
+            db.rollback()
             logger.warning("Verification email resend failed")
     return MessageResponse(message=GENERIC_REGISTRATION_MESSAGE)
 
@@ -310,10 +314,11 @@ def request_password_reset(
     )
     if account is not None:
         raw_token = issue_password_reset_token(db, account)
-        db.commit()
         try:
             send_password_reset_email(account.email_normalized, raw_token)
+            db.commit()
         except EmailDeliveryError:
+            db.rollback()
             logger.warning("Password reset email could not be delivered")
     return MessageResponse(
         message="Si la cuenta existe y puede restablecerse, recibirás un correo con los próximos pasos."
