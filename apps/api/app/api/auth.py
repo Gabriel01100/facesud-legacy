@@ -21,7 +21,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.identity.authentication import authenticate_local_account
 from app.identity.email import EmailDeliveryError, send_verification_email
-from app.identity.rate_limit import clear_login_attempts, consume_login_attempt
+from app.identity.rate_limit import (\n    clear_login_attempts,\n    consume_login_attempt,\n    consume_registration_attempt,\n    consume_resend_attempt,\n)
 from app.identity.registration import (
     create_pending_account,
     issue_new_verification_token,
