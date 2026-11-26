@@ -21,10 +21,6 @@ class Settings(BaseSettings):
             return "__Host-facesud_session"
         return "facesud_session"
 
-    @property
-    def csrf_cookie_name(self) -> str:
-        return "facesud_csrf"
-
     @model_validator(mode="after")
     def reject_development_defaults_in_production(self):
         if self.app_env.lower() == "production":
