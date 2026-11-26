@@ -26,6 +26,10 @@ PASSWORD_RESET_WINDOW = timedelta(hours=1)
 PASSWORD_RESET_EMAIL_IP_LIMIT = 3
 PASSWORD_RESET_IP_LIMIT = 10
 
+PASSWORD_CHANGE_WINDOW = timedelta(minutes=15)
+PASSWORD_CHANGE_EMAIL_IP_LIMIT = 5
+PASSWORD_CHANGE_IP_LIMIT = 20
+
 
 def _bucket_hash(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
@@ -189,5 +193,24 @@ def consume_password_reset_attempt(
         window=PASSWORD_RESET_WINDOW,
         email_ip_limit=PASSWORD_RESET_EMAIL_IP_LIMIT,
         ip_limit=PASSWORD_RESET_IP_LIMIT,
+        now=now,
+    )
+
+
+def consume_password_change_attempt(
+    db: Session,
+    *,
+    ip_address: str,
+    email: str,
+    now: datetime | None = None,
+) -> int | None:
+    return _consume_scoped_attempts(
+        db,
+        scope="password-change",
+        ip_address=ip_address,
+        email=email,
+        window=PASSWORD_CHANGE_WINDOW,
+        email_ip_limit=PASSWORD_CHANGE_EMAIL_IP_LIMIT,
+        ip_limit=PASSWORD_CHANGE_IP_LIMIT,
         now=now,
     )
