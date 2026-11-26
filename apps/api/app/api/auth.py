@@ -21,7 +21,12 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.identity.authentication import authenticate_local_account
 from app.identity.email import EmailDeliveryError, send_verification_email
-from app.identity.rate_limit import (\n    clear_login_attempts,\n    consume_login_attempt,\n    consume_registration_attempt,\n    consume_resend_attempt,\n)
+from app.identity.rate_limit import (
+    clear_login_attempts,
+    consume_login_attempt,
+    consume_registration_attempt,
+    consume_resend_attempt,
+)
 from app.identity.registration import (
     create_pending_account,
     issue_new_verification_token,
@@ -82,6 +87,16 @@ def register(
     if not settings.email_delivery_configured:
         raise HTTPException(status_code=503, detail="Email delivery is not configured.")
 
+    ip_address = request.client.host if request.client else "unknown"
+    retry_after = consume_registration_attempt(db, ip_address=ip_address, email=str(data.email))
+    db.commit()
+    if retry_after is not None:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many registration attempts. Try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     try:
         created = create_pending_account(db, email=str(data.email), password=data.password)
         if created is None:
@@ -110,6 +125,16 @@ def resend_verification(
     response.headers["Cache-Control"] = "no-store"
     if not settings.email_delivery_configured:
         raise HTTPException(status_code=503, detail="Email delivery is not configured.")
+
+    ip_address = request.client.host if request.client else "unknown"
+    retry_after = consume_resend_attempt(db, ip_address=ip_address, email=str(data.email))
+    db.commit()
+    if retry_after is not None:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many verification email requests. Try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
 
     normalized_email = normalize_email(str(data.email))
     account = db.scalar(
