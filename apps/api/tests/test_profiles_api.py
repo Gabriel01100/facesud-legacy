@@ -70,6 +70,7 @@ def test_profile_is_private_and_requires_authentication():
         response = client.get("/api/v1/profile/me")
         assert response.status_code == 401
         assert response.headers["cache-control"] == "no-store"
+        assert response.headers["vary"] == "Cookie"
     finally:
         teardown(client, engine)
 
