@@ -20,6 +20,9 @@ export default function App() {
   const [account, setAccount] = useState<Account | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
   const [verificationToken, setVerificationToken] = useState(
     new URLSearchParams(window.location.search).get("token") ?? "",
   );
@@ -37,7 +40,7 @@ export default function App() {
         if (active) setApiState("error");
       }
 
-      if (new URLSearchParams(window.location.search).has("token")) return;
+      if (new URLSearchParams(window.location.search).has("token") || window.location.pathname.endsWith("/reset-password")) return;
 
       try {
         const response = await authenticatedFetch(`${AUTH_URL}/me`);
@@ -180,6 +183,39 @@ export default function App() {
     }
   }
 
+  async function updatePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setChangingPassword(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await authenticatedFetch(`${AUTH_URL}/password/change`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+      });
+      if (!response.ok) throw new Error("No se pudo cambiar la contraseña. Verificá la contraseña actual.");
+      setCsrfToken(null);
+      setAccount(null);
+      setCurrentPassword("");
+      setNewPassword("");
+      setNotice("La contraseña cambió. Iniciá sesión nuevamente.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudo cambiar la contraseña.");
+    } finally {
+      setChangingPassword(false);
+    }
+  }
+
+  function switchMode(next: AuthMode) {
+    setMode(next);
+    setError("");
+    setNotice("");
+    setPassword("");
+    setVerificationToken("");
+    window.history.replaceState({}, "", next === "reset-confirm" ? "/reset-password" : next === "verify" ? "/verify-email" : "/");
+  }
+
   const statusText = {
     loading: "Comprobando conexión con el servidor…",
     connected: "Servicio disponible",
@@ -214,55 +250,69 @@ export default function App() {
               <div className="eyebrow">SESIÓN ACTIVA</div>
               <h2 id="auth-title">¡Qué bueno verte!</h2>
               <p>Iniciaste sesión como <strong>{account.email}</strong>.</p>
-              <button className="primary-button" type="button" onClick={logout} disabled={loading}>
-                {loading ? "Cerrando sesión…" : "Cerrar sesión"}
-              </button>
+              {error && <div className="feedback error" role="alert">{error}</div>}
+              {notice && <div className="feedback success" role="status">{notice}</div>}
+              <form onSubmit={updatePassword} className="password-change-form">
+                <h3>Cambiar contraseña</h3>
+                <label htmlFor="current-password">Contraseña actual</label>
+                <input id="current-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required />
+                <label htmlFor="new-password">Nueva contraseña</label>
+                <input id="new-password" type="password" autoComplete="new-password" minLength={12} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required />
+                <button className="primary-button" type="submit" disabled={changingPassword}>{changingPassword ? "Actualizando…" : "Cambiar contraseña"}</button>
+              </form>
+              <button className="text-button muted logout-button" type="button" onClick={logout} disabled={loading}>Cerrar sesión</button>
             </div>
           ) : (
             <>
               <div className="card-heading">
-                <div className="eyebrow">{mode === "register" ? "SUMATE A LA COMUNIDAD" : mode === "verify" ? "CONFIRMÁ TU CORREO" : "BIENVENIDO DE NUEVO"}</div>
-                <h2 id="auth-title">{mode === "register" ? "Crear cuenta" : mode === "verify" ? "Verificá tu correo" : "Iniciar sesión"}</h2>
-                <p>{mode === "register" ? "Completá tus datos para comenzar." : mode === "verify" ? "Ingresá el código del enlace que recibiste por correo." : "Ingresá con tu correo y contraseña."}</p>
+                <div className="eyebrow">{mode === "register" ? "SUMATE A LA COMUNIDAD" : mode === "verify" ? "CONFIRMÁ TU CORREO" : mode.startsWith("reset") ? "RECUPERÁ TU ACCESO" : "BIENVENIDO DE NUEVO"}</div>
+                <h2 id="auth-title">{mode === "register" ? "Crear cuenta" : mode === "verify" ? "Verificá tu correo" : mode === "reset-request" ? "Recuperar contraseña" : mode === "reset-confirm" ? "Elegí una nueva contraseña" : "Iniciar sesión"}</h2>
+                <p>{mode === "register" ? "Completá tus datos para comenzar." : mode === "verify" ? "Ingresá el código del enlace que recibiste por correo." : mode === "reset-request" ? "Te enviaremos un enlace si existe una cuenta asociada a ese correo." : mode === "reset-confirm" ? "El enlace vence en 30 minutos y solo puede utilizarse una vez." : "Ingresá con tu correo y contraseña."}</p>
               </div>
 
-              {mode !== "verify" && (
+              {["login", "register"].includes(mode) && (
                 <div className="mode-switch" role="tablist" aria-label="Tipo de acceso">
-                  <button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} onClick={() => { setMode("login"); setError(""); setNotice(""); }}>Ingresar</button>
-                  <button type="button" role="tab" aria-selected={mode === "register"} className={mode === "register" ? "active" : ""} onClick={() => { setMode("register"); setError(""); setNotice(""); }}>Crear cuenta</button>
+                  <button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "active" : ""} onClick={() => switchMode("login")}>Ingresar</button>
+                  <button type="button" role="tab" aria-selected={mode === "register"} className={mode === "register" ? "active" : ""} onClick={() => switchMode("register")}>Crear cuenta</button>
                 </div>
               )}
 
               <form onSubmit={submit}>
-                {mode !== "verify" ? (
+                {["login", "register", "reset-request"].includes(mode) && (
                   <>
                     <label htmlFor="email">Correo electrónico</label>
                     <input id="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nombre@correo.com" required />
-                    <label htmlFor="password">Contraseña</label>
-                    <input id="password" type="password" autoComplete={mode === "register" ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={mode === "register" ? "Mínimo 12 caracteres" : "Tu contraseña"} minLength={mode === "register" ? 12 : 1} required />
                   </>
-                ) : (
+                )}
+                {["login", "register", "reset-confirm"].includes(mode) && (
+                  <>
+                    <label htmlFor="password">{mode === "reset-confirm" ? "Nueva contraseña" : "Contraseña"}</label>
+                    <input id="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder={mode === "login" ? "Tu contraseña" : "Mínimo 12 caracteres"} minLength={mode === "login" ? 1 : 12} required />
+                  </>
+                )}
+                {["verify", "reset-confirm"].includes(mode) ? (
                   <div className="field-group">
-                    <label htmlFor="verification-token">Código de verificación</label>
-                    <input id="verification-token" type="text" value={verificationToken} onChange={(event) => setVerificationToken(event.target.value)} placeholder="Pegá el código del correo" minLength={32} required />
-                    <label htmlFor="resend-email">Correo electrónico para reenviar</label>
-                    <input id="resend-email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nombre@correo.com" />
+                    <label htmlFor="verification-token">Código de seguridad</label>
+                    <input id="verification-token" type="text" autoComplete="one-time-code" value={verificationToken} onChange={(event) => setVerificationToken(event.target.value)} placeholder="Pegá el código del correo" minLength={32} required />
+                    {mode === "verify" && <>
+                      <label htmlFor="resend-email">Correo electrónico para reenviar</label>
+                      <input id="resend-email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nombre@correo.com" />
+                    </>}
                   </div>
                 )}
 
                 {error && <div className="feedback error" role="alert">{error}</div>}
                 {notice && <div className="feedback success" role="status">{notice}</div>}
                 <button className="primary-button" type="submit" disabled={loading}>
-                  {loading ? "Procesando…" : mode === "register" ? "Crear cuenta" : mode === "verify" ? "Verificar correo" : "Ingresar"}
+                  {loading ? "Procesando…" : mode === "register" ? "Crear cuenta" : mode === "verify" ? "Verificar correo" : mode === "reset-request" ? "Enviar enlace" : mode === "reset-confirm" ? "Restablecer contraseña" : "Ingresar"}
                 </button>
               </form>
 
-              {mode === "verify" && (
-                <div className="secondary-actions">
-                  <button type="button" className="text-button" onClick={resendVerification} disabled={loading || !email}>Reenviar correo de verificación</button>
-                  <button type="button" className="text-button muted" onClick={() => { setMode("login"); setError(""); }}>Volver al inicio de sesión</button>
-                </div>
-              )}
+              <div className="secondary-actions">
+                {mode === "login" && <button type="button" className="text-button" onClick={() => switchMode("reset-request")}>¿Olvidaste tu contraseña?</button>}
+                {mode === "verify" && <button type="button" className="text-button" onClick={resendVerification} disabled={loading || !email}>Reenviar correo de verificación</button>}
+                {mode !== "login" && <button type="button" className="text-button muted" onClick={() => switchMode("login")}>Volver al inicio de sesión</button>}
+              </div>
               {mode === "register" && <p className="password-hint">La contraseña debe tener al menos 12 caracteres.</p>}
             </>
           )}
