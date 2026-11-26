@@ -13,3 +13,11 @@ class AuthenticatedAccount(BaseModel):
 
     id: UUID
     email: str
+
+
+class LoginResponse(AuthenticatedAccount):
+    csrf_token: str
+
+
+class CsrfTokenResponse(BaseModel):
+    csrf_token: str
