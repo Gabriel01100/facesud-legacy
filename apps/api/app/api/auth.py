@@ -27,6 +27,7 @@ from app.identity.email import EmailDeliveryError, send_password_reset_email, se
 from app.identity.rate_limit import (
     clear_login_attempts,
     consume_login_attempt,
+    consume_password_change_attempt,
     consume_password_reset_attempt,
     consume_registration_attempt,
     consume_resend_attempt,
@@ -355,6 +356,17 @@ def change_password(
     db: Session = Depends(get_db),
 ) -> Response:
     response.headers["Cache-Control"] = "no-store"
+    ip_address = request.client.host if request.client else "unknown"
+    retry_after = consume_password_change_attempt(
+        db, ip_address=ip_address, email=session.account.email_normalized
+    )
+    db.commit()
+    if retry_after is not None:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many password change attempts. Try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
     changed = change_account_password(
         db,
         account_id=session.account_id,
