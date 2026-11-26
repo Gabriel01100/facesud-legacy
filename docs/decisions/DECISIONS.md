@@ -121,3 +121,14 @@ Las decisiones técnicas confirmadas para esta base no aprueban automáticamente
 - **Privacidad y abuso:** no se aplica un bloqueo global por correo, para evitar que terceros puedan impedir que una víctima registre o verifique su cuenta desde otras redes.
 - **Operación:** la limpieza de buckets conserva los registros durante la ventana máxima configurada.
 - **Consideración de proxy:** la IP usada debe ser la que entregue el servidor/proxy confiable. No se debe confiar en encabezados X-Forwarded-For suministrados directamente por clientes.
+
+
+### D-022 — Recuperación y cambio de contraseña
+- **Estado:** política técnica inicial implementada; revisar antes de habilitar registro público.
+- **Solicitud de recuperación:** respuesta genérica para no revelar si el correo corresponde a una cuenta activa.
+- **Token:** valor opaco aleatorio, se almacena únicamente su hash SHA-256, vence a los 30 minutos y es de un solo uso. Una nueva solicitud invalida tokens anteriores de la cuenta.
+- **Restablecimiento:** solo cuentas activas con credencial local pueden restablecer la contraseña. Se invalida el resto de los tokens de recuperación y se revocan todas las sesiones activas de la cuenta.
+- **Cambio autenticado:** requiere contraseña actual y CSRF válido; se revocan todas las sesiones y se solicita iniciar sesión nuevamente.
+- **Rate limiting:** 3 solicitudes por hora por IP+correo y 10 por hora por IP, con claves hash y respuesta 429.
+- **Correo:** se utiliza el adaptador SMTP STARTTLS existente. El proveedor transaccional definitivo y sus credenciales por entorno siguen pendientes.
+- **Justificación:** ofrecer recuperación sin exponer existencia de cuentas ni conservar tokens reutilizables en la base.
