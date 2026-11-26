@@ -44,6 +44,7 @@ def reset_password(
     db: Session, *, raw_token: str, new_password: str, now: datetime | None = None
 ) -> bool:
     current_time = now or datetime.now(timezone.utc)
+    new_password_hash = hash_password(new_password)
     token = db.scalar(
         select(PasswordResetToken)
         .where(
@@ -73,7 +74,7 @@ def reset_password(
     if credential is None:
         return False
 
-    credential.password_hash = hash_password(new_password)
+    credential.password_hash = new_password_hash
     credential.password_changed_at = current_time
     token.used_at = current_time
     db.execute(
@@ -103,6 +104,11 @@ def change_password(
     now: datetime | None = None,
 ) -> bool:
     current_time = now or datetime.now(timezone.utc)
+    credential_snapshot = db.get(PasswordCredential, account_id)
+    if credential_snapshot is None or not verify_password(credential_snapshot.password_hash, current_password):
+        return False
+
+    new_password_hash = hash_password(new_password)
     account = db.scalar(
         select(Account)
         .where(Account.id == account_id, Account.status == AccountStatus.ACTIVE)
@@ -117,10 +123,10 @@ def change_password(
         .where(PasswordCredential.account_id == account_id)
         .with_for_update()
     )
-    if credential is None or not verify_password(credential.password_hash, current_password):
+    if credential is None or credential.password_hash != credential_snapshot.password_hash:
         return False
 
-    credential.password_hash = hash_password(new_password)
+    credential.password_hash = new_password_hash
     credential.password_changed_at = current_time
     db.execute(
         update(PasswordResetToken)
