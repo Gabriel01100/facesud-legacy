@@ -1,16 +1,17 @@
-# Estrategia de pruebas — primera versión ejecutable
+# Estrategia de pruebas
 
 ## Backend
 - Pytest como runner.
 - Pruebas HTTP con FastAPI TestClient.
-- Cubrir el contrato de `GET /api/v1/health`.
-- Cubrir readiness con dependencias disponibles y con PostgreSQL o Redis no disponibles.
-- Las pruebas de integración requieren PostgreSQL y Redis reales o servicios equivalentes.
-- Validar la migración inicial ejecutando Alembic contra una base vacía.
+- Cubrir los endpoints de salud y readiness.
+- Cubrir Identity: login válido/incorrecto, cuenta pendiente, cookies, token CSRF, sesión actual, logout, Origin, expiración absoluta, inactividad y límite de sesiones.
+- Las pruebas HTTP de Identity usan una base SQLite aislada. Los tests de migraciones y el arranque del stack se validan con PostgreSQL en CI; deben agregarse pruebas concurrentes de sesiones sobre PostgreSQL antes de un despliegue público.
+- SQLite puede utilizarse para pruebas unitarias cuando no altera la semántica bajo prueba.
+- Validar migraciones Alembic contra una base vacía y contra una base con migraciones previas.
 
 ## Frontend
-- El criterio de esta etapa es el build TypeScript/Vite sin errores.
-- La conexión de la pantalla con la API se verifica manualmente en navegador o mediante comprobación de integración cuando exista un runner E2E aprobado.
+- El criterio actual es el build TypeScript/Vite sin errores.
+- Las integraciones de autenticación requieren pruebas de navegador/E2E cuando se implemente el frontend.
 
 ## Infraestructura
 - Validar construcción y arranque de los cuatro servicios con Docker Compose.
@@ -19,7 +20,7 @@
 - Confirmar que detener PostgreSQL o Redis provoca readiness HTTP 503.
 
 ## CI
-El workflow ejecuta pruebas backend con servicios PostgreSQL/Redis, build frontend y validación/build de Docker Compose.
+El workflow ejecuta pruebas backend, build frontend y validación/build de Docker Compose. Los resultados deben verificarse en el run correspondiente antes de declarar una tarea validada.
 
 ## Reporte
 Distinguir pruebas ejecutadas, pruebas que pasaron, fallaron y no se pudieron ejecutar. No declarar cobertura ni resultados no medidos.

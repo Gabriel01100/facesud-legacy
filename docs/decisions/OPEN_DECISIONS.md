@@ -18,10 +18,10 @@
 - Reglas definitivas de normalización y validación de direcciones de correo.
 - Verificación de correo y reglas para activar una cuenta.
 - Flujo y canal de recuperación de contraseña.
-- Duración de sesiones, expiración por inactividad y límite de sesiones/dispositivos.
 - Política de cierre de sesiones al cambiar contraseña o ante eventos de seguridad.
 - Configuración OAuth/OIDC de Google: credenciales, URI de callback, scopes mínimos y entornos.
 - Proveedor de correo transaccional y plantillas de verificación/recuperación.
+- Límites de intentos de autenticación y estrategia de rate limiting.
 
 ## Técnica y operación
 - Hosting, almacenamiento y correo transaccional.

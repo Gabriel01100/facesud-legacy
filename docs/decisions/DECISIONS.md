@@ -24,6 +24,7 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 | D-016 | Aportes voluntarios bajo modalidad `both` | Confirmada por el propietario; fuera de Etapa 1 |
 | D-017 | Autenticación web mediante cookies HttpOnly y sesiones opacas persistidas en PostgreSQL | Confirmada por el propietario |
 | D-018 | Acceso con correo/contraseña y Google; membresía SUD obligatoria | Confirmada por el propietario; verificación diferida |
+| D-019 | Política de duración y concurrencia de sesiones | Confirmada por el propietario |
 
 ## Historial y contexto de cambios
 
@@ -73,7 +74,7 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 - **Protección de sesiones:** generar identificadores con un generador criptográficamente seguro; almacenar solo un hash del identificador, nunca el valor de la cookie; establecer expiración; invalidar en logout; rotar el identificador al autenticar y ante cambios sensibles.
 - **CSRF y origen:** las operaciones que modifican estado deberán incorporar defensa CSRF y validación estricta del origen. `SameSite` no se considera la única defensa.
 - **Persistencia:** PostgreSQL será el almacén inicial de sesiones. Redis conserva exclusivamente el uso de infraestructura/readiness aprobado por D-013.
-- **Límites:** no define todavía duración exacta de sesiones ni política de dispositivos concurrentes.
+- **Duración y concurrencia:** definidas por D-019.
 - **Justificación:** reducir la exposición del identificador de sesión a JavaScript y permitir revocación del lado servidor.
 - **Evolución:** una futura aplicación móvil o integración externa podrá tener un mecanismo separado.
 
@@ -85,6 +86,15 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 - **Implementación diferida:** durante las etapas actuales no se exigirá ni verificará la cédula porque todavía no están disponibles los datos ni el procedimiento autorizado. La verificación se diseñará e implementará en una etapa posterior antes de habilitar el acceso comunitario real.
 - **Separación de dominios:** identidad/autenticación y membresía/verificación serán conceptos y estados separados. No asumir integración institucional, consulta automática ni almacenar/exponer el número de cédula sin una decisión específica y un diseño de privacidad.
 - **Justificación:** admitir métodos de acceso convenientes sin confundir autenticación con pertenencia o elegibilidad comunitaria.
+
+### D-019 — Política de duración y concurrencia de sesiones
+- **Estado:** confirmada por el propietario.
+- **Duración absoluta:** una sesión vence a los 7 días desde su creación, aunque se mantenga activa.
+- **Expiración por inactividad:** una sesión se invalida después de 30 minutos sin actividad autenticada.
+- **Concurrencia:** máximo de 5 sesiones activas por cuenta.
+- **Al emitir una sexta sesión:** se revoca la sesión activa más antigua y se conserva la nueva.
+- **Actividad:** una solicitud autenticada válida actualiza `last_seen_at`; solicitudes rechazadas por CSRF no deben considerarse actividad de negocio.
+- **Persistencia:** los tiempos y revocaciones se controlan en PostgreSQL, no en Redis.
 
 ## Decisiones técnicas anteriores
 Las decisiones técnicas confirmadas para esta base no aprueban automáticamente herramientas o funcionalidades futuras. Las decisiones abiertas siguen listadas en [OPEN_DECISIONS.md](OPEN_DECISIONS.md).

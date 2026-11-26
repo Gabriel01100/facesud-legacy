@@ -1,12 +1,20 @@
 import hmac
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.identity.security import new_session_secrets, token_digest
+from app.identity.security import new_opaque_token, new_session_secrets, token_digest
 from app.models.identity import Account, AccountStatus, UserSession
+
+SESSION_ABSOLUTE_TTL = timedelta(days=7)
+SESSION_IDLE_TTL = timedelta(minutes=30)
+MAX_ACTIVE_SESSIONS = 5
+
+
+def _utc(value: datetime) -> datetime:
+    return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value.astimezone(timezone.utc)
 
 
 def normalize_email(email: str) -> str:
@@ -21,17 +29,45 @@ def create_session(
     *,
     account_id: UUID,
     expires_at: datetime,
+    now: datetime | None = None,
 ) -> tuple[UserSession, str, str]:
+    current_time = now or datetime.now(timezone.utc)
     if expires_at.tzinfo is None:
         raise ValueError("Session expiration must be timezone-aware")
-    if expires_at <= datetime.now(timezone.utc):
+    if _utc(expires_at) <= _utc(current_time):
         raise ValueError("Session expiration must be in the future")
+    if _utc(expires_at) > _utc(current_time) + SESSION_ABSOLUTE_TTL:
+        raise ValueError("Session expiration exceeds the absolute session lifetime")
+
+    # Serialize session issuance per account on databases that support row locks.
+    db.scalar(select(Account).where(Account.id == account_id).with_for_update())
+
+    active_sessions = list(
+        db.scalars(
+            select(UserSession).where(
+                UserSession.account_id == account_id,
+                UserSession.revoked_at.is_(None),
+                UserSession.expires_at > current_time,
+            )
+        )
+    )
+    active_sessions = [
+        item for item in active_sessions
+        if current_time - _utc(item.last_seen_at or item.created_at) < SESSION_IDLE_TTL
+    ]
+    active_sessions.sort(key=lambda item: _utc(item.created_at))
+
+    while len(active_sessions) >= MAX_ACTIVE_SESSIONS:
+        oldest = active_sessions.pop(0)
+        oldest.revoked_at = current_time
 
     raw_session_token, raw_csrf_token = new_session_secrets()
     session = UserSession(
         account_id=account_id,
         token_hash=token_digest(raw_session_token),
         csrf_token_hash=token_digest(raw_csrf_token),
+        created_at=current_time,
+        last_seen_at=current_time,
         expires_at=expires_at,
     )
     db.add(session)
@@ -39,7 +75,13 @@ def create_session(
     return session, raw_session_token, raw_csrf_token
 
 
-def get_active_session(db: Session, raw_token: str, *, now: datetime | None = None) -> UserSession | None:
+def get_active_session(
+    db: Session,
+    raw_token: str,
+    *,
+    now: datetime | None = None,
+    touch: bool = True,
+) -> UserSession | None:
     current_time = now or datetime.now(timezone.utc)
     statement = (
         select(UserSession)
@@ -51,7 +93,31 @@ def get_active_session(db: Session, raw_token: str, *, now: datetime | None = No
             Account.status == AccountStatus.ACTIVE,
         )
     )
-    return db.scalar(statement)
+    session = db.scalar(statement)
+    if session is None:
+        return None
+
+    last_activity = _utc(session.last_seen_at or session.created_at)
+    if _utc(current_time) - last_activity >= SESSION_IDLE_TTL:
+        session.revoked_at = current_time
+        db.flush()
+        return None
+
+    if touch:
+        touch_session(db, session, now=current_time)
+    return session
+
+
+def touch_session(db: Session, session: UserSession, *, now: datetime | None = None) -> None:
+    session.last_seen_at = now or datetime.now(timezone.utc)
+    db.flush()
+
+
+def rotate_csrf_token(db: Session, session: UserSession) -> str:
+    raw_token = new_opaque_token()
+    session.csrf_token_hash = token_digest(raw_token)
+    db.flush()
+    return raw_token
 
 
 def verify_csrf_token(session: UserSession, raw_token: str) -> bool:

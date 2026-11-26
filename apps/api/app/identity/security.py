@@ -5,6 +5,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
 
 _password_hasher = PasswordHasher()
+DUMMY_PASSWORD_HASH = _password_hasher.hash("not-a-real-facesud-password")
 
 
 def hash_password(password: str) -> str:
