@@ -53,7 +53,7 @@ def create_session(
         item for item in active_sessions
         if current_time - _utc(item.last_seen_at or item.created_at) <= SESSION_IDLE_TTL
     ]
-    active_sessions.sort(key=lambda item: _utc(item.last_seen_at or item.created_at))
+    active_sessions.sort(key=lambda item: _utc(item.created_at))
 
     while len(active_sessions) >= MAX_ACTIVE_SESSIONS:
         oldest = active_sessions.pop(0)
