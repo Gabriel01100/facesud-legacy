@@ -53,7 +53,7 @@ def create_session(
     )
     active_sessions = [
         item for item in active_sessions
-        if current_time - _utc(item.last_seen_at or item.created_at) <= SESSION_IDLE_TTL
+        if current_time - _utc(item.last_seen_at or item.created_at) < SESSION_IDLE_TTL
     ]
     active_sessions.sort(key=lambda item: _utc(item.created_at))
 
@@ -98,7 +98,7 @@ def get_active_session(
         return None
 
     last_activity = _utc(session.last_seen_at or session.created_at)
-    if _utc(current_time) - last_activity > SESSION_IDLE_TTL:
+    if _utc(current_time) - last_activity >= SESSION_IDLE_TTL:
         session.revoked_at = current_time
         db.flush()
         return None
