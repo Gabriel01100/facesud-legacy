@@ -9,6 +9,10 @@
 - Agregar pruebas concurrentes de creación/revocación de sesiones y rate limiting bajo carga antes de despliegue público.
 - Validar migraciones Alembic contra una base vacía y una base con migraciones previas.
 
+## Profiles
+- Cubrir consulta del perfil propio, actualización allowlist, unicidad de username, normalización, CSRF, respuestas privadas no cacheables y ausencia de rutas de consulta ajena.
+- Ejecutar migraciones de Profiles contra PostgreSQL y verificar que las tablas Identity existentes no sufren regresiones.
+
 ## Frontend
 - Build TypeScript/Vite.
 - authenticatedFetch renueva token CSRF y reintenta una vez ante el error específico de CSRF.
