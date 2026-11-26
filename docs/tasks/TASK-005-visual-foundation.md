@@ -16,6 +16,7 @@ Establecer una base visual y de accesibilidad consistente para FaceSud antes de 
 - [x] Documentar convenciones para evitar controles ficticios y estilos inconsistentes.
 - [x] Implementar shell autenticado de escritorio y móvil.
 - [x] Mantener solo la navegación de Inicio, sin enlaces a destinos sociales todavía inexistentes.
+- [x] Usar landmarks semánticos y anunciar el estado de conexión de la API a tecnologías de asistencia.
 - [x] Ofrecer cierre de sesión tanto en escritorio como en móvil.
 - [ ] Añadir pruebas visuales y de teclado en navegador.
 
