@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     def validate_environment_configuration(self):
         if self.app_env.strip().lower() in {"production", "prod"}:
             placeholders = ("facesud_dev", "localhost", "example", "changeme")
-            configured = f"{self.database_url} {self.redis_url} {self.cors_origins} {self.frontend_base_url}".lower()
+            configured = f"{self.database_url} {self.redis_url} {self.cors_origins} {self.frontend_base_url} {self.smtp_host or ''} {self.email_from or ''}".lower()
             if any(value in configured for value in placeholders):
                 raise ValueError("Production configuration contains development/example values")
             if not self.allowed_origins or any(not origin.startswith("https://") for origin in self.allowed_origins):
