@@ -13,7 +13,7 @@
    - `docs/operations/AI_WORK_CONTRACT.md`
 2. Trabajar en ramas de tarea; nunca hacer commits directamente sobre `main`.
 3. No inventar ni aprobar decisiones de producto pendientes. Consultar `docs/decisions/OPEN_DECISIONS.md`.
-4. Respetar el alcance de la tarea. La primera versión ejecutable no incluye funcionalidades sociales ni autenticación.
+4. Respetar el alcance vigente de cada tarea. Identity/autenticación ya está implementado parcialmente; no asumir que los módulos sociales están disponibles.
 5. No agregar secretos, datos personales reales ni valores de producción al repositorio.
 6. Justificar dependencias nuevas y fijar versiones.
 7. No afirmar que se ejecutaron pruebas, builds o despliegues si no se verificaron.
