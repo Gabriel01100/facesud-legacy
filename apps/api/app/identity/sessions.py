@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.identity.security import new_session_secrets, token_digest
+from app.identity.security import new_opaque_token, new_session_secrets, token_digest
 from app.models.identity import Account, AccountStatus, UserSession
 
 SESSION_ABSOLUTE_TTL = timedelta(days=7)
@@ -111,6 +111,13 @@ def get_active_session(
 def touch_session(db: Session, session: UserSession, *, now: datetime | None = None) -> None:
     session.last_seen_at = now or datetime.now(timezone.utc)
     db.flush()
+
+
+def rotate_csrf_token(db: Session, session: UserSession) -> str:
+    raw_token = new_opaque_token()
+    session.csrf_token_hash = token_digest(raw_token)
+    db.flush()
+    return raw_token
 
 
 def verify_csrf_token(session: UserSession, raw_token: str) -> bool:
