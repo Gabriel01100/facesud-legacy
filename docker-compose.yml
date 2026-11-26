@@ -48,7 +48,7 @@ services:
       SMTP_USERNAME: ${SMTP_USERNAME:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
-      EMAIL_FROM: ${EMAIL_FROM:-FaceSud <no-reply@facesud.local>}
+      EMAIL_FROM: "${EMAIL_FROM:-FaceSud <no-reply@facesud.local>}"
     command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
     ports:
       - "8000:8000"
