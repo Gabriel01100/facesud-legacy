@@ -13,6 +13,12 @@ No almacenar número de miembro, documentos ni pruebas documentales en el MVP. N
 - No confiar en IDs, roles ni estados enviados por el cliente.
 - Prevenir IDOR; respuestas de recuperación sin enumeración de cuentas.
 
+## Perfiles
+- Los perfiles son privados por defecto. La cuenta solo puede consultar su propio perfil hasta que exista un procedimiento operativo de aprobación comunitaria.
+- No exponer perfiles por ID, username, listados o búsquedas antes de habilitar expresamente la autorización comunitaria.
+- Las respuestas de perfil deben ser no cacheables y variar por cookie de sesión.
+- Mantener separados identidad de cuenta, atributos de perfil y vinculación comunitaria.
+
 ## API y archivos
 Validar entrada/salida; DTOs explícitos; CORS limitado; consultas parametrizadas; paginación y límites. Validar tipo real y tamaño de archivos, renombrar, almacenar fuera del webroot y usar URLs controladas. No confiar en Content-Type del cliente.
 
