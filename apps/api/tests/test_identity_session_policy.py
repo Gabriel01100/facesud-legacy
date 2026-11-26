@@ -136,3 +136,47 @@ def test_cleanup_removes_revoked_expired_idle_sessions_and_old_rate_limit_bucket
         assert db.scalar(select(UserSession)) is None
         assert db.scalar(select(LoginRateLimit)) is None
     engine.dispose()
+
+
+def test_concurrent_session_creation_respects_account_session_limit():
+    import os
+    from concurrent.futures import ThreadPoolExecutor
+    from uuid import uuid4
+
+    database_url = os.getenv("IDENTITY_TEST_DATABASE_URL")
+    if not database_url:
+        pytest.skip("Requires the PostgreSQL identity integration database")
+
+    engine = create_engine(database_url, pool_size=10, max_overflow=0)
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+    with Session(engine) as db:
+        account = Account(email_normalized=f"concurrency-{uuid4()}@example.com", status=AccountStatus.ACTIVE)
+        db.add(account)
+        db.commit()
+        account_id = account.id
+
+    def create_one_session(_index: int) -> None:
+        now = datetime.now(timezone.utc)
+        with Session(engine) as db:
+            create_session(
+                db,
+                account_id=account_id,
+                expires_at=now + SESSION_ABSOLUTE_TTL,
+                now=now,
+            )
+            db.commit()
+
+    try:
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            list(executor.map(create_one_session, range(8)))
+        with Session(engine) as db:
+            active_count = len(list(db.scalars(
+                select(UserSession).where(
+                    UserSession.account_id == account_id,
+                    UserSession.revoked_at.is_(None),
+                )
+            )))
+        assert active_count == MAX_ACTIVE_SESSIONS
+    finally:
+        engine.dispose()
