@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
@@ -98,7 +99,7 @@ def reset_password(
 def change_password(
     db: Session,
     *,
-    account_id,
+    account_id: UUID,
     current_password: str,
     new_password: str,
     now: datetime | None = None,
