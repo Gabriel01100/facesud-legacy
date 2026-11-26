@@ -5,7 +5,7 @@
 - Logout devuelve 204 y limpia la cookie cuando no existe sesión vigente o ya venció. Si existe sesión activa, sigue exigiendo Origin permitido y CSRF válido.
 - Cookies Secure y prefijo __Host- en todo entorno salvo development y test.
 - Tests HTTP de autenticación y registro ejecutables contra PostgreSQL mediante IDENTITY_TEST_DATABASE_URL; SQLite queda como fallback local y para pruebas unitarias.
-- Rate limiting de login persistido en PostgreSQL: 5 intentos por 15 minutos por combinación IP/correo y 30 por IP en 15 minutos. Ventana fija, respuesta 429 y Retry-After. Un login exitoso limpia ambos buckets.
+- Rate limiting de login persistido en PostgreSQL: 5 intentos por 15 minutos por combinación IP/correo y 30 por IP en 15 minutos. Ventana fija, respuesta 429 y Retry-After. Un login exitoso limpia ambos buckets.\n- Rate limiting de registro: 2 intentos por hora por IP/correo y 5 por hora por IP. Reenvío de verificación: 3 por hora por IP/correo y 10 por hora por IP. Los buckets usan claves hash y scopes separados; ver D-021.
 - La autenticación no bloquea la fila de cuenta mientras calcula Argon2. create_session toma el bloqueo y vuelve a comprobar que la cuenta exista y siga ACTIVE.
 - En producción, REDIS_URL debe contener contraseña.
 - Cliente frontend exporta authenticatedFetch: ante 403 específico de CSRF, solicita token nuevo y reintenta una sola vez.
