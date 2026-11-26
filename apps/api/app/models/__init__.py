@@ -6,6 +6,7 @@ from app.models.identity import (
     ExternalIdentity,
     LoginRateLimit,
     PasswordCredential,
+    PasswordResetToken,
     UserSession,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "ExternalIdentity",
     "LoginRateLimit",
     "PasswordCredential",
+    "PasswordResetToken",
     "UserSession",
 ]
