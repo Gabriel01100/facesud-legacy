@@ -15,7 +15,8 @@ async def prevent_private_response_caching(request: Request, call_next):
     if request.url.path.startswith(("/api/v1/auth/", "/api/v1/profile/")):
         response.headers["Cache-Control"] = "no-store"
     if request.url.path.startswith("/api/v1/profile/"):
-        response.headers["Vary"] = "Cookie"
+        vary = response.headers.get("Vary")
+        response.headers["Vary"] = f"{vary}, Cookie" if vary and "cookie" not in vary.lower() else (vary or "Cookie")
     return response
 
 
