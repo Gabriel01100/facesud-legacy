@@ -13,12 +13,9 @@ router = APIRouter(prefix="/api/v1/profile", tags=["profiles"])
 
 def _response(profile, account) -> ProfileResponse:
     return ProfileResponse(
-        id=profile.id if profile is not None else account.id,
         display_name=profile.display_name if profile is not None else None,
         username=profile.username if profile is not None else None,
         bio=profile.bio if profile is not None else None,
-        created_at=profile.created_at if profile is not None else account.created_at,
-        updated_at=profile.updated_at if profile is not None else None,
         account_created_at=account.created_at,
         avatar_url=None,
         community_unit=None,
