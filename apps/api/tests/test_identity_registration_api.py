@@ -208,3 +208,73 @@ def test_verification_resend_is_rate_limited(monkeypatch):
         assert int(responses[3].headers["Retry-After"]) > 0
     finally:
         teardown(client, engine)
+
+
+def test_password_reset_is_generic_single_use_and_revokes_existing_sessions(monkeypatch):
+    client, engine, verification_emails = build_client(monkeypatch)
+    reset_emails = []
+    monkeypatch.setattr("app.api.auth.send_password_reset_email", lambda recipient, token: reset_emails.append((recipient, token)))
+    try:
+        headers = {"Origin": "http://localhost:5173"}
+        registered = client.post(
+            "/api/v1/auth/register",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers=headers,
+        )
+        assert registered.status_code == 202
+        verified = client.post(
+            "/api/v1/auth/email-verification/verify",
+            json={"token": verification_emails[0][1]},
+            headers=headers,
+        )
+        assert verified.status_code == 200
+        login = client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers=headers,
+        )
+        assert login.status_code == 200
+
+        request_reset = client.post(
+            "/api/v1/auth/password-reset/request",
+            json={"email": "person@example.com"},
+            headers=headers,
+        )
+        unknown_reset = client.post(
+            "/api/v1/auth/password-reset/request",
+            json={"email": "missing@example.com"},
+            headers=headers,
+        )
+        assert request_reset.status_code == unknown_reset.status_code == 202
+        assert request_reset.json() == unknown_reset.json()
+        assert len(reset_emails) == 1
+
+        reset = client.post(
+            "/api/v1/auth/password-reset/confirm",
+            json={"token": reset_emails[0][1], "new_password": "a-new-long-password"},
+            headers=headers,
+        )
+        assert reset.status_code == 200
+        assert client.get("/api/v1/auth/me").status_code == 401
+
+        old_login = client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers=headers,
+        )
+        new_login = client.post(
+            "/api/v1/auth/login",
+            json={"email": "person@example.com", "password": "a-new-long-password"},
+            headers=headers,
+        )
+        assert old_login.status_code == 401
+        assert new_login.status_code == 200
+
+        reused = client.post(
+            "/api/v1/auth/password-reset/confirm",
+            json={"token": reset_emails[0][1], "new_password": "another-new-password"},
+            headers=headers,
+        )
+        assert reused.status_code == 400
+    finally:
+        teardown(client, engine)
