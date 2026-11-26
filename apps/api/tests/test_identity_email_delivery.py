@@ -1,4 +1,3 @@
-from email.message import EmailMessage
 from types import SimpleNamespace
 
 from app.identity import email as email_module
