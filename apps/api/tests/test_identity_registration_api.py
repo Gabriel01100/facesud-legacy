@@ -172,3 +172,39 @@ def test_registration_rejects_untrusted_origin(monkeypatch):
         assert response.status_code == 403
     finally:
         teardown(client, engine)
+
+
+def test_registration_is_rate_limited_without_disclosing_account_state(monkeypatch):
+    client, engine, _ = build_client(monkeypatch)
+    try:
+        headers = {"Origin": "http://localhost:5173"}
+        payload = {"email": "person@example.com", "password": "a-long-test-password"}
+        first = client.post("/api/v1/auth/register", json=payload, headers=headers)
+        second = client.post("/api/v1/auth/register", json=payload, headers=headers)
+        limited = client.post("/api/v1/auth/register", json=payload, headers=headers)
+
+        assert first.status_code == 202
+        assert second.status_code == 202
+        assert first.json() == second.json()
+        assert limited.status_code == 429
+        assert int(limited.headers["Retry-After"]) > 0
+    finally:
+        teardown(client, engine)
+
+
+def test_verification_resend_is_rate_limited(monkeypatch):
+    client, engine, _ = build_client(monkeypatch)
+    try:
+        headers = {"Origin": "http://localhost:5173"}
+        payload = {"email": "person@example.com"}
+        responses = [
+            client.post("/api/v1/auth/email-verification/resend", json=payload, headers=headers)
+            for _ in range(4)
+        ]
+
+        assert [response.status_code for response in responses[:3]] == [202, 202, 202]
+        assert responses[0].json() == responses[1].json() == responses[2].json()
+        assert responses[3].status_code == 429
+        assert int(responses[3].headers["Retry-After"]) > 0
+    finally:
+        teardown(client, engine)
