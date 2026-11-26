@@ -251,7 +251,7 @@ export default function App() {
             <div className="workspace-sidebar-account">
               <span className="account-avatar" aria-hidden="true">{account.email.charAt(0).toUpperCase()}</span>
               <span className="account-email" title={account.email}>{account.email}</span>
-              <button className="text-button muted" type="button" onClick={logout} disabled={loading}>Salir</button>
+              
             </div>
           </aside>
 
@@ -261,7 +261,7 @@ export default function App() {
                 <div className="eyebrow">FACE SUD · COMUNIDAD</div>
                 <h1 className="workspace-title">Inicio</h1>
               </div>
-              <span className="workspace-user">{account.email}</span>
+              <div className="workspace-header-actions"><span className="workspace-user">{account.email}</span><button className="text-button" type="button" onClick={logout} disabled={loading}>Cerrar sesión</button></div>
             </header>
 
             <section className="workspace-welcome">
@@ -283,13 +283,10 @@ export default function App() {
                   <span className="status-pill">En desarrollo</span>
                 </div>
                 <p className="workspace-panel-copy">La cuenta y el acceso seguro ya están disponibles. Las publicaciones, perfiles y el feed se incorporarán en próximas etapas.</p>
-                <div className="workspace-progress" role="img" aria-label="La base de la aplicación está implementada; las funciones sociales están en desarrollo.">
-                  <span />
-                </div>
-                <div className="workspace-progress-caption">
-                  <span>Base de la aplicación</span>
-                  <strong>Social Core en preparación</strong>
-                </div>
+                <ul className="workspace-stage-list">
+                  <li><span className="stage-indicator complete" aria-hidden="true">✓</span><span><strong>Cuenta y acceso seguro</strong><small>Disponible</small></span></li>
+                  <li><span className="stage-indicator pending" aria-hidden="true">•</span><span><strong>Funciones sociales</strong><small>En preparación</small></span></li>
+                </ul>
               </section>
 
               <section className="workspace-panel account-settings" aria-labelledby="account-settings-title">
