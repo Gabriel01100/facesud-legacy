@@ -6,13 +6,16 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.dependencies.identity import get_current_session, require_allowed_origin
+from app.api.dependencies.identity import get_current_session, require_allowed_origin, require_csrf
 from app.api.schemas.identity import (
     AuthenticatedAccount,
     CsrfTokenResponse,
     LoginRequest,
     LoginResponse,
     MessageResponse,
+    PasswordChangeRequest,
+    PasswordResetConfirmRequest,
+    PasswordResetRequest,
     RegisterRequest,
     ResendVerificationRequest,
     VerifyEmailRequest,
@@ -20,10 +23,11 @@ from app.api.schemas.identity import (
 from app.core.config import settings
 from app.core.database import get_db
 from app.identity.authentication import authenticate_local_account
-from app.identity.email import EmailDeliveryError, send_verification_email
+from app.identity.email import EmailDeliveryError, send_password_reset_email, send_verification_email
 from app.identity.rate_limit import (
     clear_login_attempts,
     consume_login_attempt,
+    consume_password_reset_attempt,
     consume_registration_attempt,
     consume_resend_attempt,
 )
@@ -31,6 +35,11 @@ from app.identity.registration import (
     create_pending_account,
     issue_new_verification_token,
     verify_email_token,
+)
+from app.identity.password_reset import (
+    change_password as change_account_password,
+    issue_password_reset_token,
+    reset_password,
 )
 from app.identity.sessions import (
     SESSION_ABSOLUTE_TTL,
@@ -263,5 +272,98 @@ def logout(
 
     _clear_session_cookie(response)
     response.headers["Cache-Control"] = "no-store"
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
+
+
+@router.post("/password-reset/request", response_model=MessageResponse, status_code=status.HTTP_202_ACCEPTED)
+def request_password_reset(
+    data: PasswordResetRequest,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> MessageResponse:
+    require_allowed_origin(request)
+    response.headers["Cache-Control"] = "no-store"
+    if not settings.email_delivery_configured:
+        raise HTTPException(status_code=503, detail="Email delivery is not configured.")
+
+    ip_address = request.client.host if request.client else "unknown"
+    retry_after = consume_password_reset_attempt(
+        db, ip_address=ip_address, email=str(data.email)
+    )
+    db.commit()
+    if retry_after is not None:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many password reset requests. Try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    normalized_email = normalize_email(str(data.email))
+    account = db.scalar(
+        select(Account).where(
+            Account.email_normalized == normalized_email,
+            Account.status == AccountStatus.ACTIVE,
+        )
+    )
+    if account is not None:
+        raw_token = issue_password_reset_token(db, account)
+        db.commit()
+        try:
+            send_password_reset_email(account.email_normalized, raw_token)
+        except EmailDeliveryError:
+            logger.warning("Password reset email could not be delivered")
+    return MessageResponse(
+        message="Si la cuenta existe y puede restablecerse, recibirás un correo con los próximos pasos."
+    )
+
+
+@router.post("/password-reset/confirm", response_model=MessageResponse)
+def confirm_password_reset(
+    data: PasswordResetConfirmRequest,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+) -> MessageResponse:
+    require_allowed_origin(request)
+    response.headers["Cache-Control"] = "no-store"
+    ip_address = request.client.host if request.client else "unknown"
+    retry_after = consume_password_reset_attempt(
+        db, ip_address=ip_address, email="reset-confirmation"
+    )
+    db.commit()
+    if retry_after is not None:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many password reset attempts. Try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    if not reset_password(db, raw_token=data.token, new_password=data.new_password):
+        raise HTTPException(status_code=400, detail="The reset link is invalid, expired, or already used.")
+    db.commit()
+    return MessageResponse(message="Tu contraseña fue actualizada. Iniciá sesión nuevamente.")
+
+
+@router.post("/password/change", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(
+    data: PasswordChangeRequest,
+    request: Request,
+    response: Response,
+    session: UserSession = Depends(require_csrf),
+    db: Session = Depends(get_db),
+) -> Response:
+    response.headers["Cache-Control"] = "no-store"
+    changed = change_account_password(
+        db,
+        account_id=session.account_id,
+        current_password=data.current_password,
+        new_password=data.new_password,
+    )
+    if not changed:
+        raise HTTPException(status_code=400, detail="Current password is incorrect.")
+    db.commit()
+    _clear_session_cookie(response)
     response.status_code = status.HTTP_204_NO_CONTENT
     return response
