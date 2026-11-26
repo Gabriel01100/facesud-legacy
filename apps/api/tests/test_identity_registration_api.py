@@ -82,6 +82,64 @@ def test_registration_creates_pending_account_and_sends_single_use_token(monkeyp
         teardown(client, engine)
 
 
+
+def test_registration_rolls_back_pending_account_when_email_delivery_fails(monkeypatch):
+    client, engine, _ = build_client(monkeypatch)
+
+    def fail_delivery(recipient, token):
+        from app.identity.email import EmailDeliveryError
+
+        raise EmailDeliveryError("SMTP unavailable")
+
+    monkeypatch.setattr("app.api.auth.send_verification_email", fail_delivery)
+    try:
+        response = client.post(
+            "/api/v1/auth/register",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers={"Origin": "http://localhost:5173"},
+        )
+        assert response.status_code == 503
+        with Session(engine) as db:
+            assert db.scalar(select(Account)) is None
+            assert db.scalar(select(EmailVerificationToken)) is None
+    finally:
+        teardown(client, engine)
+
+
+def test_failed_resend_keeps_the_previous_verification_token_valid(monkeypatch):
+    client, engine, sent = build_client(monkeypatch)
+    try:
+        headers = {"Origin": "http://localhost:5173"}
+        registered = client.post(
+            "/api/v1/auth/register",
+            json={"email": "person@example.com", "password": "a-long-test-password"},
+            headers=headers,
+        )
+        assert registered.status_code == 202
+        original_token = sent[0][1]
+
+        def fail_delivery(recipient, token):
+            from app.identity.email import EmailDeliveryError
+
+            raise EmailDeliveryError("SMTP unavailable")
+
+        monkeypatch.setattr("app.api.auth.send_verification_email", fail_delivery)
+        resent = client.post(
+            "/api/v1/auth/email-verification/resend",
+            json={"email": "person@example.com"},
+            headers=headers,
+        )
+        assert resent.status_code == 202
+
+        still_valid = client.post(
+            "/api/v1/auth/email-verification/verify",
+            json={"token": original_token},
+            headers=headers,
+        )
+        assert still_valid.status_code == 200
+    finally:
+        teardown(client, engine)
+
 def test_email_verification_activates_account_and_token_cannot_be_reused(monkeypatch):
     client, engine, sent = build_client(monkeypatch)
     try:
