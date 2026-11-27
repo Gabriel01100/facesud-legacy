@@ -111,7 +111,6 @@ async def upload_my_avatar(
 
 @router.get("/me/avatar")
 def get_my_avatar(
-    response: Response,
     session: UserSession = Depends(get_current_session),
     db: Session = Depends(get_db),
     storage=Depends(get_media_storage),
