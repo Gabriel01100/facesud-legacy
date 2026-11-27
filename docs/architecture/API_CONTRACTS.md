@@ -83,7 +83,7 @@ Campos de respuesta permitidos:
 - bio: biografía o null.
 - account_created_at: fecha de creación derivada de Identity.Account; solo lectura.
 - avatar_url: null hasta implementar almacenamiento protegido de fotografías.
-- community_unit: null hasta implementar el dominio Community y su flujo de aprobación.
+- community_unit: objeto con name y kind derivado exclusivamente de la vinculación aprobada propia; null cuando no existe una vinculación aprobada. No es editable desde Profiles.
 
 Respuesta privada: Cache-Control: no-store y Vary: Cookie.
 
