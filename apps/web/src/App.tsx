@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { authenticatedFetch, getApiHealth, setCsrfToken } from "./api/client";
 import ProfileEditor from "./features/profile/ProfileEditor";
+import CommunityWorkspace from "./features/community/CommunityWorkspace";
 
 type ApiState = "loading" | "connected" | "error";
 type AuthMode = "login" | "register" | "verify" | "reset-request" | "reset-confirm";
@@ -307,6 +308,7 @@ export default function App() {
                 </form>
               </section>
             </div>
+            <CommunityWorkspace />
             <ProfileEditor />
           </div>
         </section>
