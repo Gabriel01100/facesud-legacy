@@ -18,6 +18,7 @@ Las versiones exactas se mantienen en `apps/api/pyproject.toml`, `apps/web/packa
 - `api`: API FastAPI.
 - `db`: PostgreSQL con volumen persistente.
 - `redis`: Redis con persistencia AOF y volumen persistente.
+- `media_data`: volumen privado para archivos de imágenes en desarrollo local; producción usa un bucket S3-compatible privado.
 
 PostgreSQL y Redis se mantienen en la red interna de Docker Compose y no publican puertos al host. La API espera a que ambos servicios estén saludables antes de iniciar.
 
@@ -46,10 +47,11 @@ REST para operaciones síncronas. FastAPI publica OpenAPI. Los contratos actualm
 ## Diagrama de ejecución local
 Navegador → Vite/React → FastAPI → PostgreSQL y Redis.
 
-La API también recibe comprobaciones de salud. No se incorpora Nginx, almacenamiento S3 ni servicios externos en esta etapa.
+La API también recibe comprobaciones de salud. El módulo Media usa almacenamiento local privado en desarrollo y un adaptador S3-compatible en producción; los archivos nunca se sirven desde una ruta pública del bucket. La API autoriza cada descarga según la vinculación comunitaria vigente.
 
 ## Estructura actual
 - `apps/api/app/core`: configuración y conexiones a dependencias.
+- `apps/api/app/media`: validación, normalización y almacenamiento privado de imágenes.
 - `apps/api/app/api`: endpoints HTTP.
 - `apps/api/migrations`: revisiones Alembic.
 - `apps/web/src/api`: cliente HTTP centralizado.
