@@ -55,6 +55,7 @@ function PostImageView({ image }: { image: PostImage }) {
         const blob = await response.blob();
         objectUrl = URL.createObjectURL(blob);
         if (active) setSrc(objectUrl);
+        else URL.revokeObjectURL(objectUrl);
       })
       .catch(() => {
         if (active) setSrc("");
@@ -140,11 +141,15 @@ export default function CommunityFeed() {
       for (const file of selectedImages) {
         const formData = new FormData();
         formData.append("file", file);
-        const upload = await authenticatedFetch(apiUrl(`/api/v1/social/posts/${post.id}/media`), {
-          method: "POST",
-          body: formData,
-        });
-        if (!upload.ok) imageUploadFailed = true;
+        try {
+          const upload = await authenticatedFetch(apiUrl(`/api/v1/social/posts/${post.id}/media`), {
+            method: "POST",
+            body: formData,
+          });
+          if (!upload.ok) imageUploadFailed = true;
+        } catch {
+          imageUploadFailed = true;
+        }
       }
       setBody("");
       setSelectedImages([]);
