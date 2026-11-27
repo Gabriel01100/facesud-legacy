@@ -1,3 +1,4 @@
+from app.api.schemas.media import PostMediaResponse
 import uuid
 from datetime import datetime
 
@@ -32,6 +33,7 @@ class PostResponse(BaseModel):
     comment_count: int = 0
     reaction_count: int = 0
     is_reacted: bool = False
+    images: list[PostMediaResponse] = []
 
 
 class FeedResponse(BaseModel):
