@@ -663,3 +663,103 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) {
   .feed-section { margin: 22px 0; }
   .post-composer, .feed-post, .feed-state { padding: 16px; }
 }
+
+
+/* Unit-scoped post interactions */
+.feed-interactions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid var(--fs-color-border);
+}
+.feed-action {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--fs-color-text-secondary);
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.feed-action:hover:not(:disabled) {
+  color: var(--fs-color-primary);
+  background: var(--fs-color-primary-soft);
+}
+.feed-action.is-active {
+  color: var(--fs-color-primary);
+  background: var(--fs-color-primary-soft);
+}
+.feed-action:disabled { cursor: wait; opacity: .6; }
+.feed-comments {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: var(--fs-radius-md);
+  background: var(--fs-color-surface-subtle);
+}
+.feed-comment-list { display: grid; gap: 11px; }
+.feed-comment {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.feed-comment > div { min-width: 0; }
+.feed-comment strong { color: var(--fs-color-navy); font-size: 11px; }
+.feed-comment p {
+  margin: 4px 0 0;
+  color: #344f60;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.feed-comment-empty {
+  margin: 2px 0 8px;
+  color: var(--fs-color-text-muted);
+  font-size: 11px;
+}
+.feed-comment-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 13px;
+  padding-top: 12px;
+  border-top: 1px solid var(--fs-color-border);
+}
+.feed-comment-form input {
+  flex: 1;
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--fs-color-border-strong);
+  border-radius: 8px;
+  outline: none;
+  color: var(--fs-color-navy);
+  background: var(--fs-color-surface);
+  font: inherit;
+  font-size: 11px;
+}
+.feed-comment-form input:focus {
+  border-color: var(--fs-color-primary);
+  box-shadow: var(--fs-focus-ring);
+}
+.feed-comment-form button {
+  padding: 0 13px;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  background: var(--fs-color-primary);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+}
+.feed-comment-form button:disabled { cursor: not-allowed; opacity: .55; }
+@media (max-width: 520px) {
+  .feed-comments { padding: 11px; }
+  .feed-comment-form { align-items: stretch; flex-direction: column; }
+  .feed-comment-form button { min-height: 38px; }
+}
