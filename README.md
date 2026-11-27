@@ -6,16 +6,16 @@ FaceSud es una plataforma social independiente orientada a la comunidad SUD. No 
 
 ## Estado del proyecto
 
-`main` contiene la infraestructura ejecutable, los flujos de identidad/autenticación y la base inicial del Social Core. El registro local y la verificación de correo funcionan mediante Mailpit, que captura los mensajes sin enviarlos a destinatarios reales. El titular de una cuenta autenticada puede consultar y editar su perfil básico (nombre visible, username y biografía). Los perfiles ajenos siguen privados y no hay directorio ni búsqueda de usuarios.
+`main` contiene una aplicación funcional con autenticación por correo/contraseña, verificación de correo, perfiles propios, vinculación comunitaria provisional y un feed social privado por unidad. Las publicaciones admiten texto, comentarios, reacciones e imágenes WebP protegidas. El registro local y la verificación de correo funcionan mediante Mailpit, que captura los mensajes sin enviarlos a destinatarios reales. Los perfiles ajenos siguen privados y no hay directorio ni búsqueda de usuarios.
 
-La fotografía de perfil y la unidad comunitaria se incorporarán cuando estén implementados, respectivamente, el almacenamiento protegido de medios y el procedimiento de aprobación de vinculación comunitaria. La base visual FaceSud v1.0 orienta las pantallas.
+La fotografía de perfil queda pendiente. La vinculación comunitaria disponible es administrativa/provisional y no verifica membresía institucional. La base visual FaceSud v1.0 orienta las pantallas.
 
 ## Stack de la primera versión ejecutable
 
 - Backend: Python 3.12, FastAPI, Pydantic Settings.
 - Persistencia: PostgreSQL 17, SQLAlchemy 2, Alembic.
 - Servicio Redis 7 para infraestructura inicial y comprobación de disponibilidad.
-- Mailpit para capturar correos transaccionales en desarrollo local.
+- Mailpit para capturar correos transaccionales en desarrollo local.\n- Pillow y un adaptador de almacenamiento local/S3 para imágenes privadas.
 - Frontend: React 19, TypeScript 5, Vite 6.
 - Pruebas backend: Pytest.
 - Entorno local: Docker Compose v2.
