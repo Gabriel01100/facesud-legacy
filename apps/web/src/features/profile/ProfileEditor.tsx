@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 
-import { getMyProfile, updateMyProfile } from "./api";
+import {
+  deleteMyAvatar,
+  getMyAvatarBlob,
+  getMyProfile,
+  updateMyProfile,
+  uploadMyAvatar,
+} from "./api";
 import type { Profile } from "./types";
 
 export default function ProfileEditor() {
@@ -9,29 +15,39 @@ export default function ProfileEditor() {
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
   useEffect(() => {
     let active = true;
-    void getMyProfile()
-      .then((result) => {
+    void (async () => {
+      try {
+        const result = await getMyProfile();
         if (!active) return;
         setProfile(result);
         setDisplayName(result.display_name ?? "");
         setUsername(result.username ?? "");
         setBio(result.bio ?? "");
-      })
-      .catch((cause: unknown) => {
+        if (result.avatar_url) {
+          const blob = await getMyAvatarBlob();
+          if (active && blob) setAvatarSrc(URL.createObjectURL(blob));
+        }
+      } catch (cause) {
         if (active) setError(cause instanceof Error ? cause.message : "No se pudo cargar tu perfil.");
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    })();
     return () => { active = false; };
   }, []);
+
+  useEffect(() => () => {
+    if (avatarSrc) URL.revokeObjectURL(avatarSrc);
+  }, [avatarSrc]);
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,6 +72,49 @@ export default function ProfileEditor() {
     }
   }
 
+  async function saveAvatar(file: File) {
+    if (file.size > 5 * 1024 * 1024) {
+      setError("La fotografía supera el límite de 5 MiB.");
+      return;
+    }
+    setAvatarBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await uploadMyAvatar(file);
+      const blob = await getMyAvatarBlob();
+      setAvatarSrc(blob ? URL.createObjectURL(blob) : null);
+      setProfile((current) => current ? { ...current, avatar_url: blob ? "/api/v1/profile/me/avatar" : null } : current);
+      setNotice("Tu fotografía de perfil se guardó correctamente.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudo guardar la fotografía de perfil.");
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
+
+  async function removeAvatar() {
+    setAvatarBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await deleteMyAvatar();
+      setAvatarSrc(null);
+      setProfile((current) => current ? { ...current, avatar_url: null } : current);
+      setNotice("Tu fotografía de perfil se eliminó.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudo eliminar la fotografía de perfil.");
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
+
+  function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (file) void saveAvatar(file);
+  }
+
   const createdAt = profile
     ? new Intl.DateTimeFormat("es-AR", { dateStyle: "long" }).format(new Date(profile.account_created_at))
     : "";
@@ -75,13 +134,37 @@ export default function ProfileEditor() {
       ) : (
         <>
           <div className="profile-summary">
-            <div className="profile-avatar-placeholder" aria-hidden="true">
-              {(displayName || username || "F").charAt(0).toUpperCase()}
-            </div>
+            {avatarSrc ? (
+              <img className="profile-avatar-image" src={avatarSrc} alt="Tu fotografía de perfil" />
+            ) : (
+              <div className="profile-avatar-placeholder" aria-hidden="true">
+                {(displayName || username || "F").charAt(0).toUpperCase()}
+              </div>
+            )}
             <div>
               <strong>{displayName || "Tu nombre visible"}</strong>
               <span>{username ? `@${username}` : "Elegí tu nombre de usuario"}</span>
             </div>
+          </div>
+
+          <div className="profile-avatar-controls">
+            <label htmlFor="profile-avatar-file">Fotografía de perfil</label>
+            <input
+              id="profile-avatar-file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleAvatarChange}
+              disabled={avatarBusy}
+              aria-describedby="profile-avatar-hint"
+            />
+            <p id="profile-avatar-hint" className="profile-field-hint">
+              JPEG, PNG o WebP. Máximo 5 MiB. La imagen se procesa en el servidor y solo vos podés verla en esta etapa.
+            </p>
+            {profile?.avatar_url && (
+              <button className="profile-avatar-remove" type="button" onClick={() => void removeAvatar()} disabled={avatarBusy}>
+                {avatarBusy ? "Procesando…" : "Eliminar fotografía"}
+              </button>
+            )}
           </div>
 
           <form className="profile-form" onSubmit={save}>
@@ -146,7 +229,6 @@ export default function ProfileEditor() {
               {saving ? "Guardando…" : "Guardar perfil"}
             </button>
           </form>
-          <p className="profile-field-hint profile-photo-note">La carga de fotografía de perfil se incorporará mediante almacenamiento protegido en una siguiente entrega.</p>
         </>
       )}
     </section>
