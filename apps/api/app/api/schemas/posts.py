@@ -28,6 +28,7 @@ class PostResponse(BaseModel):
     body: str
     created_at: datetime
     author: PostAuthorResponse
+    is_mine: bool
 
 
 class FeedResponse(BaseModel):
