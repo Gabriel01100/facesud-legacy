@@ -2,7 +2,7 @@ import os
 import uuid
 
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
@@ -175,7 +175,7 @@ def test_comments_and_reactions_are_restricted_to_the_post_unit_and_author_contr
             db.commit()
             unit_a_id, unit_b_id = unit_a.id, unit_b.id
 
-        seed_account(engine, "interaction-author@example.com", unit_a_id)
+        author_id = seed_account(engine, "interaction-author@example.com", unit_a_id)
         seed_account(engine, "interaction-member@example.com", unit_a_id)
         seed_account(engine, "interaction-outsider@example.com", unit_b_id)
         author_csrf = login(author, "interaction-author@example.com")
@@ -256,6 +256,15 @@ def test_comments_and_reactions_are_restricted_to_the_post_unit_and_author_contr
             headers={"Origin": "http://localhost:5173", "X-CSRF-Token": member_csrf},
         )
         assert removed_comment.status_code == 204
+
+        with Session(engine) as db:
+            author_membership = db.scalar(
+                select(UnitMembership).where(UnitMembership.account_id == author_id)
+            )
+            author_membership.status = MembershipStatus.REVOKED
+            db.commit()
+        revoked_author_comments = same_unit_member.get(f"/api/v1/social/posts/{post_id}/comments")
+        assert revoked_author_comments.status_code == 404
 
         missing_csrf = same_unit_member.post(
             f"/api/v1/social/posts/{post_id}/comments",
