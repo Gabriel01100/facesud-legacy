@@ -165,4 +165,4 @@ def test_community_rejects_requests_without_csrf():
         assert response.status_code == 403
         assert csrf
     finally:
-        cleanup(member, reviewer, engine)
+        cleanup(member, reviewer, engine=engine)
