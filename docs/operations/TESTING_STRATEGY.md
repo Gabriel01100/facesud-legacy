@@ -28,10 +28,10 @@
 ## Frontend
 - Build TypeScript/Vite.
 - Node.js test runner nativo para pruebas unitarias de lógica TypeScript pura, sin dependencias adicionales; Node 22.15 o superior.
-- `npm test` valida la normalización del formulario de perfil antes de enviar cambios a la API.
+- `npm test` valida la normalización del formulario de perfil y el límite de tamaño de archivo en el cliente (la validación definitiva sigue siendo responsabilidad del servidor).
 - authenticatedFetch renueva token CSRF y reintenta una vez ante el error específico de CSRF.
 - Pruebas de componentes, E2E y pruebas multi-pestaña quedan pendientes de seleccionar e incorporar una herramienta de DOM/navegador.
-## Infraestructura
+\n## Infraestructura
 - Validar configuración y build de Docker Compose.
 - Verificar healthchecks de PostgreSQL, Redis y API.
 - API ejecutada como usuario sin privilegios.
@@ -43,7 +43,7 @@
 ## Seguridad de cadena de suministro
 - Gitleaks escanea el historial del repositorio en CI.
 - Ruff analiza backend.
-- El frontend continúa con npm install hasta que package-lock.json se genere y se versione; no migrar a npm ci sin lockfile completo.
+- El frontend versiona package-lock.json y utiliza `npm ci` en CI para instalaciones reproducibles.
 
 ## CI
 El workflow ejecuta backend (PostgreSQL, migraciones, tests y Ruff), build frontend, escaneo de secretos y validación/build de contenedores.
