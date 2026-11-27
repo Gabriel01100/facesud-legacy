@@ -101,6 +101,15 @@ La fila de perfil se crea al guardar por primera vez. La unicidad se garantiza t
 
 No se implementan perfiles ajenos ni se interpreta autenticación como aprobación de vinculación comunitaria. La unidad comunitaria no puede editarse desde este endpoint.
 
+### POST /api/v1/profile/me/avatar
+Requiere sesión válida, Origin permitido y X-CSRF-Token válido. Recibe un archivo multipart `file`. Acepta JPEG, PNG y WebP estáticos; el servidor valida, recodifica a WebP y elimina EXIF mediante el normalizador compartido con imágenes sociales. El límite de entrada es 5 MiB y 20 megapíxeles. Reemplaza la fotografía anterior de forma transaccional. Devuelve HTTP 201 y una ruta relativa autenticada. Archivo inválido HTTP 422; tamaño excedido HTTP 413.
+
+### GET /api/v1/profile/me/avatar
+Requiere sesión válida y solo entrega la fotografía de la cuenta autenticada. No existe un endpoint por ID ni username. Devuelve WebP con `Cache-Control: private, no-store`, `Vary: Cookie` y `X-Content-Type-Options: nosniff`. Sin fotografía: HTTP 404.
+
+### DELETE /api/v1/profile/me/avatar
+Requiere sesión válida, Origin permitido y CSRF. Elimina la metadata y programa la eliminación del objeto privado después del commit. HTTP 204; operación idempotente.
+
 ## Community
 
 Las rutas de Community aplican `Cache-Control: no-store` y `Vary: Cookie` cuando corresponda. Las operaciones mutables requieren sesión, Origin permitido y CSRF.
@@ -201,12 +210,3 @@ REDIS_URL debe contener contraseña; REDIS_PASSWORD protege el servicio Redis en
 
 La elegibilidad comunitaria por cédula de miembro es independiente de la autenticación. Google o contraseña no acreditan membresía. No se solicita ni almacena el número de cédula en esta etapa.
 
-
-### POST /api/v1/profile/me/avatar
-Requiere sesión válida, Origin permitido y X-CSRF-Token válido. Recibe un archivo multipart `file`. Acepta JPEG, PNG y WebP estáticos; el servidor valida, recodifica a WebP y elimina EXIF mediante el normalizador compartido con imágenes sociales. El límite de entrada es 5 MiB y 20 megapíxeles. Reemplaza la fotografía anterior de forma transaccional. Devuelve HTTP 201 y una ruta relativa autenticada. Archivo inválido HTTP 422; tamaño excedido HTTP 413.
-
-### GET /api/v1/profile/me/avatar
-Requiere sesión válida y solo entrega la fotografía de la cuenta autenticada. No existe un endpoint por ID ni username. Devuelve WebP con `Cache-Control: private, no-store`, `Vary: Cookie` y `X-Content-Type-Options: nosniff`. Sin fotografía: HTTP 404.
-
-### DELETE /api/v1/profile/me/avatar
-Requiere sesión válida, Origin permitido y CSRF. Elimina la metadata y programa la eliminación del objeto privado después del commit. HTTP 204; operación idempotente.
