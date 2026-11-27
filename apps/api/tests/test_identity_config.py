@@ -20,6 +20,10 @@ def test_cookie_security_is_enabled_outside_development_and_test():
             smtp_password="smtp-secret",
             smtp_starttls=True,
             email_from="FaceSud <no-reply@facesud.org>",
+            media_storage_backend="s3",
+            media_s3_bucket="facesud-private-test",
+            media_s3_access_key_id="test-access-key",
+            media_s3_secret_access_key="test-secret-key",
         )
         assert config.secure_cookies
         assert config.session_cookie_name == "__Host-facesud_session"
