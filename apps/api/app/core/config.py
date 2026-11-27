@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_username: str | None = None
     smtp_password: str | None = None
+    smtp_starttls: bool = True
     email_from: str | None = None
     smtp_timeout_seconds: int = 10
 
@@ -42,7 +43,7 @@ class Settings(BaseSettings):
     def validate_environment_configuration(self):
         if self.app_env.strip().lower() in {"production", "prod"}:
             placeholders = ("facesud_dev", "localhost", "example", "changeme")
-            configured = f"{self.database_url} {self.redis_url} {self.cors_origins} {self.frontend_base_url}".lower()
+            configured = f"{self.database_url} {self.redis_url} {self.cors_origins} {self.frontend_base_url} {self.smtp_host or ''} {self.email_from or ''}".lower()
             if any(value in configured for value in placeholders):
                 raise ValueError("Production configuration contains development/example values")
             if not self.allowed_origins or any(not origin.startswith("https://") for origin in self.allowed_origins):
@@ -50,7 +51,13 @@ class Settings(BaseSettings):
             if not self.frontend_base_url.startswith("https://"):
                 raise ValueError("Production frontend URL must use HTTPS")
             if not urlsplit(self.redis_url).password:
-                raise ValueError("Production Redis URL must include a password")
+                raise ValueError("Production REDIS_URL must include a password")
+            if not all((self.smtp_host, self.smtp_username, self.smtp_password, self.email_from)):
+                raise ValueError("Production requires authenticated SMTP credentials and EMAIL_FROM")
+            if "mailpit" in (self.smtp_host or "").lower() or ".local" in (self.email_from or "").lower():
+                raise ValueError("Production cannot use local Mailpit SMTP settings")
+            if not self.smtp_starttls:
+                raise ValueError("Production SMTP must use STARTTLS")
         return self
 
 

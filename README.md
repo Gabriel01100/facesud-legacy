@@ -6,7 +6,7 @@ FaceSud es una plataforma social independiente orientada a la comunidad SUD. No 
 
 ## Estado del proyecto
 
-`main` contiene la infraestructura ejecutable, los flujos de identidad/autenticación y la base inicial del Social Core. El titular de una cuenta autenticada puede consultar y editar su perfil básico (nombre visible, username y biografía). Los perfiles ajenos siguen privados y no hay directorio ni búsqueda de usuarios.
+`main` contiene la infraestructura ejecutable, los flujos de identidad/autenticación y la base inicial del Social Core. El registro local y la verificación de correo funcionan mediante Mailpit, que captura los mensajes sin enviarlos a destinatarios reales. El titular de una cuenta autenticada puede consultar y editar su perfil básico (nombre visible, username y biografía). Los perfiles ajenos siguen privados y no hay directorio ni búsqueda de usuarios.
 
 La fotografía de perfil y la unidad comunitaria se incorporarán cuando estén implementados, respectivamente, el almacenamiento protegido de medios y el procedimiento de aprobación de vinculación comunitaria. La base visual FaceSud v1.0 orienta las pantallas.
 
@@ -15,6 +15,7 @@ La fotografía de perfil y la unidad comunitaria se incorporarán cuando estén 
 - Backend: Python 3.12, FastAPI, Pydantic Settings.
 - Persistencia: PostgreSQL 17, SQLAlchemy 2, Alembic.
 - Servicio Redis 7 para infraestructura inicial y comprobación de disponibilidad.
+- Mailpit para capturar correos transaccionales en desarrollo local.
 - Frontend: React 19, TypeScript 5, Vite 6.
 - Pruebas backend: Pytest.
 - Entorno local: Docker Compose v2.
@@ -28,6 +29,7 @@ Las versiones de dependencias e imágenes están fijadas en los manifiestos corr
 | Frontend | http://localhost:5173 |
 | API | http://localhost:8000 |
 | OpenAPI | http://localhost:8000/docs |
+| Mailpit | http://localhost:8025 | Captura local de correos de verificación y recuperación |
 | PostgreSQL | Red interna Compose: `db:5432` |
 | Redis | Red interna Compose: `redis:6379` |
 
@@ -74,6 +76,7 @@ Todavía no incluye perfiles ajenos, publicaciones, feed, comentarios, reaccione
 - [Guías frontend](docs/architecture/FRONTEND_GUIDELINES.md)
 - [Estrategia de pruebas](docs/operations/TESTING_STRATEGY.md)
 - [Desarrollo local](docs/operations/LOCAL_DEVELOPMENT.md)
+- [Entrega de correo electrónico](docs/operations/EMAIL_DELIVERY.md)
 - [Registro de decisiones](docs/decisions/DECISIONS.md)
 - [Decisiones pendientes](docs/decisions/OPEN_DECISIONS.md)
 - [Auditoría documental](docs/operations/DOCUMENTATION_AUDIT.md)

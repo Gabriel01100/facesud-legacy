@@ -13,13 +13,31 @@ class EmailDeliveryError(RuntimeError):
     pass
 
 
-def send_verification_email(recipient: str, raw_token: str) -> None:
+def _send_message(message: EmailMessage) -> None:
     if not settings.email_delivery_configured:
         raise EmailDeliveryError("Transactional email is not configured")
 
+    try:
+        with smtplib.SMTP(
+            settings.smtp_host,
+            settings.smtp_port,
+            timeout=settings.smtp_timeout_seconds,
+        ) as smtp:
+            smtp.ehlo()
+            if settings.smtp_starttls:
+                smtp.starttls(context=ssl.create_default_context())
+                smtp.ehlo()
+            if settings.smtp_username:
+                smtp.login(settings.smtp_username, settings.smtp_password or "")
+            smtp.send_message(message)
+    except (OSError, smtplib.SMTPException) as exc:
+        logger.exception("Transactional email delivery failed")
+        raise EmailDeliveryError("Could not deliver transactional email") from exc
+
+
+def send_verification_email(recipient: str, raw_token: str) -> None:
     query = urlencode({"token": raw_token})
-    base_url = settings.frontend_base_url.rstrip("/")
-    verification_url = f"{base_url}/verify-email?{query}"
+    verification_url = f"{settings.frontend_base_url.rstrip('/')}/verify-email?{query}"
 
     message = EmailMessage()
     message["Subject"] = "Verificá tu correo electrónico para FaceSud"
@@ -30,31 +48,12 @@ def send_verification_email(recipient: str, raw_token: str) -> None:
         f"{verification_url}\n\n"
         "El enlace vence en 24 horas. Si no solicitaste esta cuenta, podés ignorar este mensaje."
     )
-
-    try:
-        with smtplib.SMTP(
-            settings.smtp_host,
-            settings.smtp_port,
-            timeout=settings.smtp_timeout_seconds,
-        ) as smtp:
-            smtp.ehlo()
-            smtp.starttls(context=ssl.create_default_context())
-            smtp.ehlo()
-            if settings.smtp_username:
-                smtp.login(settings.smtp_username, settings.smtp_password or "")
-            smtp.send_message(message)
-    except (OSError, smtplib.SMTPException) as exc:
-        logger.exception("Transactional email delivery failed")
-        raise EmailDeliveryError("Could not deliver verification email") from exc
+    _send_message(message)
 
 
 def send_password_reset_email(recipient: str, raw_token: str) -> None:
-    if not settings.email_delivery_configured:
-        raise EmailDeliveryError("Transactional email is not configured")
-
     query = urlencode({"token": raw_token})
-    base_url = settings.frontend_base_url.rstrip("/")
-    reset_url = f"{base_url}/reset-password?{query}"
+    reset_url = f"{settings.frontend_base_url.rstrip('/')}/reset-password?{query}"
 
     message = EmailMessage()
     message["Subject"] = "Restablecé tu contraseña de FaceSud"
@@ -67,19 +66,4 @@ def send_password_reset_email(recipient: str, raw_token: str) -> None:
         "El enlace vence en 30 minutos y solo puede utilizarse una vez. "
         "Si no solicitaste este cambio, ignorá este mensaje; tu contraseña seguirá igual."
     )
-
-    try:
-        with smtplib.SMTP(
-            settings.smtp_host,
-            settings.smtp_port,
-            timeout=settings.smtp_timeout_seconds,
-        ) as smtp:
-            smtp.ehlo()
-            smtp.starttls(context=ssl.create_default_context())
-            smtp.ehlo()
-            if settings.smtp_username:
-                smtp.login(settings.smtp_username, settings.smtp_password or "")
-            smtp.send_message(message)
-    except (OSError, smtplib.SMTPException) as exc:
-        logger.exception("Password reset email delivery failed")
-        raise EmailDeliveryError("Could not deliver password reset email") from exc
+    _send_message(message)

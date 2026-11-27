@@ -114,7 +114,9 @@ No se implementan perfiles ajenos ni se interpreta autenticación como aprobaci�
 Las operaciones mutables validan Origin y CSRF. Ante 403 con detalle CSRF validation failed, el cliente solicita un token nuevo y reintenta la solicitud una sola vez. El reintento debe usar un cuerpo reproducible.
 
 ## Correo
-SMTP STARTTLS con validación TLS. Variables: SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, EMAIL_FROM, FRONTEND_BASE_URL. Registro y recuperación deshabilitados con HTTP 503 si no hay configuración. El proveedor SMTP/API definitivo, SPF, DKIM y DMARC siguen pendientes.
+El transporte es SMTP configurable y compartido por verificación de correo y recuperación de contraseña. Variables: SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_STARTTLS, EMAIL_FROM, FRONTEND_BASE_URL. Registro y recuperación devuelven HTTP 503 si falta configuración.
+
+En desarrollo Compose, Mailpit captura correos en `mailpit:1025`, sin TLS ni autenticación; su UI se publica únicamente en `127.0.0.1:8025`. En producción se exige SMTP autenticado con STARTTLS y credenciales reales. El proveedor sugerido es Resend mediante SMTP; requiere dominio emisor verificado y registros DNS de autenticación. Mailpit nunca debe usarse como proveedor de producción.
 
 Las direcciones se normalizan en NFC y se validan con email-validator antes de persistir; se conserva el comportamiento case-insensitive vigente.
 
@@ -128,7 +130,7 @@ REDIS_URL debe contener contraseña; REDIS_PASSWORD protege el servicio Redis en
 - Google OpenID Connect y vinculación explícita.
 - Almacenamiento protegido, validación y entrega de fotografías de perfil.
 - Implementación del dominio Community y flujo autorizado de aprobación de vinculación a unidad.
-- Proveedor transaccional definitivo, credenciales y configuración SPF/DKIM/DMARC.
+- Cuenta y dominio emisor verificado del proveedor SMTP transaccional; credenciales, SPF, DKIM y DMARC.
 - Pruebas E2E de navegador para registro, verificación, login, logout, recuperación, cambio de contraseña y CSRF multi-pestaña.
 - Pruebas de concurrencia del rate limiting y carga sostenida.
 - Revisión de umbrales de rate limiting y retención de tokens con métricas/política de privacidad.
