@@ -442,3 +442,55 @@ def test_post_images_are_normalized_private_and_unit_scoped(monkeypatch):
         assert storage.objects == {}
     finally:
         cleanup(clients, engine)
+
+
+def test_media_object_is_removed_when_database_transaction_rolls_back():
+    from io import BytesIO
+
+    from PIL import Image
+
+    from app.media.service import upload_post_image
+
+    class MemoryStorage:
+        def __init__(self):
+            self.objects = {}
+
+        def put(self, key, content, content_type):
+            self.objects[key] = (content, content_type)
+
+        def get(self, key):
+            return self.objects[key][0]
+
+        def delete(self, key):
+            self.objects.pop(key, None)
+
+    clients, engine = build_clients()
+    storage = MemoryStorage()
+    try:
+        with Session(engine) as db:
+            unit = OrganizationUnit(
+                name="Rama Rollback", unit_type=UnitType.BRANCH, country_code="AR", status=UnitStatus.ACTIVE
+            )
+            db.add(unit)
+            db.commit()
+            unit_id = unit.id
+
+        account_id = seed_account(engine, "media-rollback@example.com", unit_id)
+        with Session(engine) as db:
+            post = Post(author_account_id=account_id, unit_id=unit_id, body="Transacción reversible")
+            db.add(post)
+            db.commit()
+            post_id = post.id
+
+        image_buffer = BytesIO()
+        Image.new("RGB", (12, 12), (22, 122, 153)).save(image_buffer, format="PNG")
+        with Session(engine) as db:
+            upload_post_image(
+                db, storage, post_id=post_id, account_id=account_id, raw_content=image_buffer.getvalue()
+            )
+            assert len(storage.objects) == 1
+            db.rollback()
+
+        assert storage.objects == {}
+    finally:
+        cleanup(clients, engine)
