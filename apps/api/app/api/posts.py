@@ -10,12 +10,12 @@ from app.core.database import get_db
 from app.models.identity import UserSession
 from app.models.post import Post
 from app.models.profile import UserProfile
-from app.social.service import SocialRuleError, create_post, delete_own_post, list_unit_feed
+from app.social.service import SocialRuleError, create_post, delete_own_post, interaction_summaries, list_unit_feed
 
 router = APIRouter(prefix="/api/v1/social", tags=["social"])
 
 
-def _post_response(post: Post, profile: UserProfile | None, viewer_id: uuid.UUID) -> PostResponse:
+def _post_response(post: Post, profile: UserProfile | None, viewer_id: uuid.UUID, summary: dict | None = None) -> PostResponse:
     return PostResponse(
         id=post.id,
         body=post.body,
@@ -47,7 +47,7 @@ def get_feed(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from None
     has_more = len(rows) > limit
     rows = rows[:limit]
-    items = [_post_response(post, profile, session.account_id) for post, profile in rows]
+    summaries = interaction_summaries(db, post_ids=[post.id for post, _ in rows], viewer_id=session.account_id)\n    items = [\n        _post_response(post, profile, session.account_id, summaries.get(post.id))\n        for post, profile in rows\n    ]
     last_item = items[-1] if items else None
     return FeedResponse(
         items=items,
