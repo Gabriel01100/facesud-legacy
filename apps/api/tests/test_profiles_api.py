@@ -237,6 +237,7 @@ def test_profile_avatar_is_private_normalized_replaceable_and_removable():
     app.dependency_overrides[get_media_storage] = lambda: storage
     try:
         seed_account(engine, "avatar-owner@example.com")
+        seed_account(engine, "avatar-outsider@example.com")
         csrf = login(client, "avatar-owner@example.com")
         headers = {"Origin": "http://localhost:5173", "X-CSRF-Token": csrf}
 
@@ -265,6 +266,13 @@ def test_profile_avatar_is_private_normalized_replaceable_and_removable():
         assert normalized.format == "WEBP"
         assert normalized.size == (16, 12)
         assert not normalized.getexif()
+
+        outsider = TestClient(app)
+        try:
+            login(outsider, "avatar-outsider@example.com")
+            assert outsider.get("/api/v1/profile/me/avatar").status_code == 404
+        finally:
+            outsider.close()
 
         replacement = client.post(
             "/api/v1/profile/me/avatar",
