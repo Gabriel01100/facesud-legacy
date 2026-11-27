@@ -29,6 +29,9 @@ class PostResponse(BaseModel):
     created_at: datetime
     author: PostAuthorResponse
     is_mine: bool
+    comment_count: int = 0
+    reaction_count: int = 0
+    is_reacted: bool = False
 
 
 class FeedResponse(BaseModel):
