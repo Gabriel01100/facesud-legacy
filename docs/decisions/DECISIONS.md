@@ -29,7 +29,8 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 | D-023 | Perfiles privados por defecto y acceso condicionado a vinculación comunitaria aprobada | Confirmada por el propietario |
 | D-024 | Publicaciones y feed cronológico restringidos a miembros aprobados de la misma unidad | Confirmada por el propietario |
 | D-025 | Comentarios y reacciones restringidos a miembros aprobados de la unidad de la publicación | Implementada como extensión de D-024 |
-| D-026 | Imágenes de publicaciones en almacenamiento privado, con autorización por unidad y normalización del lado servidor | Implementada; perfiles diferidos |\n| D-027 | Fotografía de perfil privada, visible solo para su titular hasta definir el acceso a perfiles ajenos | Implementada en la etapa de perfiles |
+| D-026 | Imágenes de publicaciones en almacenamiento privado, con autorización por unidad y normalización del lado servidor | Implementada; perfiles diferidos |
+| D-027 | Fotografía de perfil privada, visible solo para su titular hasta definir el acceso a perfiles ajenos | Implementada en la etapa de perfiles |
 
 ## Historial y contexto de cambios
 
@@ -178,4 +179,13 @@ Las decisiones técnicas confirmadas para esta base no aprueban automáticamente
 - **Entrega:** todas las descargas pasan por la API autenticada; no exponer rutas de filesystem, URLs públicas ni URLs presignadas. Aplicar no-store, Vary: Cookie y nosniff.
 - **Ciclo de vida:** coordinar altas y bajas de objetos con commit/rollback de la transacción SQLAlchemy.
 - **Justificación:** evitar que la capa social conozca el proveedor de almacenamiento y preservar el aislamiento de unidad ya definido por D-024.
-\n\n### D-027 — Fotografía de perfil privada\n- **Estado:** confirmada como política de implementación de Profiles.\n- **Decisión:** cada cuenta activa puede mantener una única fotografía de perfil. La lectura, carga y eliminación se realizan únicamente por el titular mediante endpoints autenticados.\n- **Almacenamiento:** reutiliza el adaptador privado filesystem/S3-compatible y el normalizador de imágenes de D-026. La metadata vive en una tabla propia de Profiles; no se mezcla con los adjuntos de publicaciones.\n- **Validación:** acepta JPEG, PNG y WebP estáticos; recodifica a WebP, elimina EXIF y aplica los límites globales de tamaño y resolución.\n- **Privacidad:** no se expone una ruta por ID, username ni una URL pública. El perfil solo informa una ruta relativa autenticada del titular. La exposición a otros usuarios queda diferida hasta definir el acceso a perfiles ajenos conforme a D-023.\n- **Ciclo de vida:** los reemplazos y eliminaciones de archivos se ejecutan después del commit; los archivos nuevos se limpian si la transacción se revierte.\n- **Justificación:** habilitar personalización sin ampliar prematuramente la superficie de exposición de datos personales.\n
+
+
+### D-027 — Fotografía de perfil privada
+- **Estado:** confirmada como política de implementación de Profiles.
+- **Decisión:** cada cuenta activa puede mantener una única fotografía de perfil. La lectura, carga y eliminación se realizan únicamente por el titular mediante endpoints autenticados.
+- **Almacenamiento:** reutiliza el adaptador privado filesystem/S3-compatible y el normalizador de imágenes de D-026. La metadata vive en una tabla propia de Profiles; no se mezcla con los adjuntos de publicaciones.
+- **Validación:** acepta JPEG, PNG y WebP estáticos; recodifica a WebP, elimina EXIF y aplica los límites globales de tamaño y resolución.
+- **Privacidad:** no se expone una ruta por ID, username ni una URL pública. El perfil solo informa una ruta relativa autenticada del titular. La exposición a otros usuarios queda diferida hasta definir el acceso a perfiles ajenos conforme a D-023.
+- **Ciclo de vida:** los reemplazos y eliminaciones de archivos se ejecutan después del commit; los archivos nuevos se limpian si la transacción se revierte.
+- **Justificación:** habilitar personalización sin ampliar prematuramente la superficie de exposición de datos personales.
