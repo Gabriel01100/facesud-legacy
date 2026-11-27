@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, Uuid, func
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, Uuid, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -53,18 +53,10 @@ class UnitMembership(Base):
     __tablename__ = "community_unit_memberships"
     __table_args__ = (
         Index(
-            "uq_community_pending_account_unit",
-            "account_id",
-            "unit_id",
-            unique=True,
-            sqlite_where=(MembershipStatus.PENDING == "pending"),
-            postgresql_where=(MembershipStatus.PENDING == "pending"),
+            "uq_community_pending_account_unit", "account_id", "unit_id", unique=True,
+            sqlite_where=text("status = 'pending'"), postgresql_where=text("status = 'pending'"),
         ),
-        Index(
-            "ix_community_membership_account_status",
-            "account_id",
-            "status",
-        ),
+        Index("ix_community_membership_account_status", "account_id", "status"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
