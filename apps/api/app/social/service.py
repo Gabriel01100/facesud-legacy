@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.comment import Comment
@@ -130,7 +130,7 @@ def interaction_summaries(db: Session, *, post_ids: list[uuid.UUID], viewer_id: 
         ).all()
     )
     reaction_rows = db.execute(
-        select(Reaction.post_id, func.count(Reaction.id), func.max(Reaction.account_id == viewer_id))
+        select(Reaction.post_id, func.count(Reaction.id), func.count(case((Reaction.account_id == viewer_id, 1))) > 0)
         .where(Reaction.post_id.in_(post_ids))
         .group_by(Reaction.post_id)
     ).all()
