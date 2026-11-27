@@ -1,4 +1,6 @@
 from app.models.base import Base
+from app.models.comment import Comment
+from app.models.reaction import Reaction
 from app.models.community import MembershipStatus, OrganizationUnit, UnitMembership, UnitStatus, UnitType
 from app.models.identity import (
     Account, AccountStatus, EmailVerificationToken, ExternalIdentity, LoginRateLimit,
@@ -8,7 +10,7 @@ from app.models.post import Post
 from app.models.profile import UserProfile
 
 __all__ = [
-    "Account", "AccountStatus", "Base", "EmailVerificationToken", "ExternalIdentity",
+    "Account", "AccountStatus", "Base", "Comment", "EmailVerificationToken", "ExternalIdentity",
     "LoginRateLimit", "MembershipStatus", "OrganizationUnit", "PasswordCredential", "Post",
-    "PasswordResetToken", "UnitMembership", "UnitStatus", "UnitType", "UserProfile", "UserSession",
+    "PasswordResetToken", "Reaction", "UnitMembership", "UnitStatus", "UnitType", "UserProfile", "UserSession",
 ]
