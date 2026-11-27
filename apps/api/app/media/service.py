@@ -167,7 +167,11 @@ def delete_post_images_for_owner(
     post_id: uuid.UUID,
     account_id: uuid.UUID,
 ) -> bool:
-    post = db.scalar(select(Post).where(Post.id == post_id, Post.author_account_id == account_id))
+    post = db.scalar(
+        select(Post)
+        .where(Post.id == post_id, Post.author_account_id == account_id)
+        .with_for_update(of=Post)
+    )
     if post is None:
         return False
     assets = db.scalars(select(MediaAsset).where(MediaAsset.post_id == post_id)).all()
