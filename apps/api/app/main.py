@@ -5,9 +5,10 @@ from app.api.auth import router as auth_router
 from app.api.community import router as community_router
 from app.api.health import router as health_router
 from app.api.posts import router as posts_router
+from app.api.interactions import router as interactions_router
 from app.api.profiles import router as profiles_router
 from app.core.config import settings
-from app.models import community as community_models, post as post_models  # noqa: F401 — register domain tables
+from app.models import comment as comment_models, community as community_models, post as post_models, reaction as reaction_models  # noqa: F401 — register domain tables
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
 
@@ -39,3 +40,4 @@ app.include_router(auth_router)
 app.include_router(profiles_router)
 app.include_router(community_router)
 app.include_router(posts_router)
+app.include_router(interactions_router)
