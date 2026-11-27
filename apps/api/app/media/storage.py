@@ -65,6 +65,8 @@ class LocalMediaStorage:
 
 class S3MediaStorage:
     def __init__(self):
+        if not all((settings.media_s3_bucket, settings.media_s3_access_key_id, settings.media_s3_secret_access_key)):
+            raise MediaStorageError("S3 media storage requires a bucket and credentials.")
         self.bucket = settings.media_s3_bucket
         self.client = boto3.client(
             "s3",
