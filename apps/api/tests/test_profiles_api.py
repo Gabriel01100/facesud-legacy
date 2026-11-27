@@ -331,11 +331,11 @@ def test_profile_avatar_mutations_require_csrf_and_cannot_be_read_without_sessio
             headers={"Origin": "http://localhost:5173"},
         ).status_code == 403
 
-        client.post(
-            "/api/v1/auth/logout",
-            headers={"Origin": "http://localhost:5173"},
-        )
-        assert client.get("/api/v1/profile/me/avatar").status_code == 401
+        anonymous = TestClient(app)
+        try:
+            assert anonymous.get("/api/v1/profile/me/avatar").status_code == 401
+        finally:
+            anonymous.close()
         assert storage.objects == {}
     finally:
         teardown(client, engine)
