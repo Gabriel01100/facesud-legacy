@@ -27,6 +27,7 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 | D-019 | Política de duración y concurrencia de sesiones | Confirmada por el propietario |
 
 | D-023 | Perfiles privados por defecto y acceso condicionado a vinculación comunitaria aprobada | Confirmada por el propietario |
+| D-024 | Publicaciones y feed cronológico restringidos a miembros aprobados de la misma unidad | Confirmada por el propietario |
 
 ## Historial y contexto de cambios
 
@@ -144,3 +145,14 @@ Las decisiones técnicas confirmadas para esta base no aprueban automáticamente
 - **Autorización:** la regla debe aplicarse en el servidor/API, no solo ocultando elementos en la interfaz. Las consultas, listados, búsquedas y recursos derivados del perfil deberán respetar la misma política.
 - **Alcance pendiente:** esta decisión no define todavía los campos individuales del perfil, la visibilidad de publicaciones, ni las excepciones de acceso administrativo; esos aspectos requieren decisiones separadas.
 - **Justificación:** reducir la exposición de datos personales y evitar que una cuenta autenticada se interprete como una membresía comunitaria aprobada.
+
+
+### D-024 — Visibilidad de publicaciones y feed comunitario
+- **Estado:** confirmada por el propietario.
+- **Decisión:** las publicaciones y el feed solo serán visibles para cuentas activas cuya vinculación comunitaria esté aprobada en la misma unidad que la publicación.
+- **Alcance:** el feed se ordena cronológicamente, de más reciente a más antigua. La primera entrega admite publicaciones de texto de hasta 2.000 caracteres.
+- **Autorización:** el servidor valida la vinculación del lector y del autor; la interfaz no es una frontera de seguridad. Una cuenta autenticada sin vinculación aprobada no puede leer ni crear publicaciones.
+- **Privacidad:** no se publican perfiles, directorios ni búsquedas. El feed devuelve únicamente nombre visible/username opcionales y contenido de la publicación; no expone correo ni identificadores de cuenta del autor.
+- **Evolución:** imágenes, comentarios y reacciones se implementarán en etapas separadas con controles de acceso y almacenamiento apropiados.
+- **Justificación:** habilitar interacción local sin convertir publicaciones ni perfiles en contenido público o visible entre unidades.
+
