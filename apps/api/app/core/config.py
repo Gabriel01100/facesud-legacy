@@ -56,6 +56,14 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_environment_configuration(self):
+        if self.media_storage_backend.strip().lower() not in {"local", "s3"}:
+            raise ValueError("MEDIA_STORAGE_BACKEND must be local or s3")
+        if not 1024 <= self.media_max_upload_bytes <= 10_485_760:
+            raise ValueError("MEDIA_MAX_UPLOAD_BYTES must be between 1 KiB and 10 MiB")
+        if not 1_000_000 <= self.media_max_image_pixels <= 40_000_000:
+            raise ValueError("MEDIA_MAX_IMAGE_PIXELS must be between 1 MP and 40 MP")
+        if not 1 <= self.media_max_post_images <= 4:
+            raise ValueError("MEDIA_MAX_POST_IMAGES must be between 1 and 4")
         if self.app_env.strip().lower() in {"production", "prod"}:
             placeholders = ("facesud_dev", "localhost", "example", "changeme")
             configured = f"{self.database_url} {self.redis_url} {self.cors_origins} {self.frontend_base_url} {self.smtp_host or ''} {self.email_from or ''}".lower()
@@ -79,10 +87,6 @@ class Settings(BaseSettings):
                 raise ValueError("Production media storage requires bucket and credentials")
             if self.media_s3_endpoint_url and not self.media_s3_endpoint_url.startswith("https://"):
                 raise ValueError("Production custom media storage endpoint must use HTTPS")
-            if self.media_max_upload_bytes > 10_485_760 or self.media_max_upload_bytes < 1024:
-                raise ValueError("MEDIA_MAX_UPLOAD_BYTES must be between 1 KiB and 10 MiB")
-            if self.media_max_image_pixels > 40_000_000 or self.media_max_image_pixels < 1_000_000:
-                raise ValueError("MEDIA_MAX_IMAGE_PIXELS must be between 1 MP and 40 MP")
         return self
 
 
