@@ -17,6 +17,13 @@ Piloto inicial en una rama local; expansión conceptual a barrios y estacas y, a
 - Reportes, bloqueos, moderación y límites contra spam.
 - Revisión de solicitudes de unidad por responsables designados para el piloto.
 
+## Primera entrega social implementada
+- Publicaciones de texto de hasta 2.000 caracteres.
+- Feed cronológico por unidad comunitaria aprobada.
+- Solo miembros aprobados de la misma unidad pueden leer las publicaciones.
+- Solo el autor puede eliminar su publicación.
+- Las imágenes, comentarios y reacciones quedan para etapas posteriores.
+
 ## Fuera del MVP
 Marketplace, publicidad, integración con sistemas/directorios institucionales y verificación automática con número de miembro. Grupos y eventos quedan pendientes de especificación. Los detalles funcionales del chat y de los aportes deben especificarse antes de sus respectivas implementaciones.
 
