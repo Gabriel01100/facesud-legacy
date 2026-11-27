@@ -2,7 +2,8 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import and_, case, func, or_, select
-from sqlalchemy.dialects.postgresql import insert as pg_insert\nfrom sqlalchemy.dialects.sqlite import insert as sqlite_insert\nfrom sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert\nfrom sqlalchemy.orm import Session
 
 from app.models.comment import Comment
 from app.models.community import MembershipStatus, UnitMembership
