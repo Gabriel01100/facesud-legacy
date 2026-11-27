@@ -1,4 +1,5 @@
 import re
+import os
 from pathlib import Path
 from typing import Protocol
 
@@ -29,7 +30,8 @@ def _validate_key(key: str) -> None:
 class LocalMediaStorage:
     def __init__(self, root: str):
         self.root = Path(root).resolve()
-        self.root.mkdir(parents=True, exist_ok=True)
+        self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        os.chmod(self.root, 0o700)
 
     def _path(self, key: str) -> Path:
         _validate_key(key)
@@ -43,6 +45,7 @@ class LocalMediaStorage:
         temporary = path.with_suffix(".tmp")
         try:
             temporary.write_bytes(content)
+            os.chmod(temporary, 0o600)
             temporary.replace(path)
         except OSError as exc:
             temporary.unlink(missing_ok=True)
@@ -91,7 +94,11 @@ class S3MediaStorage:
         _validate_key(key)
         try:
             response = self.client.get_object(Bucket=self.bucket, Key=key)
-            return response["Body"].read()
+            body = response["Body"]
+            try:
+                return body.read()
+            finally:
+                body.close()
         except Exception as exc:
             raise MediaStorageError("Media object not found.") from exc
 
