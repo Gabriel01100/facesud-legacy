@@ -21,6 +21,8 @@
 - Verificar aislamiento por unidad en lectura/creación de comentarios y reacciones.
 - Verificar idempotencia y unicidad de reacciones, conteos del feed, CSRF y respuestas privadas.
 - Verificar que comentarios y publicaciones no expongan correo ni UUID de cuenta.
+- Verificar formato real del archivo, recodificación WebP, límites de tamaño/píxeles/cantidad, eliminación EXIF y rechazo de SVG/GIF animado.
+- Verificar autorización de carga y descarga por autor/unidad, CSRF, no-store/nosniff y limpieza de objetos tras commit/rollback.
 
 ## Frontend
 - Build TypeScript/Vite.
@@ -31,6 +33,8 @@
 - Validar configuración y build de Docker Compose.
 - Verificar healthchecks de PostgreSQL, Redis y API.
 - API ejecutada como usuario sin privilegios.
+- Volumen local de medios escribible por el usuario de API y no publicado como directorio web.
+- Configuración de producción exige S3-compatible privado y credenciales; no generar URLs públicas.
 - Producción exige Redis con contraseña y cookies Secure.
 - La imagen optimizada de producción para frontend queda diferida a la etapa de despliegue.
 

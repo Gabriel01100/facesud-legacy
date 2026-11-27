@@ -155,7 +155,15 @@ Requiere sesión, Origin permitido y CSRF. Elimina la reacción de la cuenta aut
 
 El feed incluye comment_count, reaction_count e is_reacted. No se ofrece un listado de personas que reaccionaron. Todos los endpoints de comentarios y reacciones respetan D-025 y aplican Cache-Control: no-store y Vary: Cookie.
 
-No se implementan imágenes, edición de publicaciones, perfiles ajenos ni búsquedas.
+### POST /api/v1/social/posts/{post_id}/media
+Requiere sesión, Origin permitido y CSRF. Recibe un archivo multipart `file`. Solo el autor de la publicación puede adjuntar imágenes y debe conservar cuenta activa y vinculación aprobada. Máximo 4 imágenes por publicación; máximo 5 MiB por archivo. Se aceptan JPEG, PNG y WebP estáticos; GIF animado, SVG y otros formatos se rechazan. El servidor decodifica y vuelve a codificar a WebP, elimina metadatos EXIF y limita la resolución a 20 megapíxeles. Devuelve metadatos y una ruta relativa de la API, nunca una URL directa del almacenamiento. HTTP 201; archivo inválido HTTP 422; tamaño excedido HTTP 413; límite de adjuntos HTTP 409.
+
+### GET /api/v1/social/media/{media_id}
+Requiere sesión válida y vinculación aprobada en la misma unidad que la publicación. El autor de la publicación debe conservar cuenta activa y vinculación aprobada. Una imagen inexistente o no visible responde HTTP 404. Devuelve bytes WebP con `Cache-Control: private, no-store`, `Vary: Cookie` y `X-Content-Type-Options: nosniff`. No hay URL pública ni URL presignada.
+
+El feed incluye un arreglo `images` con identificador de medio, ruta relativa, dimensiones, tamaño y fecha. El navegador descarga cada imagen mediante el cliente autenticado, no mediante una URL pública. Al eliminar una publicación se programan las eliminaciones de objetos para después del commit de base de datos.
+
+No se implementan edición de publicaciones, perfiles ajenos ni búsquedas.
 
 ## Política de sesiones
 - Expiración absoluta: 7 días.
@@ -184,7 +192,7 @@ REDIS_URL debe contener contraseña; REDIS_PASSWORD protege el servicio Redis en
 
 ## Pendientes
 - Google OpenID Connect y vinculación explícita.
-- Almacenamiento protegido, validación y entrega de fotografías de perfil.
+- Carga y entrega protegida de fotografías de perfil (el almacenamiento de imágenes de publicaciones ya está implementado).
 - Verificación institucional de membresía, pendiente de procedimiento y datos autorizados.
 - Cuenta y dominio emisor verificado del proveedor SMTP transaccional; credenciales, SPF, DKIM y DMARC.
 - Pruebas E2E de navegador para registro, verificación, login, logout, recuperación, cambio de contraseña y CSRF multi-pestaña.

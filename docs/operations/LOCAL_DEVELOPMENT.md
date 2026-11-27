@@ -29,8 +29,9 @@ docker compose up --build
 | OpenAPI | http://localhost:8000/docs | Documentación interactiva |
 | PostgreSQL | Red interna `db:5432` | Persistencia |
 | Redis | Red interna `redis:6379` | Infraestructura y comprobación de disponibilidad |
+| Imágenes | Volumen Docker `media_data` | Archivos WebP privados de publicaciones |
 
-PostgreSQL y Redis no publican puertos en el host.
+PostgreSQL y Redis no publican puertos en el host. Las imágenes locales se guardan en `media_data`; `docker compose down` conserva el volumen y `docker compose down -v` también lo elimina.
 
 ## Comprobaciones
 ```bash
@@ -52,7 +53,25 @@ docker compose down -v
 ```
 El segundo comando es destructivo para los volúmenes locales.
 
-## Administración inicial de Community\n\nPara habilitar revisión comunitaria en desarrollo, agregá en el archivo `.env` el correo de una cuenta que ya hayas registrado y verificado:\n\n```dotenv\nCOMMUNITY_REVIEWER_EMAILS=responsable@tu-correo.com\n```\n\nReiniciá el servicio API. Solo esa cuenta podrá crear unidades y aprobar/rechazar solicitudes. Dejá la variable vacía si todavía no designaste responsables. No uses una dirección compartida ni un correo que no controles.\n\n## Variables de entorno
+## Administración inicial de Community
+
+Para habilitar revisión comunitaria en desarrollo, agregá en el archivo `.env` el correo de una cuenta que ya hayas registrado y verificado:
+
+```dotenv
+COMMUNITY_REVIEWER_EMAILS=responsable@tu-correo.com
+```
+
+Reiniciá el servicio API. Solo esa cuenta podrá crear unidades y aprobar/rechazar solicitudes. Dejá la variable vacía si todavía no designaste responsables. No uses una dirección compartida ni un correo que no controles.
+
+## Imágenes privadas
+
+El entorno local usa `MEDIA_STORAGE_BACKEND=local`; no hace falta configurar credenciales. Los archivos se escriben en el volumen Docker `media_data`, no dentro del repositorio ni en `apps/web/public`.
+
+En producción se requiere un bucket S3-compatible privado con `MEDIA_STORAGE_BACKEND=s3`, `MEDIA_S3_BUCKET`, `MEDIA_S3_REGION`, `MEDIA_S3_ACCESS_KEY_ID` y `MEDIA_S3_SECRET_ACCESS_KEY`. `MEDIA_S3_ENDPOINT_URL` es opcional y, si se usa en producción, debe ser HTTPS. El bucket debe bloquear acceso público y las credenciales deben inyectarse desde un gestor de secretos.
+
+Límites iniciales: 5 MiB por archivo, 20 megapíxeles y cuatro imágenes por publicación. Solo JPEG, PNG y WebP estáticos; el servidor recodifica a WebP y elimina metadatos EXIF.
+
+## Variables de entorno
 Copiar `.env.example` a `.env` y ajustar los valores para desarrollo. Los valores de ejemplo son exclusivamente locales y deben rechazarse en producción. No subir `.env` al repositorio.
 
 ## Desarrollo sin Compose

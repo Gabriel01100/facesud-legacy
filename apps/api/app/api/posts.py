@@ -6,9 +6,13 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies.identity import get_current_session, require_csrf
 from app.api.schemas.posts import FeedResponse, PostAuthorResponse, PostCreateRequest, PostResponse
+from app.api.schemas.media import PostMediaResponse
 from app.core.database import get_db
 from app.models.identity import UserSession
 from app.models.post import Post
+from app.models.media import MediaAsset
+from app.media.service import list_post_media, delete_post_images_for_owner
+from app.media.storage import get_media_storage
 from app.models.profile import UserProfile
 from app.social.service import (
     SocialRuleError, create_post, delete_own_post, interaction_summaries, list_unit_feed,
@@ -18,7 +22,8 @@ router = APIRouter(prefix="/api/v1/social", tags=["social"])
 
 
 def _post_response(
-    post: Post, profile: UserProfile | None, viewer_id: uuid.UUID, summary: dict | None = None
+    post: Post, profile: UserProfile | None, viewer_id: uuid.UUID, summary: dict | None = None,
+    images: list[MediaAsset] | None = None,
 ) -> PostResponse:
     return PostResponse(
         id=post.id,
@@ -32,6 +37,18 @@ def _post_response(
         comment_count=(summary or {}).get("comment_count", 0),
         reaction_count=(summary or {}).get("reaction_count", 0),
         is_reacted=(summary or {}).get("is_reacted", False),
+        images=[
+            PostMediaResponse(
+                id=asset.id,
+                url=f"/api/v1/social/media/{asset.id}",
+                content_type=asset.content_type,
+                byte_size=asset.byte_size,
+                width=asset.width,
+                height=asset.height,
+                created_at=asset.created_at,
+            )
+            for asset in (images or [])
+        ],
     )
 
 
@@ -57,8 +74,9 @@ def get_feed(
     summaries = interaction_summaries(
         db, post_ids=[post.id for post, _ in rows], viewer_id=session.account_id
     )
+    media_by_post = list_post_media(db, [post.id for post, _ in rows])
     items = [
-        _post_response(post, profile, session.account_id, summaries.get(post.id))
+        _post_response(post, profile, session.account_id, summaries.get(post.id), media_by_post.get(post.id, []))
         for post, profile in rows
     ]
     last_item = items[-1] if items else None
@@ -91,8 +109,12 @@ def remove_post(
     response: Response,
     session: UserSession = Depends(require_csrf),
     db: Session = Depends(get_db),
+    storage=Depends(get_media_storage),
 ):
     response.headers["Cache-Control"] = "no-store"
     response.headers["Vary"] = "Cookie"
-    if not delete_own_post(db, post_id=post_id, author_id=session.account_id):
+    deleted_media = delete_post_images_for_owner(
+        db, storage, post_id=post_id, account_id=session.account_id
+    )
+    if not deleted_media or not delete_own_post(db, post_id=post_id, author_id=session.account_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found.")

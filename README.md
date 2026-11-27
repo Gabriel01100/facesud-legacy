@@ -6,9 +6,9 @@ FaceSud es una plataforma social independiente orientada a la comunidad SUD. No 
 
 ## Estado del proyecto
 
-`main` contiene la infraestructura ejecutable, los flujos de identidad/autenticación y la base inicial del Social Core. El registro local y la verificación de correo funcionan mediante Mailpit, que captura los mensajes sin enviarlos a destinatarios reales. El titular de una cuenta autenticada puede consultar y editar su perfil básico (nombre visible, username y biografía). Los perfiles ajenos siguen privados y no hay directorio ni búsqueda de usuarios.
+`main` contiene una aplicación funcional con autenticación por correo/contraseña, verificación de correo, perfiles propios, vinculación comunitaria provisional y un feed social privado por unidad. Las publicaciones admiten texto, comentarios, reacciones e imágenes WebP protegidas. El registro local y la verificación de correo funcionan mediante Mailpit, que captura los mensajes sin enviarlos a destinatarios reales. Los perfiles ajenos siguen privados y no hay directorio ni búsqueda de usuarios.
 
-La fotografía de perfil y la unidad comunitaria se incorporarán cuando estén implementados, respectivamente, el almacenamiento protegido de medios y el procedimiento de aprobación de vinculación comunitaria. La base visual FaceSud v1.0 orienta las pantallas.
+La fotografía de perfil queda pendiente. La vinculación comunitaria disponible es administrativa/provisional y no verifica membresía institucional. La base visual FaceSud v1.0 orienta las pantallas.
 
 ## Stack de la primera versión ejecutable
 
@@ -16,6 +16,7 @@ La fotografía de perfil y la unidad comunitaria se incorporarán cuando estén 
 - Persistencia: PostgreSQL 17, SQLAlchemy 2, Alembic.
 - Servicio Redis 7 para infraestructura inicial y comprobación de disponibilidad.
 - Mailpit para capturar correos transaccionales en desarrollo local.
+- Pillow y un adaptador de almacenamiento local/S3 para imágenes privadas.
 - Frontend: React 19, TypeScript 5, Vite 6.
 - Pruebas backend: Pytest.
 - Entorno local: Docker Compose v2.
@@ -65,9 +66,17 @@ curl http://localhost:8000/api/v1/health/ready
 
 ## Alcance funcional actual
 
-Incluye infraestructura local, identidad y autenticación por correo/contraseña, verificación y recuperación de correo, cambio de contraseña y perfil básico propio.
+Incluye:
+- Registro, autenticación por correo/contraseña, verificación y recuperación de correo.
+- Perfil básico propio.
+- Solicitud de vinculación comunitaria y revisión administrativa provisional.
+- Publicaciones de texto de hasta 2.000 caracteres en feed cronológico por unidad.
+- Comentarios, reacciones y hasta cuatro imágenes por publicación.
+- Imágenes normalizadas a WebP, almacenadas en volumen privado local o bucket S3-compatible privado en producción.
 
-Todavía no incluye perfiles ajenos, publicaciones, feed, comentarios, reacciones, amistades, chat, notificaciones de producto, carga de fotografías, aprobación de unidad comunitaria, aportes/pagos ni integraciones externas. El alcance conceptual del producto se mantiene documentado en `docs/product/PRODUCT_SCOPE.md`; no implica que esas funciones estén implementadas.
+Las publicaciones, comentarios, reacciones e imágenes solo son accesibles para cuentas activas con vinculación aprobada en la misma unidad. La aprobación comunitaria es provisional y no equivale a verificación institucional.
+
+Todavía no incluye fotografía de perfil, perfiles ajenos, directorios, búsquedas, amistades, chat, notificaciones de producto, aportes/pagos ni integraciones externas. El alcance conceptual completo se mantiene en `docs/product/PRODUCT_SCOPE.md`.
 
 ## Documentación
 

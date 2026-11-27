@@ -4,11 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.auth import router as auth_router
 from app.api.community import router as community_router
 from app.api.health import router as health_router
+from app.api.media import router as media_router
 from app.api.posts import router as posts_router
 from app.api.interactions import router as interactions_router
 from app.api.profiles import router as profiles_router
 from app.core.config import settings
-from app.models import comment as comment_models, community as community_models, post as post_models, reaction as reaction_models  # noqa: F401 — register domain tables
+from app.models import comment as comment_models, community as community_models, media as media_models, post as post_models, reaction as reaction_models  # noqa: F401 — register domain tables
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
 
@@ -19,7 +20,8 @@ async def prevent_private_response_caching(request: Request, call_next):
     if request.url.path.startswith((
         "/api/v1/auth/", "/api/v1/profile/", "/api/v1/community/", "/api/v1/social/"
     )):
-        response.headers["Cache-Control"] = "no-store"
+        if not response.headers.get("Cache-Control"):
+            response.headers["Cache-Control"] = "no-store"
     if request.url.path.startswith((
         "/api/v1/profile/", "/api/v1/community/", "/api/v1/social/"
     )):
@@ -40,4 +42,5 @@ app.include_router(auth_router)
 app.include_router(profiles_router)
 app.include_router(community_router)
 app.include_router(posts_router)
+app.include_router(media_router)
 app.include_router(interactions_router)

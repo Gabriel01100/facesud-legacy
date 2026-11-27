@@ -29,6 +29,7 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 | D-023 | Perfiles privados por defecto y acceso condicionado a vinculación comunitaria aprobada | Confirmada por el propietario |
 | D-024 | Publicaciones y feed cronológico restringidos a miembros aprobados de la misma unidad | Confirmada por el propietario |
 | D-025 | Comentarios y reacciones restringidos a miembros aprobados de la unidad de la publicación | Implementada como extensión de D-024 |
+| D-026 | Imágenes de publicaciones en almacenamiento privado, con autorización por unidad y normalización del lado servidor | Implementada; perfiles diferidos |
 
 ## Historial y contexto de cambios
 
@@ -167,3 +168,13 @@ Las decisiones técnicas confirmadas para esta base no aprueban automáticamente
 - **Privacidad:** no se exponen correos ni identificadores de cuenta de autores o personas que reaccionaron. No se ofrece un listado de quién reaccionó.
 - **Autorización:** se verifica en backend la elegibilidad del lector, la unidad de la publicación y la vigencia de la vinculación del autor original. Las respuestas son privadas y no cacheables.
 - **Justificación:** habilitar interacción básica sin ampliar el alcance de visibilidad establecido por D-024 ni crear directorios de participantes.
+
+
+### D-026 — Almacenamiento privado de imágenes
+- **Estado:** implementada para imágenes adjuntas a publicaciones; fotografía de perfil diferida.
+- **Decisión:** almacenar archivos fuera de PostgreSQL mediante un adaptador de almacenamiento. Desarrollo usa filesystem en volumen privado; producción exige bucket S3-compatible privado.
+- **Validación:** aceptar JPEG, PNG y WebP estáticos; decodificar y recodificar a WebP; quitar metadatos EXIF; máximo 5 MiB, 20 megapíxeles y cuatro imágenes por publicación.
+- **Autorización:** solo el autor adjunta imágenes. La lectura requiere cuenta activa y vinculación aprobada en la misma unidad que la publicación, y que el autor siga siendo elegible.
+- **Entrega:** todas las descargas pasan por la API autenticada; no exponer rutas de filesystem, URLs públicas ni URLs presignadas. Aplicar no-store, Vary: Cookie y nosniff.
+- **Ciclo de vida:** coordinar altas y bajas de objetos con commit/rollback de la transacción SQLAlchemy.
+- **Justificación:** evitar que la capa social conozca el proveedor de almacenamiento y preservar el aislamiento de unidad ya definido por D-024.
