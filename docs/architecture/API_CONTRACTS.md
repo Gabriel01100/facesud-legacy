@@ -82,7 +82,7 @@ Campos de respuesta permitidos:
 - username: identificador normalizado sin @ o null.
 - bio: biografía o null.
 - account_created_at: fecha de creación derivada de Identity.Account; solo lectura.
-- avatar_url: null hasta implementar almacenamiento protegido de fotografías.
+- avatar_url: ruta relativa autenticada `/api/v1/profile/me/avatar` cuando existe fotografía; null cuando no existe. No es una URL pública.
 - community_unit: objeto con name y kind derivado exclusivamente de la vinculación aprobada propia; null cuando no existe una vinculación aprobada. No es editable desde Profiles.
 
 Respuesta privada: Cache-Control: no-store y Vary: Cookie.
@@ -200,3 +200,4 @@ REDIS_URL debe contener contraseña; REDIS_PASSWORD protege el servicio Redis en
 - Revisión de umbrales de rate limiting y retención de tokens con métricas/política de privacidad.
 
 La elegibilidad comunitaria por cédula de miembro es independiente de la autenticación. Google o contraseña no acreditan membresía. No se solicita ni almacena el número de cédula en esta etapa.
+\n\n### POST /api/v1/profile/me/avatar\nRequiere sesión válida, Origin permitido y X-CSRF-Token válido. Recibe un archivo multipart `file`. Acepta JPEG, PNG y WebP estáticos; el servidor valida, recodifica a WebP y elimina EXIF mediante el normalizador compartido con imágenes sociales. El límite de entrada es 5 MiB y 20 megapíxeles. Reemplaza la fotografía anterior de forma transaccional. Devuelve HTTP 201 y una ruta relativa autenticada. Archivo inválido HTTP 422; tamaño excedido HTTP 413.\n\n### GET /api/v1/profile/me/avatar\nRequiere sesión válida y solo entrega la fotografía de la cuenta autenticada. No existe un endpoint por ID ni username. Devuelve WebP con `Cache-Control: private, no-store`, `Vary: Cookie` y `X-Content-Type-Options: nosniff`. Sin fotografía: HTTP 404.\n\n### DELETE /api/v1/profile/me/avatar\nRequiere sesión válida, Origin permitido y CSRF. Elimina la metadata y programa la eliminación del objeto privado después del commit. HTTP 204; operación idempotente.\n
