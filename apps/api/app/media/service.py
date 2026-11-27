@@ -1,43 +1,16 @@
-import logging
 import uuid
 
-from sqlalchemy import and_, event, func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.media.images import InvalidImageError, normalize_image
+import app.media.lifecycle  # noqa: F401 — register commit/rollback cleanup for all media purposes
 from app.media.storage import MediaStorage, MediaStorageError
 from app.models.community import MembershipStatus, UnitMembership
 from app.models.identity import Account, AccountStatus
 from app.models.media import MediaAsset
 from app.models.post import Post
-
-
-logger = logging.getLogger(__name__)
-
-
-def _after_commit(session: Session) -> None:
-    session.info.pop("media_pending_uploads", None)
-    pending_deletes = session.info.pop("media_pending_deletes", [])
-    for storage, key in pending_deletes:
-        try:
-            storage.delete(key)
-        except MediaStorageError:
-            logger.exception("Unable to remove an orphaned media object after database commit.")
-
-
-def _after_rollback(session: Session) -> None:
-    pending_uploads = session.info.pop("media_pending_uploads", [])
-    session.info.pop("media_pending_deletes", None)
-    for storage, key in pending_uploads:
-        try:
-            storage.delete(key)
-        except MediaStorageError:
-            logger.exception("Unable to clean up a media object after database rollback.")
-
-
-event.listen(Session, "after_commit", _after_commit)
-event.listen(Session, "after_rollback", _after_rollback)
 
 
 class MediaRuleError(Exception):

@@ -9,9 +9,10 @@ from app.models.identity import (
 )
 from app.models.post import Post
 from app.models.profile import UserProfile
+from app.models.profile_avatar import ProfileAvatar
 
 __all__ = [
     "Account", "AccountStatus", "Base", "Comment", "EmailVerificationToken", "ExternalIdentity",
     "LoginRateLimit", "MediaAsset", "MembershipStatus", "OrganizationUnit", "PasswordCredential", "Post",
-    "PasswordResetToken", "Reaction", "UnitMembership", "UnitStatus", "UnitType", "UserProfile", "UserSession",
+    "PasswordResetToken", "ProfileAvatar", "Reaction", "UnitMembership", "UnitStatus", "UnitType", "UserProfile", "UserSession",
 ]

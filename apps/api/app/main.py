@@ -9,7 +9,7 @@ from app.api.posts import router as posts_router
 from app.api.interactions import router as interactions_router
 from app.api.profiles import router as profiles_router
 from app.core.config import settings
-from app.models import comment as comment_models, community as community_models, media as media_models, post as post_models, reaction as reaction_models  # noqa: F401 — register domain tables
+from app.models import comment as comment_models, community as community_models, media as media_models, post as post_models, profile_avatar as profile_avatar_models, reaction as reaction_models  # noqa: F401 — register domain tables
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
 

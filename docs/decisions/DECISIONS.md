@@ -29,7 +29,8 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 | D-023 | Perfiles privados por defecto y acceso condicionado a vinculación comunitaria aprobada | Confirmada por el propietario |
 | D-024 | Publicaciones y feed cronológico restringidos a miembros aprobados de la misma unidad | Confirmada por el propietario |
 | D-025 | Comentarios y reacciones restringidos a miembros aprobados de la unidad de la publicación | Implementada como extensión de D-024 |
-| D-026 | Imágenes de publicaciones en almacenamiento privado, con autorización por unidad y normalización del lado servidor | Implementada; perfiles diferidos |
+| D-026 | Imágenes en almacenamiento privado, con normalización del lado servidor | Implementada para publicaciones y fotografías de perfil; la autorización de cada recurso sigue D-023/D-024 |
+| D-027 | Fotografía de perfil privada, visible solo para su titular hasta definir el acceso a perfiles ajenos | Implementada en la etapa de perfiles |
 
 ## Historial y contexto de cambios
 
@@ -171,7 +172,7 @@ Las decisiones técnicas confirmadas para esta base no aprueban automáticamente
 
 
 ### D-026 — Almacenamiento privado de imágenes
-- **Estado:** implementada para imágenes adjuntas a publicaciones; fotografía de perfil diferida.
+- **Estado:** implementada para imágenes adjuntas a publicaciones y fotografías de perfil; las reglas de autorización de cada recurso se mantienen separadas.
 - **Decisión:** almacenar archivos fuera de PostgreSQL mediante un adaptador de almacenamiento. Desarrollo usa filesystem en volumen privado; producción exige bucket S3-compatible privado.
 - **Validación:** aceptar JPEG, PNG y WebP estáticos; decodificar y recodificar a WebP; quitar metadatos EXIF; máximo 5 MiB, 20 megapíxeles y cuatro imágenes por publicación.
 - **Autorización:** solo el autor adjunta imágenes. La lectura requiere cuenta activa y vinculación aprobada en la misma unidad que la publicación, y que el autor siga siendo elegible.

@@ -8,7 +8,7 @@ FaceSud es una plataforma social independiente orientada a la comunidad SUD. No 
 
 `main` contiene una aplicación funcional con autenticación por correo/contraseña, verificación de correo, perfiles propios, vinculación comunitaria provisional y un feed social privado por unidad. Las publicaciones admiten texto, comentarios, reacciones e imágenes WebP protegidas. El registro local y la verificación de correo funcionan mediante Mailpit, que captura los mensajes sin enviarlos a destinatarios reales. Los perfiles ajenos siguen privados y no hay directorio ni búsqueda de usuarios.
 
-La fotografía de perfil queda pendiente. La vinculación comunitaria disponible es administrativa/provisional y no verifica membresía institucional. La base visual FaceSud v1.0 orienta las pantallas.
+La fotografía de perfil ya puede cargarse, reemplazarse y eliminarse; en esta etapa solo su titular puede verla. La vinculación comunitaria disponible es administrativa/provisional y no verifica membresía institucional. La base visual FaceSud v1.0 orienta las pantallas.
 
 ## Stack de la primera versión ejecutable
 
@@ -76,7 +76,7 @@ Incluye:
 
 Las publicaciones, comentarios, reacciones e imágenes solo son accesibles para cuentas activas con vinculación aprobada en la misma unidad. La aprobación comunitaria es provisional y no equivale a verificación institucional.
 
-Todavía no incluye fotografía de perfil, perfiles ajenos, directorios, búsquedas, amistades, chat, notificaciones de producto, aportes/pagos ni integraciones externas. El alcance conceptual completo se mantiene en `docs/product/PRODUCT_SCOPE.md`.
+Todavía no incluye perfiles ajenos, directorios, búsquedas, amistades, chat, notificaciones de producto, aportes/pagos ni integraciones externas. El alcance conceptual completo se mantiene en `docs/product/PRODUCT_SCOPE.md`.
 
 ## Documentación
 

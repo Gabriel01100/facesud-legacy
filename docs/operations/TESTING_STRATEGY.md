@@ -12,6 +12,7 @@
 ## Profiles
 - Cubrir consulta del perfil propio, actualización allowlist, unicidad de username, normalización, CSRF, respuestas privadas no cacheables y ausencia de rutas de consulta ajena.
 - Ejecutar migraciones de Profiles contra PostgreSQL y verificar que las tablas Identity existentes no sufren regresiones.
+- Verificar carga autenticada con CSRF, normalización WebP, límites, reemplazo, eliminación y acceso exclusivo del titular a su fotografía.
 
 ## Social
 - Cubrir requisito de vinculación aprobada para lectura y escritura.

@@ -832,3 +832,59 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) {
   .post-image-picker input { max-width: 100%; }
   .feed-post-images { grid-template-columns: minmax(0, 1fr); }
 }
+
+
+/* Private profile avatar controls */
+.profile-avatar-image,
+.profile-avatar-placeholder {
+  display: grid;
+  flex: 0 0 76px;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.profile-avatar-image {
+  border: 1px solid var(--fs-color-border);
+  background: var(--fs-color-surface-subtle);
+}
+.profile-avatar-controls {
+  display: grid;
+  gap: 8px;
+  max-width: 620px;
+  margin: -8px 0 24px;
+  padding: 16px;
+  border: 1px solid var(--fs-color-border);
+  border-radius: var(--fs-radius-md);
+  background: var(--fs-color-surface-subtle);
+}
+.profile-avatar-controls label {
+  color: #344f60;
+  font-size: 12px;
+  font-weight: 650;
+}
+.profile-avatar-controls input[type="file"] {
+  width: 100%;
+  color: var(--fs-color-text-secondary);
+  font: inherit;
+  font-size: 11px;
+}
+.profile-avatar-controls .profile-field-hint {
+  margin: 0;
+}
+.profile-avatar-remove {
+  justify-self: start;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid var(--fs-color-danger-border);
+  border-radius: 8px;
+  color: var(--fs-color-danger);
+  background: var(--fs-color-danger-surface);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+}
+.profile-avatar-remove:hover:not(:disabled) {
+  border-color: var(--fs-color-danger);
+}

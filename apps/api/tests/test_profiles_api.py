@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from app.core.database import get_db
+from app.media.storage import get_media_storage
 from app.identity.security import hash_password
 from app.main import app
 from app.models.base import Base
@@ -203,5 +204,183 @@ def test_profile_api_does_not_expose_lookup_routes_for_other_users():
         login(client, "owner@example.com")
         assert client.get("/api/v1/profile/some-other-id").status_code == 404
         assert client.get("/api/v1/profiles").status_code == 404
+    finally:
+        teardown(client, engine)
+
+
+
+def test_profile_avatar_is_private_normalized_replaceable_and_removable():
+    from io import BytesIO
+
+    from PIL import Image
+
+    class MemoryStorage:
+        def __init__(self):
+            self.objects = {}
+
+        def put(self, key, content, content_type):
+            self.objects[key] = (content, content_type)
+
+        def get(self, key):
+            return self.objects[key][0]
+
+        def delete(self, key):
+            self.objects.pop(key, None)
+
+    def png_bytes(color):
+        buffer = BytesIO()
+        Image.new("RGB", (16, 12), color).save(buffer, format="PNG")
+        return buffer.getvalue()
+
+    client, engine = build_client()
+    storage = MemoryStorage()
+    app.dependency_overrides[get_media_storage] = lambda: storage
+    try:
+        seed_account(engine, "avatar-owner@example.com")
+        seed_account(engine, "avatar-outsider@example.com")
+        csrf = login(client, "avatar-owner@example.com")
+        headers = {"Origin": "http://localhost:5173", "X-CSRF-Token": csrf}
+
+        missing = client.get("/api/v1/profile/me/avatar")
+        assert missing.status_code == 404
+
+        uploaded = client.post(
+            "/api/v1/profile/me/avatar",
+            files={"file": ("avatar.png", png_bytes((22, 122, 153)), "image/png")},
+            headers=headers,
+        )
+        assert uploaded.status_code == 201
+        assert uploaded.json()["avatar_url"] == "/api/v1/profile/me/avatar"
+        assert len(storage.objects) == 1
+
+        profile = client.get("/api/v1/profile/me")
+        assert profile.status_code == 200
+        assert profile.json()["avatar_url"] == "/api/v1/profile/me/avatar"
+
+        image_response = client.get("/api/v1/profile/me/avatar")
+        assert image_response.status_code == 200
+        assert image_response.headers["content-type"] == "image/webp"
+        assert image_response.headers["cache-control"] == "private, no-store"
+        assert image_response.headers["x-content-type-options"] == "nosniff"
+        normalized = Image.open(BytesIO(image_response.content))
+        assert normalized.format == "WEBP"
+        assert normalized.size == (16, 12)
+        assert not normalized.getexif()
+
+        outsider = TestClient(app)
+        try:
+            login(outsider, "avatar-outsider@example.com")
+            assert outsider.get("/api/v1/profile/me/avatar").status_code == 404
+        finally:
+            outsider.close()
+
+        replacement = client.post(
+            "/api/v1/profile/me/avatar",
+            files={"file": ("avatar-new.png", png_bytes((23, 47, 67)), "image/png")},
+            headers=headers,
+        )
+        assert replacement.status_code == 201
+        assert len(storage.objects) == 1
+
+        invalid = client.post(
+            "/api/v1/profile/me/avatar",
+            files={"file": ("avatar.svg", b'<svg xmlns="http://www.w3.org/2000/svg"></svg>', "image/svg+xml")},
+            headers=headers,
+        )
+        assert invalid.status_code == 422
+        assert len(storage.objects) == 1
+
+        deleted = client.delete("/api/v1/profile/me/avatar", headers=headers)
+        assert deleted.status_code == 204
+        assert storage.objects == {}
+        assert client.get("/api/v1/profile/me/avatar").status_code == 404
+        assert client.get("/api/v1/profile/me").json()["avatar_url"] is None
+    finally:
+        teardown(client, engine)
+
+
+def test_profile_avatar_mutations_require_csrf_and_cannot_be_read_without_session():
+    from io import BytesIO
+
+    from PIL import Image
+
+    class MemoryStorage:
+        def __init__(self):
+            self.objects = {}
+
+        def put(self, key, content, content_type):
+            self.objects[key] = (content, content_type)
+
+        def get(self, key):
+            return self.objects[key][0]
+
+        def delete(self, key):
+            self.objects.pop(key, None)
+
+    buffer = BytesIO()
+    Image.new("RGB", (8, 8), (22, 122, 153)).save(buffer, format="PNG")
+    image_bytes = buffer.getvalue()
+
+    client, engine = build_client()
+    storage = MemoryStorage()
+    app.dependency_overrides[get_media_storage] = lambda: storage
+    try:
+        seed_account(engine, "avatar-security@example.com")
+        login(client, "avatar-security@example.com")
+
+        missing_csrf = client.post(
+            "/api/v1/profile/me/avatar",
+            files={"file": ("avatar.png", image_bytes, "image/png")},
+            headers={"Origin": "http://localhost:5173"},
+        )
+        assert missing_csrf.status_code == 403
+        assert client.delete(
+            "/api/v1/profile/me/avatar",
+            headers={"Origin": "http://localhost:5173"},
+        ).status_code == 403
+
+        anonymous = TestClient(app)
+        try:
+            assert anonymous.get("/api/v1/profile/me/avatar").status_code == 401
+        finally:
+            anonymous.close()
+        assert storage.objects == {}
+    finally:
+        teardown(client, engine)
+
+
+
+def test_profile_avatar_object_is_removed_when_database_transaction_rolls_back():
+    from io import BytesIO
+
+    from PIL import Image
+
+    from app.profiles.avatar_service import replace_profile_avatar
+
+    class MemoryStorage:
+        def __init__(self):
+            self.objects = {}
+
+        def put(self, key, content, content_type):
+            self.objects[key] = (content, content_type)
+
+        def get(self, key):
+            return self.objects[key][0]
+
+        def delete(self, key):
+            self.objects.pop(key, None)
+
+    client, engine = build_client()
+    storage = MemoryStorage()
+    try:
+        seed_account(engine, "avatar-rollback@example.com")
+        with Session(engine) as db:
+            account = db.scalar(select(Account).where(Account.email_normalized == "avatar-rollback@example.com"))
+            buffer = BytesIO()
+            Image.new("RGB", (10, 10), (22, 122, 153)).save(buffer, format="PNG")
+            replace_profile_avatar(db, storage, account_id=account.id, raw_content=buffer.getvalue())
+            assert len(storage.objects) == 1
+            db.rollback()
+        assert storage.objects == {}
     finally:
         teardown(client, engine)

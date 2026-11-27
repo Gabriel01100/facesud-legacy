@@ -5,7 +5,7 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import settings
 from app.models.base import Base
-from app.models import comment, community, identity, media, post, profile, reaction  # noqa: F401 — register domain tables
+from app.models import comment, community, identity, media, post, profile, profile_avatar, reaction  # noqa: F401 — register domain tables
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)
