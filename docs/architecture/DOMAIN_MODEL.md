@@ -35,4 +35,9 @@ Definir restricciones únicas y claves foráneas; usar DTOs allowlist, no serial
 - Solo el autor puede adjuntar imágenes a su publicación. La lectura exige cuenta activa y vinculación aprobada en la misma unidad, y que el autor original siga siendo elegible.
 - Las descargas pasan por la API autenticada; no se generan URLs públicas ni presignadas. Respuestas no cacheables, con `nosniff`.
 - Las escrituras y eliminaciones de objetos se coordinan con el commit/rollback de la sesión SQLAlchemy para evitar dejar archivos si la transacción se revierte.
-\n\n## Profiles: fotografía privada\n- `ProfileAvatar` mantiene una única referencia de almacenamiento por cuenta; la metadata no contiene bytes, rutas locales ni URLs públicas.\n- El archivo utiliza el adaptador privado y el normalizador de `Media`; su ciclo de vida se coordina con commit/rollback.\n- Solo el titular puede consultar, cargar o eliminar su fotografía. No se habilita su exposición en feed ni a perfiles ajenos en esta etapa.\n
+
+
+## Profiles: fotografía privada
+- `ProfileAvatar` mantiene una única referencia de almacenamiento por cuenta; la metadata no contiene bytes, rutas locales ni URLs públicas.
+- El archivo utiliza el adaptador privado y el normalizador de `Media`; su ciclo de vida se coordina con commit/rollback.
+- Solo el titular puede consultar, cargar o eliminar su fotografía. No se habilita su exposición en feed ni a perfiles ajenos en esta etapa.
