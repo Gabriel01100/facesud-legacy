@@ -18,7 +18,7 @@ class MediaRuleError(Exception):
         self.status_code = status_code
 
 
-def _visible_post_for_member(db: Session, *, post_id: uuid.UUID, account_id: uuid.UUID) -> Post:
+def _visible_post_for_member(db: Session, *, post_id: uuid.UUID, account_id: uuid.UUID, lock: bool = False) -> Post:
     account = db.scalar(select(Account).where(Account.id == account_id))
     if account is None or account.status != AccountStatus.ACTIVE:
         raise MediaRuleError("Post not found.")
@@ -30,7 +30,7 @@ def _visible_post_for_member(db: Session, *, post_id: uuid.UUID, account_id: uui
     )
     if membership is None:
         raise MediaRuleError("Post not found.")
-    post = db.scalar(
+    query = (
         select(Post)
         .join(Account, Account.id == Post.author_account_id)
         .join(
@@ -46,8 +46,10 @@ def _visible_post_for_member(db: Session, *, post_id: uuid.UUID, account_id: uui
             Post.unit_id == membership.unit_id,
             Account.status == AccountStatus.ACTIVE,
         )
-        .with_for_update()
     )
+    if lock:
+        query = query.with_for_update()
+    post = db.scalar(query)
     if post is None:
         raise MediaRuleError("Post not found.")
     return post
@@ -61,7 +63,7 @@ def upload_post_image(
     account_id: uuid.UUID,
     raw_content: bytes,
 ) -> MediaAsset:
-    post = _visible_post_for_member(db, post_id=post_id, account_id=account_id)
+    post = _visible_post_for_member(db, post_id=post_id, account_id=account_id, lock=True)
     if post.author_account_id != account_id:
         raise MediaRuleError("Post not found.")
     current_count = db.scalar(select(func.count(MediaAsset.id)).where(MediaAsset.post_id == post_id)) or 0
