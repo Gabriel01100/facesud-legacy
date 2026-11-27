@@ -18,7 +18,7 @@ class MediaStorage(Protocol):
     def delete(self, key: str) -> None: ...
 
 
-_KEY_PATTERN = re.compile(r"^[0-9a-f]{32}\\.webp$")
+_KEY_PATTERN = re.compile(r"^[0-9a-f]{32}\.webp$")
 
 
 def _validate_key(key: str) -> None:
