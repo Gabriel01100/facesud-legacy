@@ -27,9 +27,10 @@
 
 ## Frontend
 - Build TypeScript/Vite.
+- Node.js test runner nativo para pruebas unitarias de lógica TypeScript pura, sin dependencias adicionales; Node 22.15 o superior.
+- `npm test` valida la normalización del formulario de perfil antes de enviar cambios a la API.
 - authenticatedFetch renueva token CSRF y reintenta una vez ante el error específico de CSRF.
-- Pruebas E2E y pruebas multi-pestaña pendientes hasta implementar pantallas de autenticación.
-
+- Pruebas de componentes, E2E y pruebas multi-pestaña quedan pendientes de seleccionar e incorporar una herramienta de DOM/navegador.
 ## Infraestructura
 - Validar configuración y build de Docker Compose.
 - Verificar healthchecks de PostgreSQL, Redis y API.
