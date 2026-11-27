@@ -149,7 +149,7 @@ def test_community_requires_authentication_and_supports_request_review(monkeypat
             assert record.reviewer_account_id == reviewer_id
             assert record.review_note == "Vinculación revisada localmente."
     finally:
-        cleanup(member, reviewer, engine)
+        cleanup(member, reviewer, engine=engine)
 
 
 def test_community_rejects_requests_without_csrf():
