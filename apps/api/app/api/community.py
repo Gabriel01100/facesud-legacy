@@ -12,7 +12,7 @@ from app.community.service import (
 )
 from app.core.config import settings
 from app.core.database import get_db
-from app.models.community import MembershipStatus, OrganizationUnit, UnitMembership
+from app.models.community import OrganizationUnit, UnitMembership
 from app.models.identity import Account, UserSession
 
 router = APIRouter(prefix="/api/v1/community", tags=["community"])
