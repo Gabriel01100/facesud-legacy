@@ -9,12 +9,13 @@ from app.api.schemas.posts import FeedResponse, PostAuthorResponse, PostCreateRe
 from app.core.database import get_db
 from app.models.identity import UserSession
 from app.models.post import Post
+from app.models.profile import UserProfile
 from app.social.service import SocialRuleError, create_post, delete_own_post, list_unit_feed
 
 router = APIRouter(prefix="/api/v1/social", tags=["social"])
 
 
-def _post_response(post: Post, profile) -> PostResponse:
+def _post_response(post: Post, profile: UserProfile | None) -> PostResponse:
     return PostResponse(
         id=post.id,
         body=post.body,
@@ -31,19 +32,27 @@ def get_feed(
     response: Response,
     limit: int = Query(default=20, ge=1, le=50),
     before: datetime | None = Query(default=None),
+    before_id: uuid.UUID | None = Query(default=None),
     session: UserSession = Depends(get_current_session),
     db: Session = Depends(get_db),
 ):
     response.headers["Cache-Control"] = "no-store"
     response.headers["Vary"] = "Cookie"
     try:
-        rows = list_unit_feed(db, viewer_id=session.account_id, limit=limit + 1, before=before)
+        rows = list_unit_feed(
+            db, viewer_id=session.account_id, limit=limit + 1, before=before, before_id=before_id
+        )
     except SocialRuleError as exc:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from None
     has_more = len(rows) > limit
     rows = rows[:limit]
     items = [_post_response(post, profile) for post, profile in rows]
-    return FeedResponse(items=items, next_before=items[-1].created_at if has_more and items else None)
+    last_item = items[-1] if items else None
+    return FeedResponse(
+        items=items,
+        next_before=last_item.created_at if has_more and last_item else None,
+        next_before_id=last_item.id if has_more and last_item else None,
+    )
 
 
 @router.post("/posts", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
@@ -56,10 +65,10 @@ def add_post(
     response.headers["Cache-Control"] = "no-store"
     response.headers["Vary"] = "Cookie"
     try:
-        post = create_post(db, author_id=session.account_id, body=data.body)
+        post, profile = create_post(db, author_id=session.account_id, body=data.body)
     except SocialRuleError as exc:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from None
-    return _post_response(post, None)
+    return _post_response(post, profile)
 
 
 @router.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
