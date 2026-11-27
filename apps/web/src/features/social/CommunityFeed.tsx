@@ -2,19 +2,39 @@ import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { apiUrl, authenticatedFetch } from "../../api/client";
 
+type Author = { display_name: string | null; username: string | null };
+type Comment = {
+  id: string;
+  body: string;
+  created_at: string;
+  author: Author;
+  is_mine: boolean;
+};
 type Post = {
   id: string;
   body: string;
   created_at: string;
-  author: { display_name: string | null; username: string | null };
+  author: Author;
   is_mine: boolean;
+  comment_count: number;
+  reaction_count: number;
+  is_reacted: boolean;
 };
-
 type FeedPage = {
   items: Post[];
   next_before: string | null;
   next_before_id: string | null;
 };
+type CommentPage = { items: Comment[]; has_more: boolean };
+type InteractionSummary = {
+  comment_count: number;
+  reaction_count: number;
+  is_reacted: boolean;
+};
+
+function authorLabel(author: Author) {
+  return author.display_name || (author.username ? `@${author.username}` : "Miembro de la comunidad");
+}
 
 export default function CommunityFeed() {
   const [items, setItems] = useState<Post[]>([]);
@@ -26,6 +46,10 @@ export default function CommunityFeed() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [eligible, setEligible] = useState<boolean | null>(null);
+  const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
+  const [comments, setComments] = useState<Record<string, Comment[]>>({});
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
+  const [busyPosts, setBusyPosts] = useState<Record<string, boolean>>({});
 
   const loadFeed = useCallback(async (cursor?: { before: string; before_id: string }) => {
     const params = new URLSearchParams({ limit: "20" });
@@ -113,6 +137,78 @@ export default function CommunityFeed() {
     }
   }
 
+  async function toggleReaction(post: Post) {
+    setBusyPosts((current) => ({ ...current, [post.id]: true }));
+    setError("");
+    try {
+      const response = await authenticatedFetch(apiUrl(`/api/v1/social/posts/${post.id}/reaction`), {
+        method: post.is_reacted ? "DELETE" : "PUT",
+      });
+      if (!response.ok) throw new Error("No se pudo actualizar la reacción.");
+      const summary = (await response.json()) as InteractionSummary;
+      setItems((current) => current.map((item) => item.id === post.id ? { ...item, ...summary } : item));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudo actualizar la reacción.");
+    } finally {
+      setBusyPosts((current) => ({ ...current, [post.id]: false }));
+    }
+  }
+
+  async function toggleComments(postId: string) {
+    const shouldOpen = !openComments[postId];
+    setOpenComments((current) => ({ ...current, [postId]: shouldOpen }));
+    if (!shouldOpen || comments[postId]) return;
+    try {
+      const response = await authenticatedFetch(apiUrl(`/api/v1/social/posts/${postId}/comments`));
+      if (!response.ok) throw new Error("No se pudieron cargar los comentarios.");
+      const page = (await response.json()) as CommentPage;
+      setComments((current) => ({ ...current, [postId]: page.items }));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudieron cargar los comentarios.");
+    }
+  }
+
+  async function submitComment(event: FormEvent<HTMLFormElement>, postId: string) {
+    event.preventDefault();
+    const draft = commentDrafts[postId] || "";
+    if (!draft.trim()) return;
+    setBusyPosts((current) => ({ ...current, [postId]: true }));
+    setError("");
+    try {
+      const response = await authenticatedFetch(apiUrl(`/api/v1/social/posts/${postId}/comments`), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ body: draft }),
+      });
+      if (!response.ok) throw new Error("No se pudo publicar el comentario.");
+      const comment = (await response.json()) as Comment;
+      setComments((current) => ({ ...current, [postId]: [...(current[postId] || []), comment] }));
+      setCommentDrafts((current) => ({ ...current, [postId]: "" }));
+      setItems((current) => current.map((item) => item.id === postId
+        ? { ...item, comment_count: item.comment_count + 1 } : item));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudo publicar el comentario.");
+    } finally {
+      setBusyPosts((current) => ({ ...current, [postId]: false }));
+    }
+  }
+
+  async function removeComment(postId: string, commentId: string) {
+    setError("");
+    try {
+      const response = await authenticatedFetch(apiUrl(`/api/v1/social/comments/${commentId}`), { method: "DELETE" });
+      if (!response.ok) throw new Error("No se pudo eliminar el comentario.");
+      setComments((current) => ({
+        ...current,
+        [postId]: (current[postId] || []).filter((comment) => comment.id !== commentId),
+      }));
+      setItems((current) => current.map((item) => item.id === postId
+        ? { ...item, comment_count: Math.max(0, item.comment_count - 1) } : item));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "No se pudo eliminar el comentario.");
+    }
+  }
+
   return (
     <section className="feed-section" aria-labelledby="feed-title">
       <header className="feed-heading">
@@ -168,12 +264,65 @@ export default function CommunityFeed() {
                   {(post.author.display_name || post.author.username || "M").charAt(0).toUpperCase()}
                 </div>
                 <div className="feed-author">
-                  <strong>{post.author.display_name || (post.author.username ? `@${post.author.username}` : "Miembro de la comunidad")}</strong>
+                  <strong>{authorLabel(post.author)}</strong>
                   <time dateTime={post.created_at}>{new Date(post.created_at).toLocaleString("es-AR", { dateStyle: "medium", timeStyle: "short" })}</time>
                 </div>
                 {post.is_mine && <button className="feed-delete" type="button" onClick={() => void removePost(post.id)} aria-label="Eliminar publicación" title="Eliminar publicación">Eliminar</button>}
               </header>
               <p className="feed-post-body">{post.body}</p>
+              <div className="feed-interactions">
+                <button
+                  className={post.is_reacted ? "feed-action is-active" : "feed-action"}
+                  type="button"
+                  onClick={() => void toggleReaction(post)}
+                  disabled={Boolean(busyPosts[post.id])}
+                  aria-pressed={post.is_reacted}
+                >
+                  {post.is_reacted ? "Te gusta" : "Me gusta"} · {post.reaction_count}
+                </button>
+                <button
+                  className="feed-action"
+                  type="button"
+                  onClick={() => void toggleComments(post.id)}
+                  aria-expanded={Boolean(openComments[post.id])}
+                >
+                  Comentarios · {post.comment_count}
+                </button>
+              </div>
+              {openComments[post.id] && (
+                <div className="feed-comments">
+                  <div className="feed-comment-list">
+                    {(comments[post.id] || []).map((comment) => (
+                      <div className="feed-comment" key={comment.id}>
+                        <div>
+                          <strong>{authorLabel(comment.author)}</strong>
+                          <p>{comment.body}</p>
+                        </div>
+                        {comment.is_mine && (
+                          <button type="button" className="feed-delete" onClick={() => void removeComment(post.id, comment.id)}>
+                            Eliminar
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {comments[post.id]?.length === 0 && <p className="feed-comment-empty">Todavía no hay comentarios.</p>}
+                  </div>
+                  <form className="feed-comment-form" onSubmit={(event) => void submitComment(event, post.id)}>
+                    <label className="sr-only" htmlFor={`comment-${post.id}`}>Escribir un comentario</label>
+                    <input
+                      id={`comment-${post.id}`}
+                      value={commentDrafts[post.id] || ""}
+                      onChange={(event) => setCommentDrafts((current) => ({ ...current, [post.id]: event.target.value }))}
+                      maxLength={1000}
+                      placeholder="Escribí un comentario…"
+                      required
+                    />
+                    <button type="submit" disabled={Boolean(busyPosts[post.id]) || !(commentDrafts[post.id] || "").trim()}>
+                      Comentar
+                    </button>
+                  </form>
+                </div>
+              )}
             </article>
           ))}
         </div>
