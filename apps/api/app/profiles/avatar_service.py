@@ -3,7 +3,8 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.media.images import InvalidImageError, normalize_image
+from app.media.images import normalize_image
+import app.media.lifecycle  # noqa: F401 — register shared commit/rollback storage cleanup
 from app.media.storage import MediaStorage, MediaStorageError
 from app.models.identity import Account, AccountStatus
 from app.models.profile_avatar import ProfileAvatar
