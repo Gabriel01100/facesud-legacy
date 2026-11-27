@@ -43,4 +43,4 @@ class ProfileResponse(BaseModel):
     bio: str | None
     account_created_at: datetime
     avatar_url: str | None = None
-    community_unit: None = None
+    community_unit: dict[str, str] | None = None
