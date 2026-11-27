@@ -3,7 +3,7 @@
 Modelo conceptual; no es un esquema SQL completo.
 
 - **Identity:** `Account`, `Credential`, `Session` y proveedor de identidad.
-- **Profiles:** `UserProfile`, asociado uno a uno con una cuenta interna. Contiene únicamente atributos editables del perfil (nombre visible, username único y biografía). No contiene credenciales, correo, estado de cuenta ni membresía.
+- **Profiles:** `UserProfile`, asociado uno a uno con una cuenta interna. Contiene únicamente atributos editables del perfil (nombre visible, username único y biografía). La fotografía se mantiene en `ProfileAvatar`, separada de los atributos textuales. No contiene credenciales, correo, estado de cuenta ni membresía.
 - **Community:** `OrganizationUnit` (tipo, parent_id, país, estado), `UnitMembership` (account, unit, estado, fechas, reviewer y nota interna). Las solicitudes aprobadas son vinculaciones administrativas provisionales; no acreditan membresía institucional. La unidad visible del perfil debe derivarse de una vinculación aprobada, nunca de texto ingresado libremente.
 - **Social:** `Post` (texto y feed por unidad), `Comment`, `Reaction` y `MediaAsset` (imagen WebP privada asociada a una publicación); `FriendshipRequest` y `Friendship` (capacidades futuras).
 - **Trust & Safety:** `UserBlock`, `Report`, `ModerationAction`, `AuditEvent`.
@@ -35,3 +35,4 @@ Definir restricciones únicas y claves foráneas; usar DTOs allowlist, no serial
 - Solo el autor puede adjuntar imágenes a su publicación. La lectura exige cuenta activa y vinculación aprobada en la misma unidad, y que el autor original siga siendo elegible.
 - Las descargas pasan por la API autenticada; no se generan URLs públicas ni presignadas. Respuestas no cacheables, con `nosniff`.
 - Las escrituras y eliminaciones de objetos se coordinan con el commit/rollback de la sesión SQLAlchemy para evitar dejar archivos si la transacción se revierte.
+\n\n## Profiles: fotografía privada\n- `ProfileAvatar` mantiene una única referencia de almacenamiento por cuenta; la metadata no contiene bytes, rutas locales ni URLs públicas.\n- El archivo utiliza el adaptador privado y el normalizador de `Media`; su ciclo de vida se coordina con commit/rollback.\n- Solo el titular puede consultar, cargar o eliminar su fotografía. No se habilita su exposición en feed ni a perfiles ajenos en esta etapa.\n
