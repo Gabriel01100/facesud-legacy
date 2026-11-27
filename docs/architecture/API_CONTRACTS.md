@@ -101,6 +101,30 @@ La fila de perfil se crea al guardar por primera vez. La unicidad se garantiza t
 
 No se implementan perfiles ajenos ni se interpreta autenticación como aprobación de vinculación comunitaria. La unidad comunitaria no puede editarse desde este endpoint.
 
+## Community
+
+Las rutas de Community aplican `Cache-Control: no-store` y `Vary: Cookie` cuando corresponda. Las operaciones mutables requieren sesión, Origin permitido y CSRF.
+
+### GET /api/v1/community/units
+Lista unidades activas disponibles. No expone cuentas ni vinculaciones.
+
+### POST /api/v1/community/units
+Solo cuentas cuyo correo figure en `COMMUNITY_REVIEWER_EMAILS` pueden crear unidades. Request: `name`, `unit_type` (branch/ward/stake), `country_code` ISO alpha-2, y ubicación opcional. Una unidad hija solo puede tener como padre una unidad compatible del mismo país. No hay borrado físico ni edición pública de unidades.
+
+### POST /api/v1/community/membership-requests
+Requiere sesión y CSRF. Request: `unit_id`. Solo cuentas activas pueden solicitar. Se permite una solicitud pendiente por cuenta y una vinculación aprobada por cuenta. La respuesta marca `provisional: true`; no se solicita ni almacena cédula ni documentos.
+
+### GET /api/v1/community/membership/me
+Devuelve únicamente el historial de vinculaciones de la cuenta autenticada.
+
+### GET /api/v1/community/review/requests
+Solo revisores configurados en `COMMUNITY_REVIEWER_EMAILS`. Devuelve hasta 100 solicitudes pendientes con correo de referencia y unidad. No expone notas internas ni IDs de revisor.
+
+### POST /api/v1/community/review/requests/{request_id}
+Solo revisores con sesión y CSRF. Acepta `decision` approved/rejected y nota interna opcional. Registra reviewer y fecha. Una aprobación es administrativa y provisional, no una verificación institucional.
+
+La asignación de revisores se controla por configuración de entorno, nunca por datos enviados por el cliente. En Compose local se configura `COMMUNITY_REVIEWER_EMAILS` con correos de cuentas previamente registradas y verificadas. Mantener la variable vacía por defecto.
+
 ## Política de sesiones
 - Expiración absoluta: 7 días.
 - Inactividad: 30 minutos.
@@ -129,7 +153,7 @@ REDIS_URL debe contener contraseña; REDIS_PASSWORD protege el servicio Redis en
 ## Pendientes
 - Google OpenID Connect y vinculación explícita.
 - Almacenamiento protegido, validación y entrega de fotografías de perfil.
-- Implementación del dominio Community y flujo autorizado de aprobación de vinculación a unidad.
+- Verificación institucional de membresía, pendiente de procedimiento y datos autorizados.
 - Cuenta y dominio emisor verificado del proveedor SMTP transaccional; credenciales, SPF, DKIM y DMARC.
 - Pruebas E2E de navegador para registro, verificación, login, logout, recuperación, cambio de contraseña y CSRF multi-pestaña.
 - Pruebas de concurrencia del rate limiting y carga sostenida.
