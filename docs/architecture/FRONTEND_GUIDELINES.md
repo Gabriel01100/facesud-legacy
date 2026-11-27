@@ -40,7 +40,7 @@ La interfaz debe ser minimalista, clara y consistente con los mockups aprobados.
 ## Estado funcional
 La aplicación incluye registro, login, verificación de correo, reenvío de verificación, recuperación de contraseña y cambio de contraseña. El acceso utiliza cookies de sesión HttpOnly y el cliente HTTP centralizado gestiona CSRF.
 
-El módulo Profiles permite al titular consultar y editar nombre visible, username y biografía. No ofrece navegación ni consulta de perfiles ajenos. La fecha de creación se muestra como dato de solo lectura. La foto y la unidad comunitaria se mantienen sin datos hasta implementar almacenamiento protegido y aprobación comunitaria, respectivamente.
+El módulo Profiles permite al titular consultar y editar nombre visible, username y biografía. No ofrece navegación ni consulta de perfiles ajenos. La fecha de creación se muestra como dato de solo lectura. La fotografía de perfil se carga y visualiza mediante solicitudes autenticadas y URLs de objeto locales; solo el titular puede verla. La unidad comunitaria se deriva de una vinculación aprobada.
 
 ## Dependencias
 No incorporar librerías de UI, iconos, estado global, routing o formularios sin una necesidad concreta, evaluación de mantenimiento y versiones fijadas. Preferir componentes pequeños y nativos mientras el alcance lo permita.
