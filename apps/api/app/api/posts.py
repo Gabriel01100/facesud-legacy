@@ -12,7 +12,7 @@ from app.models.identity import UserSession
 from app.models.post import Post
 from app.models.media import MediaAsset
 from app.media.service import list_post_media, delete_post_images_for_owner
-from app.media.storage import MediaStorageError, get_media_storage
+from app.media.storage import get_media_storage
 from app.models.profile import UserProfile
 from app.social.service import (
     SocialRuleError, create_post, delete_own_post, interaction_summaries, list_unit_feed,
@@ -113,11 +113,8 @@ def remove_post(
 ):
     response.headers["Cache-Control"] = "no-store"
     response.headers["Vary"] = "Cookie"
-    try:
-        deleted_media = delete_post_images_for_owner(
-            db, storage, post_id=post_id, account_id=session.account_id
-        )
-    except MediaStorageError:
-        raise HTTPException(status_code=503, detail="Media storage is temporarily unavailable.") from None
+    deleted_media = delete_post_images_for_owner(
+        db, storage, post_id=post_id, account_id=session.account_id
+    )
     if not deleted_media or not delete_own_post(db, post_id=post_id, author_id=session.account_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found.")
