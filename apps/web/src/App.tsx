@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { authenticatedFetch, getApiHealth, setCsrfToken } from "./api/client";
 import ProfileEditor from "./features/profile/ProfileEditor";
 import CommunityWorkspace from "./features/community/CommunityWorkspace";
+import CommunityFeed from "./features/social/CommunityFeed";
 
 type ApiState = "loading" | "connected" | "error";
 type AuthMode = "login" | "register" | "verify" | "reset-request" | "reset-confirm";
@@ -285,10 +286,10 @@ export default function App() {
                   </div>
                   <span className="status-pill">En desarrollo</span>
                 </div>
-                <p className="workspace-panel-copy">La cuenta y el acceso seguro ya están disponibles. Las publicaciones, perfiles y el feed se incorporarán en próximas etapas.</p>
+                <p className="workspace-panel-copy">La cuenta, el perfil propio, la vinculación comunitaria y el feed por unidad ya están disponibles.</p>
                 <ul className="workspace-stage-list">
                   <li><span className="stage-indicator complete" aria-hidden="true">✓</span><span><strong>Cuenta y acceso seguro</strong><small>Disponible</small></span></li>
-                  <li><span className="stage-indicator pending" aria-hidden="true">•</span><span><strong>Funciones sociales</strong><small>En preparación</small></span></li>
+                  <li><span className="stage-indicator pending" aria-hidden="true">•</span><span><strong>Feed comunitario</strong><small>Disponible para miembros aprobados de la misma unidad</small></span></li>
                 </ul>
               </section>
 
@@ -308,6 +309,7 @@ export default function App() {
                 </form>
               </section>
             </div>
+            <CommunityFeed />
             <CommunityWorkspace />
             <ProfileEditor />
           </div>
