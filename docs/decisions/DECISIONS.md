@@ -28,6 +28,7 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 
 | D-023 | Perfiles privados por defecto y acceso condicionado a vinculación comunitaria aprobada | Confirmada por el propietario |
 | D-024 | Publicaciones y feed cronológico restringidos a miembros aprobados de la misma unidad | Confirmada por el propietario |
+| D-025 | Comentarios y reacciones restringidos a miembros aprobados de la unidad de la publicación | Implementada como extensión de D-024 |
 
 ## Historial y contexto de cambios
 
@@ -156,3 +157,13 @@ Las decisiones técnicas confirmadas para esta base no aprueban automáticamente
 - **Evolución:** imágenes, comentarios y reacciones se implementarán en etapas separadas con controles de acceso y almacenamiento apropiados.
 - **Justificación:** habilitar interacción local sin convertir publicaciones ni perfiles en contenido público o visible entre unidades.
 
+
+
+### D-025 — Comentarios y reacciones por unidad
+- **Estado:** implementada como extensión de la política de visibilidad social D-024.
+- **Decisión:** solo cuentas activas con vinculación aprobada en la misma unidad que la publicación pueden leer o crear comentarios y reacciones.
+- **Comentarios:** texto normalizado de hasta 1.000 caracteres. El autor puede eliminar sus propios comentarios; no puede modificar ni eliminar los de otras personas.
+- **Reacciones:** la primera versión ofrece una única reacción positiva (Me gusta) por cuenta y publicación. La restricción única se garantiza en la base de datos y las operaciones de alta son idempotentes.
+- **Privacidad:** no se exponen correos ni identificadores de cuenta de autores o personas que reaccionaron. No se ofrece un listado de quién reaccionó.
+- **Autorización:** se verifica en backend la elegibilidad del lector, la unidad de la publicación y la vigencia de la vinculación del autor original. Las respuestas son privadas y no cacheables.
+- **Justificación:** habilitar interacción básica sin ampliar el alcance de visibilidad establecido por D-024 ni crear directorios de participantes.
