@@ -10,6 +10,7 @@ import {
 } from "./api";
 import type { Profile } from "./types";
 import { notifyProfileUpdated } from "./events";
+import { toProfileUpdate } from "./form";
 
 export default function ProfileEditor() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -56,11 +57,7 @@ export default function ProfileEditor() {
     setError("");
     setNotice("");
     try {
-      const updated = await updateMyProfile({
-        display_name: displayName.trim() || null,
-        username: username.trim().replace(/^@/, "") || null,
-        bio: bio.trim() || null,
-      });
+      const updated = await updateMyProfile(toProfileUpdate({ displayName, username, bio }));
       setProfile(updated);
       setDisplayName(updated.display_name ?? "");
       setUsername(updated.username ?? "");
