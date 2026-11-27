@@ -354,6 +354,7 @@ def test_post_images_are_normalized_private_and_unit_scoped(monkeypatch):
             headers={"Origin": "http://localhost:5173", "X-CSRF-Token": author_csrf},
         )
         assert too_many_images.status_code == 409
+        monkeypatch.setattr(settings, "media_max_post_images", 4)
 
         feed = same_unit_member.get("/api/v1/social/feed")
         assert feed.status_code == 200
