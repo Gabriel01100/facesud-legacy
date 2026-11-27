@@ -339,3 +339,40 @@ def test_profile_avatar_mutations_require_csrf_and_cannot_be_read_without_sessio
         assert storage.objects == {}
     finally:
         teardown(client, engine)
+
+
+
+def test_profile_avatar_object_is_removed_when_database_transaction_rolls_back():
+    from io import BytesIO
+
+    from PIL import Image
+
+    from app.profiles.avatar_service import replace_profile_avatar
+
+    class MemoryStorage:
+        def __init__(self):
+            self.objects = {}
+
+        def put(self, key, content, content_type):
+            self.objects[key] = (content, content_type)
+
+        def get(self, key):
+            return self.objects[key][0]
+
+        def delete(self, key):
+            self.objects.pop(key, None)
+
+    client, engine = build_client()
+    storage = MemoryStorage()
+    try:
+        seed_account(engine, "avatar-rollback@example.com")
+        with Session(engine) as db:
+            account = db.scalar(select(Account).where(Account.email_normalized == "avatar-rollback@example.com"))
+            buffer = BytesIO()
+            Image.new("RGB", (10, 10), (22, 122, 153)).save(buffer, format="PNG")
+            replace_profile_avatar(db, storage, account_id=account.id, raw_content=buffer.getvalue())
+            assert len(storage.objects) == 1
+            db.rollback()
+        assert storage.objects == {}
+    finally:
+        teardown(client, engine)
