@@ -201,7 +201,7 @@ REDIS_URL debe contener contraseña; REDIS_PASSWORD protege el servicio Redis en
 
 ## Pendientes
 - Google OpenID Connect y vinculación explícita.
-- Carga y entrega protegida de fotografías de perfil (el almacenamiento de imágenes de publicaciones ya está implementado).
+
 - Verificación institucional de membresía, pendiente de procedimiento y datos autorizados.
 - Cuenta y dominio emisor verificado del proveedor SMTP transaccional; credenciales, SPF, DKIM y DMARC.
 - Pruebas E2E de navegador para registro, verificación, login, logout, recuperación, cambio de contraseña y CSRF multi-pestaña.
