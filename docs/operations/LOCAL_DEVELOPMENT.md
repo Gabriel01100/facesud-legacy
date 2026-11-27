@@ -65,7 +65,7 @@ Reiniciá el servicio API. Solo esa cuenta podrá crear unidades y aprobar/recha
 
 ## Imágenes privadas
 
-El entorno local usa `MEDIA_STORAGE_BACKEND=local`; no hace falta configurar credenciales. Los archivos se escriben en el volumen Docker `media_data`, no dentro del repositorio ni en `apps/web/public`.
+El entorno local usa `MEDIA_STORAGE_BACKEND=local`; no hace falta configurar credenciales. Los archivos de publicaciones y fotografías de perfil se escriben en el volumen Docker `media_data`, no dentro del repositorio ni en `apps/web/public`. Las fotografías de perfil solo se entregan al titular mediante la API autenticada.
 
 En producción se requiere un bucket S3-compatible privado con `MEDIA_STORAGE_BACKEND=s3`, `MEDIA_S3_BUCKET`, `MEDIA_S3_REGION`, `MEDIA_S3_ACCESS_KEY_ID` y `MEDIA_S3_SECRET_ACCESS_KEY`. `MEDIA_S3_ENDPOINT_URL` es opcional y, si se usa en producción, debe ser HTTPS. El bucket debe bloquear acceso público y las credenciales deben inyectarse desde un gestor de secretos.
 
