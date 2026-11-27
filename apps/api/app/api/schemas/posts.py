@@ -33,3 +33,4 @@ class PostResponse(BaseModel):
 class FeedResponse(BaseModel):
     items: list[PostResponse]
     next_before: datetime | None
+    next_before_id: uuid.UUID | None
