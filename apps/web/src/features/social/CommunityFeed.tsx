@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { apiUrl, authenticatedFetch } from "../../api/client";
 
@@ -45,8 +45,32 @@ function authorLabel(author: Author) {
 }
 
 function PostImageView({ image }: { image: PostImage }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
   const [src, setSrc] = useState("");
+
   useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setShouldLoad(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!shouldLoad) return;
     let active = true;
     let objectUrl = "";
     void authenticatedFetch(apiUrl(image.url))
@@ -64,14 +88,22 @@ function PostImageView({ image }: { image: PostImage }) {
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [image.url]);
-  return src ? <img className="feed-post-image" src={src} alt="Imagen de la publicación" width={image.width} height={image.height} /> : <div className="feed-image-loading" role="status">Cargando imagen…</div>;
+  }, [image.url, shouldLoad]);
+
+  return (
+    <div ref={containerRef} className="feed-image-frame">
+      {src
+        ? <img className="feed-post-image" src={src} alt="Imagen de la publicación" width={image.width} height={image.height} />
+        : <div className="feed-image-loading" role="status">{shouldLoad ? "Cargando imagen…" : "Imagen"}</div>}
+    </div>
+  );
 }
 
 export default function CommunityFeed() {
   const [items, setItems] = useState<Post[]>([]);
   const [body, setBody] = useState("");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const [nextCursor, setNextCursor] = useState<{ before: string; before_id: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
@@ -153,6 +185,7 @@ export default function CommunityFeed() {
       }
       setBody("");
       setSelectedImages([]);
+      if (imageInputRef.current) imageInputRef.current.value = "";
       setNotice(imageUploadFailed
         ? "La publicación se creó, pero alguna imagen no pudo cargarse."
         : "Tu publicación se compartió con tu unidad.");
@@ -285,6 +318,7 @@ export default function CommunityFeed() {
           <label className="post-image-picker">
             <span>Agregar imágenes (hasta 4, 5 MB cada una)</span>
             <input
+              ref={imageInputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp"
               multiple
