@@ -65,7 +65,7 @@ function PostImageView({ image }: { image: PostImage }) {
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [image.url]);
-  return src ? <img className="feed-post-image" src={src} alt="Imagen de la publicación" loading="lazy" width={image.width} height={image.height} /> : <div className="feed-image-loading" role="status">Cargando imagen…</div>;
+  return src ? <img className="feed-post-image" src={src} alt="Imagen de la publicación" width={image.width} height={image.height} /> : <div className="feed-image-loading" role="status">Cargando imagen…</div>;
 }
 
 export default function CommunityFeed() {
