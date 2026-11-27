@@ -95,6 +95,13 @@ def test_community_requires_authentication_and_supports_request_review(monkeypat
         unit_id = unit_response.json()["id"]
 
         member_csrf = login(member, "member@example.com")
+        unauthorized_unit = member.post(
+            "/api/v1/community/units",
+            json={"name": "No autorizada", "unit_type": "branch", "country_code": "AR"},
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": member_csrf},
+        )
+        assert unauthorized_unit.status_code == 403
+
         request_response = member.post(
             "/api/v1/community/membership-requests",
             json={"unit_id": unit_id},
@@ -131,6 +138,10 @@ def test_community_requires_authentication_and_supports_request_review(monkeypat
         own = member.get("/api/v1/community/membership/me")
         assert own.status_code == 200
         assert own.json()[0]["status"] == "approved"
+
+        profile = member.get("/api/v1/profile/me")
+        assert profile.status_code == 200
+        assert profile.json()["community_unit"] == {"name": "Rama Centro", "kind": "branch"}
 
         with Session(engine) as db:
             record = db.scalar(select(UnitMembership).where(UnitMembership.account_id == member_id))
