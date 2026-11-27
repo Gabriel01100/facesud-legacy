@@ -172,7 +172,7 @@ Las decisiones técnicas confirmadas para esta base no aprueban automáticamente
 
 
 ### D-026 — Almacenamiento privado de imágenes
-- **Estado:** implementada para imágenes adjuntas a publicaciones; fotografía de perfil diferida.
+- **Estado:** implementada para imágenes adjuntas a publicaciones y fotografías de perfil; las reglas de autorización de cada recurso se mantienen separadas.
 - **Decisión:** almacenar archivos fuera de PostgreSQL mediante un adaptador de almacenamiento. Desarrollo usa filesystem en volumen privado; producción exige bucket S3-compatible privado.
 - **Validación:** aceptar JPEG, PNG y WebP estáticos; decodificar y recodificar a WebP; quitar metadatos EXIF; máximo 5 MiB, 20 megapíxeles y cuatro imágenes por publicación.
 - **Autorización:** solo el autor adjunta imágenes. La lectura requiere cuenta activa y vinculación aprobada en la misma unidad que la publicación, y que el autor siga siendo elegible.
