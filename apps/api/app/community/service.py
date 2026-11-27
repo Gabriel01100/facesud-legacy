@@ -24,15 +24,11 @@ def create_unit(db: Session, *, name: str, unit_type, country_code: str, parent_
         parent = db.scalar(select(OrganizationUnit).where(OrganizationUnit.id == parent_id).with_for_update())
         if parent is None or parent.status != UnitStatus.ACTIVE:
             raise CommunityRuleError("Parent unit does not exist or is inactive.")
-        if parent.id == parent_id:
-            raise CommunityRuleError("Invalid parent unit.")
-        allowed_parent = {
-            "branch": {"stake", "ward"},
-            "ward": {"stake"},
-            "stake": set(),
-        }
+        allowed_parent = {"branch": {"stake", "ward"}, "ward": {"stake"}, "stake": set()}
         if parent.unit_type.value not in allowed_parent[unit_type.value]:
             raise CommunityRuleError("Invalid parent unit type.")
+        if parent.country_code != country_code:
+            raise CommunityRuleError("Parent and child units must belong to the same country.")
     unit = OrganizationUnit(
         name=name, unit_type=unit_type, country_code=country_code, parent_id=parent_id,
         administrative_area=administrative_area, locality=locality, status=UnitStatus.ACTIVE,
@@ -52,15 +48,12 @@ def request_membership(db: Session, account_id: uuid.UUID, unit_id: uuid.UUID) -
     if unit is None:
         raise CommunityRuleError("Unit not found or inactive.")
     existing_pending = db.scalar(select(UnitMembership).where(
-        UnitMembership.account_id == account_id,
-        UnitMembership.unit_id == unit_id,
-        UnitMembership.status == MembershipStatus.PENDING,
+        UnitMembership.account_id == account_id, UnitMembership.status == MembershipStatus.PENDING,
     ))
     if existing_pending:
-        raise CommunityRuleError("A pending request already exists for this unit.")
+        raise CommunityRuleError("A pending community request already exists.")
     approved = db.scalar(select(UnitMembership).where(
-        UnitMembership.account_id == account_id,
-        UnitMembership.status == MembershipStatus.APPROVED,
+        UnitMembership.account_id == account_id, UnitMembership.status == MembershipStatus.APPROVED,
     ))
     if approved:
         raise CommunityRuleError("An approved community link already exists.")
@@ -100,8 +93,7 @@ def review_membership(
         raise CommunityRuleError("Pending request not found.")
     if decision == MembershipStatus.APPROVED:
         approved = db.scalar(select(UnitMembership).where(
-            UnitMembership.account_id == request.account_id,
-            UnitMembership.status == MembershipStatus.APPROVED,
+            UnitMembership.account_id == request.account_id, UnitMembership.status == MembershipStatus.APPROVED,
         ))
         if approved:
             raise CommunityRuleError("This account already has an approved community link.")
