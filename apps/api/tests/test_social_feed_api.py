@@ -2,7 +2,7 @@ import os
 import uuid
 
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
@@ -153,6 +153,122 @@ def test_feed_and_post_creation_require_approved_membership():
         missing_csrf = client.post(
             "/api/v1/social/posts",
             json={"body": "Sin CSRF"},
+            headers={"Origin": "http://localhost:5173"},
+        )
+        assert missing_csrf.status_code == 403
+    finally:
+        cleanup(clients, engine)
+
+
+def test_comments_and_reactions_are_restricted_to_the_post_unit_and_author_controls():
+    clients, engine = build_clients()
+    author, same_unit_member, other_unit_member = clients
+    try:
+        with Session(engine) as db:
+            unit_a = OrganizationUnit(
+                name="Rama Sur", unit_type=UnitType.BRANCH, country_code="AR", status=UnitStatus.ACTIVE
+            )
+            unit_b = OrganizationUnit(
+                name="Rama Este", unit_type=UnitType.BRANCH, country_code="AR", status=UnitStatus.ACTIVE
+            )
+            db.add_all([unit_a, unit_b])
+            db.commit()
+            unit_a_id, unit_b_id = unit_a.id, unit_b.id
+
+        author_id = seed_account(engine, "interaction-author@example.com", unit_a_id)
+        seed_account(engine, "interaction-member@example.com", unit_a_id)
+        seed_account(engine, "interaction-outsider@example.com", unit_b_id)
+        author_csrf = login(author, "interaction-author@example.com")
+        member_csrf = login(same_unit_member, "interaction-member@example.com")
+        outsider_csrf = login(other_unit_member, "interaction-outsider@example.com")
+
+        created = author.post(
+            "/api/v1/social/posts",
+            json={"body": "Publicación para interactuar"},
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": author_csrf},
+        )
+        assert created.status_code == 201
+        post_id = created.json()["id"]
+
+        comment_response = same_unit_member.post(
+            f"/api/v1/social/posts/{post_id}/comments",
+            json={"body": "Comentario de la misma unidad"},
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": member_csrf},
+        )
+        assert comment_response.status_code == 201
+        comment_id = comment_response.json()["id"]
+        assert comment_response.json()["body"] == "Comentario de la misma unidad"
+        assert "email" not in comment_response.json()
+        assert "account_id" not in comment_response.json()
+
+        comments = author.get(f"/api/v1/social/posts/{post_id}/comments")
+        assert comments.status_code == 200
+        assert [item["id"] for item in comments.json()["items"]] == [comment_id]
+
+        cannot_delete_another_comment = author.delete(
+            f"/api/v1/social/comments/{comment_id}",
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": author_csrf},
+        )
+        assert cannot_delete_another_comment.status_code == 404
+
+        outsider_comment = other_unit_member.post(
+            f"/api/v1/social/posts/{post_id}/comments",
+            json={"body": "No debería entrar"},
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": outsider_csrf},
+        )
+        assert outsider_comment.status_code == 404
+        outsider_reaction = other_unit_member.put(
+            f"/api/v1/social/posts/{post_id}/reaction",
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": outsider_csrf},
+        )
+        assert outsider_reaction.status_code == 404
+
+        first_reaction = same_unit_member.put(
+            f"/api/v1/social/posts/{post_id}/reaction",
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": member_csrf},
+        )
+        second_reaction = same_unit_member.put(
+            f"/api/v1/social/posts/{post_id}/reaction",
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": member_csrf},
+        )
+        assert first_reaction.status_code == 200
+        assert second_reaction.status_code == 200
+        assert second_reaction.json() == {
+            "comment_count": 1, "reaction_count": 1, "is_reacted": True
+        }
+
+        feed = author.get("/api/v1/social/feed")
+        assert feed.status_code == 200
+        assert feed.json()["items"][0]["comment_count"] == 1
+        assert feed.json()["items"][0]["reaction_count"] == 1
+        assert feed.json()["items"][0]["is_reacted"] is False
+
+        removed_reaction = same_unit_member.delete(
+            f"/api/v1/social/posts/{post_id}/reaction",
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": member_csrf},
+        )
+        assert removed_reaction.status_code == 200
+        assert removed_reaction.json()["reaction_count"] == 0
+        assert removed_reaction.json()["is_reacted"] is False
+
+        removed_comment = same_unit_member.delete(
+            f"/api/v1/social/comments/{comment_id}",
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": member_csrf},
+        )
+        assert removed_comment.status_code == 204
+
+        with Session(engine) as db:
+            author_membership = db.scalar(
+                select(UnitMembership).where(UnitMembership.account_id == author_id)
+            )
+            author_membership.status = MembershipStatus.REVOKED
+            db.commit()
+        revoked_author_comments = same_unit_member.get(f"/api/v1/social/posts/{post_id}/comments")
+        assert revoked_author_comments.status_code == 404
+
+        missing_csrf = same_unit_member.post(
+            f"/api/v1/social/posts/{post_id}/comments",
+            json={"body": "Sin token"},
             headers={"Origin": "http://localhost:5173"},
         )
         assert missing_csrf.status_code == 403

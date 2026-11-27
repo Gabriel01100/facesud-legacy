@@ -5,9 +5,10 @@ from app.api.auth import router as auth_router
 from app.api.community import router as community_router
 from app.api.health import router as health_router
 from app.api.posts import router as posts_router
+from app.api.interactions import router as interactions_router
 from app.api.profiles import router as profiles_router
 from app.core.config import settings
-from app.models import community as community_models, post as post_models  # noqa: F401 — register domain tables
+from app.models import comment as comment_models, community as community_models, post as post_models, reaction as reaction_models  # noqa: F401 — register domain tables
 
 app = FastAPI(title=settings.app_name, version="0.1.0")
 
@@ -31,7 +32,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "X-CSRF-Token"],
 )
 app.include_router(health_router)
@@ -39,3 +40,4 @@ app.include_router(auth_router)
 app.include_router(profiles_router)
 app.include_router(community_router)
 app.include_router(posts_router)
+app.include_router(interactions_router)

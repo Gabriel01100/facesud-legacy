@@ -138,7 +138,24 @@ Requiere sesión, Origin permitido y CSRF. Recibe `{"body":"texto"}`; texto norm
 ### DELETE /api/v1/social/posts/{post_id}
 Requiere sesión, Origin permitido y CSRF. Solo permite eliminar publicaciones propias; publicaciones ajenas e inexistentes responden HTTP 404 para no revelar su existencia. HTTP 204 al eliminar.
 
-La primera entrega no incorpora imágenes, comentarios, reacciones, edición de publicaciones, perfiles ajenos ni búsquedas.
+### GET /api/v1/social/posts/{post_id}/comments
+Requiere sesión y vinculación aprobada en la misma unidad que la publicación. Devuelve hasta 100 comentarios cronológicos con nombre visible/username opcionales, texto, fecha e indicador is_mine. No expone correo ni UUID de cuenta. Una publicación inexistente, de otra unidad o cuyo autor ya no conserva vinculación aprobada responde HTTP 404. Respuesta no cacheable.
+
+### POST /api/v1/social/posts/{post_id}/comments
+Requiere sesión, Origin permitido y CSRF. Recibe un objeto con body; normaliza espacios y admite entre 1 y 1.000 caracteres. Solo miembros activos aprobados de la misma unidad pueden comentar. HTTP 201. No se admite edición de comentarios.
+
+### DELETE /api/v1/social/comments/{comment_id}
+Requiere sesión, Origin permitido y CSRF. Solo el autor puede eliminar su comentario; los comentarios ajenos e inexistentes responden HTTP 404. HTTP 204 al eliminar.
+
+### PUT /api/v1/social/posts/{post_id}/reaction
+Requiere sesión, Origin permitido y CSRF. Agrega una reacción positiva única (Me gusta) de la cuenta autenticada. La operación es idempotente; la unicidad se garantiza en la base de datos. Devuelve comment_count, reaction_count e is_reacted.
+
+### DELETE /api/v1/social/posts/{post_id}/reaction
+Requiere sesión, Origin permitido y CSRF. Elimina la reacción de la cuenta autenticada si existe. Operación idempotente. Devuelve el resumen actualizado.
+
+El feed incluye comment_count, reaction_count e is_reacted. No se ofrece un listado de personas que reaccionaron. Todos los endpoints de comentarios y reacciones respetan D-025 y aplican Cache-Control: no-store y Vary: Cookie.
+
+No se implementan imágenes, edición de publicaciones, perfiles ajenos ni búsquedas.
 
 ## Política de sesiones
 - Expiración absoluta: 7 días.
