@@ -33,7 +33,7 @@ class PostResponse(BaseModel):
     comment_count: int = 0
     reaction_count: int = 0
     is_reacted: bool = False
-    images: list[PostMediaResponse] = []
+    images: list[PostMediaResponse] = Field(default_factory=list)
 
 
 class FeedResponse(BaseModel):
