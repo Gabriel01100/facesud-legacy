@@ -10,6 +10,13 @@ type Comment = {
   author: Author;
   is_mine: boolean;
 };
+type PostImage = {
+  id: string;
+  url: string;
+  width: number;
+  height: number;
+  byte_size: number;
+};
 type Post = {
   id: string;
   body: string;
@@ -19,6 +26,7 @@ type Post = {
   comment_count: number;
   reaction_count: number;
   is_reacted: boolean;
+  images: PostImage[];
 };
 type FeedPage = {
   items: Post[];
@@ -36,9 +44,33 @@ function authorLabel(author: Author) {
   return author.display_name || (author.username ? `@${author.username}` : "Miembro de la comunidad");
 }
 
+function PostImageView({ image }: { image: PostImage }) {
+  const [src, setSrc] = useState("");
+  useEffect(() => {
+    let active = true;
+    let objectUrl = "";
+    void authenticatedFetch(apiUrl(image.url))
+      .then(async (response) => {
+        if (!response.ok) throw new Error("No se pudo cargar la imagen.");
+        const blob = await response.blob();
+        objectUrl = URL.createObjectURL(blob);
+        if (active) setSrc(objectUrl);
+      })
+      .catch(() => {
+        if (active) setSrc("");
+      });
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [image.url]);
+  return src ? <img className="feed-post-image" src={src} alt="Imagen de la publicación" loading="lazy" width={image.width} height={image.height} /> : <div className="feed-image-loading" role="status">Cargando imagen…</div>;
+}
+
 export default function CommunityFeed() {
   const [items, setItems] = useState<Post[]>([]);
   const [body, setBody] = useState("");
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [nextCursor, setNextCursor] = useState<{ before: string; before_id: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
@@ -103,8 +135,22 @@ export default function CommunityFeed() {
         throw new Error("Necesitás una vinculación comunitaria aprobada para publicar.");
       }
       if (!response.ok) throw new Error("No se pudo publicar. Revisá el contenido e intentá nuevamente.");
+      const post = (await response.json()) as Post;
+      let imageUploadFailed = false;
+      for (const file of selectedImages) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const upload = await authenticatedFetch(apiUrl(`/api/v1/social/posts/${post.id}/media`), {
+          method: "POST",
+          body: formData,
+        });
+        if (!upload.ok) imageUploadFailed = true;
+      }
       setBody("");
-      setNotice("Tu publicación se compartió con tu unidad.");
+      setSelectedImages([]);
+      setNotice(imageUploadFailed
+        ? "La publicación se creó, pero alguna imagen no pudo cargarse."
+        : "Tu publicación se compartió con tu unidad.");
       await loadFeed();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No se pudo publicar.");
@@ -231,6 +277,33 @@ export default function CommunityFeed() {
             placeholder="Escribí una publicación para tu comunidad…"
             required
           />
+          <label className="post-image-picker">
+            <span>Agregar imágenes (hasta 4, 5 MB cada una)</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={(event) => {
+                const files = Array.from(event.currentTarget.files || []);
+                if (files.length > 4) {
+                  setError("Podés adjuntar hasta 4 imágenes por publicación.");
+                  event.currentTarget.value = "";
+                  return;
+                }
+                const oversized = files.some((file) => file.size > 5 * 1024 * 1024);
+                if (oversized) {
+                  setError("Cada imagen debe pesar como máximo 5 MB.");
+                  event.currentTarget.value = "";
+                  return;
+                }
+                setError("");
+                setSelectedImages(files);
+              }}
+            />
+          </label>
+          {selectedImages.length > 0 && (
+            <p className="post-image-selection">{selectedImages.map((file) => file.name).join(" · ")}</p>
+          )}
           <div className="post-composer-footer">
             <span>{body.length}/2000</span>
             <button className="primary-button" type="submit" disabled={posting || !body.trim()}>
@@ -270,6 +343,11 @@ export default function CommunityFeed() {
                 {post.is_mine && <button className="feed-delete" type="button" onClick={() => void removePost(post.id)} aria-label="Eliminar publicación" title="Eliminar publicación">Eliminar</button>}
               </header>
               <p className="feed-post-body">{post.body}</p>
+              {post.images.length > 0 && (
+                <div className="feed-post-images">
+                  {post.images.map((image) => <PostImageView key={image.id} image={image} />)}
+                </div>
+              )}
               <div className="feed-interactions">
                 <button
                   className={post.is_reacted ? "feed-action is-active" : "feed-action"}
