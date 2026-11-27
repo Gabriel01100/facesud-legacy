@@ -329,12 +329,15 @@ def test_post_images_are_normalized_private_and_unit_scoped(monkeypatch):
         post_id = post.json()["id"]
 
         image_buffer = BytesIO()
-        Image.new("RGB", (32, 24), (22, 122, 153)).save(image_buffer, format="PNG")
+        source_image = Image.new("RGB", (32, 24), (22, 122, 153))
+        exif = source_image.getexif()
+        exif[270] = "private metadata"
+        source_image.save(image_buffer, format="JPEG", exif=exif)
         image_bytes = image_buffer.getvalue()
 
         uploaded = author.post(
             f"/api/v1/social/posts/{post_id}/media",
-            files={"file": ("imagen.png", image_bytes, "image/png")},
+            files={"file": ("imagen.jpg", image_bytes, "image/jpeg")},
             headers={"Origin": "http://localhost:5173", "X-CSRF-Token": author_csrf},
         )
         assert uploaded.status_code == 201
@@ -361,7 +364,9 @@ def test_post_images_are_normalized_private_and_unit_scoped(monkeypatch):
         assert visible_image.headers["content-type"] == "image/webp"
         assert visible_image.headers["cache-control"] == "private, no-store"
         assert visible_image.headers["x-content-type-options"] == "nosniff"
-        assert Image.open(BytesIO(visible_image.content)).format == "WEBP"
+        normalized_image = Image.open(BytesIO(visible_image.content))
+        assert normalized_image.format == "WEBP"
+        assert not normalized_image.getexif()
 
         hidden_image = other_unit_member.get(media["url"])
         assert hidden_image.status_code == 404
@@ -386,6 +391,18 @@ def test_post_images_are_normalized_private_and_unit_scoped(monkeypatch):
             headers={"Origin": "http://localhost:5173", "X-CSRF-Token": author_csrf},
         )
         assert invalid_image.status_code == 422
+
+        with Session(engine) as db:
+            author_account = db.scalar(
+                select(Account).where(Account.email_normalized == "media-author@example.com")
+            )
+            author_membership = db.scalar(
+                select(UnitMembership).where(UnitMembership.account_id == author_account.id)
+            )
+            author_membership.status = MembershipStatus.REVOKED
+            db.commit()
+        revoked_author_image = same_unit_member.get(media["url"])
+        assert revoked_author_image.status_code == 404
 
         deleted = author.delete(
             f"/api/v1/social/posts/{post_id}",
