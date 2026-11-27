@@ -154,7 +154,7 @@ Las decisiones técnicas confirmadas para esta base no aprueban automáticamente
 - **Alcance:** el feed se ordena cronológicamente, de más reciente a más antigua. La primera entrega admite publicaciones de texto de hasta 2.000 caracteres.
 - **Autorización:** el servidor valida la vinculación del lector y del autor; la interfaz no es una frontera de seguridad. Una cuenta autenticada sin vinculación aprobada no puede leer ni crear publicaciones.
 - **Privacidad:** no se publican perfiles, directorios ni búsquedas. El feed devuelve únicamente nombre visible/username opcionales y contenido de la publicación; no expone correo ni identificadores de cuenta del autor.
-- **Evolución:** imágenes, comentarios y reacciones se implementarán en etapas separadas con controles de acceso y almacenamiento apropiados.
+- **Evolución:** imágenes requieren una etapa separada de almacenamiento y entrega protegidos. Comentarios y reacciones se implementan conforme a D-025.
 - **Justificación:** habilitar interacción local sin convertir publicaciones ni perfiles en contenido público o visible entre unidades.
 
 
