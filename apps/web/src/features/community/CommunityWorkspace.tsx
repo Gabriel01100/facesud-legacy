@@ -149,7 +149,7 @@ export default function CommunityWorkspace() {
             <label htmlFor="unit-parent">Unidad superior (opcional)</label>
             <select id="unit-parent" value={parentUnit} onChange={(event) => setParentUnit(event.target.value)}>
               <option value="">Sin unidad superior</option>
-              {units.filter((unit) => unit.country_code === countryCode.toUpperCase() && (unitType === "branch" ? ["stake", "ward"].includes(unit.unit_type) : unitType === "ward" && unit.unit_type === "stake")).map((unit) => <option key={unit.id} value={unit.id}>{unitLabel[unit.unit_type]} · {unit.name}</option>)}
+              {units.filter((unit) => unit.country_code === countryCode.toUpperCase()).map((unit) => <option key={unit.id} value={unit.id}>{unitLabel[unit.unit_type]} · {unit.name}</option>)}
             </select>
             <label htmlFor="unit-country">País (código ISO)</label>
             <input id="unit-country" value={countryCode} onChange={(event) => setCountryCode(event.target.value.toUpperCase())} minLength={2} maxLength={2} required />
