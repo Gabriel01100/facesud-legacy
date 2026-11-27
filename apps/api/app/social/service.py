@@ -125,13 +125,33 @@ def interaction_summaries(db: Session, *, post_ids: list[uuid.UUID], viewer_id: 
     comment_counts = dict(
         db.execute(
             select(Comment.post_id, func.count(Comment.id))
-            .where(Comment.post_id.in_(post_ids))
+            .join(Account, Account.id == Comment.author_account_id)
+            .join(UnitMembership, UnitMembership.account_id == Comment.author_account_id)
+            .join(Post, Post.id == Comment.post_id)
+            .where(
+                Comment.post_id.in_(post_ids),
+                Account.status == AccountStatus.ACTIVE,
+                UnitMembership.status == MembershipStatus.APPROVED,
+                UnitMembership.unit_id == Post.unit_id,
+            )
             .group_by(Comment.post_id)
         ).all()
     )
     reaction_rows = db.execute(
-        select(Reaction.post_id, func.count(Reaction.id), func.count(case((Reaction.account_id == viewer_id, 1))) > 0)
-        .where(Reaction.post_id.in_(post_ids))
+        select(
+            Reaction.post_id,
+            func.count(Reaction.id),
+            func.count(case((Reaction.account_id == viewer_id, 1))) > 0,
+        )
+        .join(Account, Account.id == Reaction.account_id)
+        .join(UnitMembership, UnitMembership.account_id == Reaction.account_id)
+        .join(Post, Post.id == Reaction.post_id)
+        .where(
+            Reaction.post_id.in_(post_ids),
+            Account.status == AccountStatus.ACTIVE,
+            UnitMembership.status == MembershipStatus.APPROVED,
+            UnitMembership.unit_id == Post.unit_id,
+        )
         .group_by(Reaction.post_id)
     ).all()
     summaries = {
@@ -152,11 +172,13 @@ def list_post_comments(
         select(Comment, UserProfile)
         .join(Account, Account.id == Comment.author_account_id)
         .join(UnitMembership, UnitMembership.account_id == Comment.author_account_id)
+        .join(Post, Post.id == Comment.post_id)
         .outerjoin(UserProfile, UserProfile.account_id == Comment.author_account_id)
         .where(
             Comment.post_id == post_id,
             Account.status == AccountStatus.ACTIVE,
             UnitMembership.status == MembershipStatus.APPROVED,
+            UnitMembership.unit_id == Post.unit_id,
         )
         .order_by(Comment.created_at.asc(), Comment.id.asc())
         .limit(limit)
