@@ -1,4 +1,5 @@
 import os
+import uuid
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -127,7 +128,7 @@ def test_feed_is_scoped_to_approved_members_of_the_same_unit():
         assert member.get("/api/v1/social/feed").json()["items"] == []
 
         with Session(engine) as db:
-            assert db.get(Post, post_id) is None
+            assert db.get(Post, uuid.UUID(post_id)) is None
     finally:
         cleanup(clients, engine)
 
