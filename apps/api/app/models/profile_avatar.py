@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, UniqueConstraint, Uuid, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, UniqueConstraint, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -12,6 +12,8 @@ class ProfileAvatar(Base):
     __table_args__ = (
         UniqueConstraint("account_id", name="uq_profiles_avatars_account_id"),
         UniqueConstraint("storage_key", name="uq_profiles_avatars_storage_key"),
+        CheckConstraint("byte_size > 0", name="ck_profiles_avatars_positive_size"),
+        CheckConstraint("width > 0 AND height > 0", name="ck_profiles_avatars_positive_dimensions"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
