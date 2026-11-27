@@ -393,6 +393,35 @@ def test_post_images_are_normalized_private_and_unit_scoped(monkeypatch):
         )
         assert invalid_image.status_code == 422
 
+        svg_image = author.post(
+            f"/api/v1/social/posts/{post_id}/media",
+            files={"file": ("vector.svg", b'<svg xmlns="http://www.w3.org/2000/svg"></svg>', "image/svg+xml")},
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": author_csrf},
+        )
+        assert svg_image.status_code == 422
+
+        animated_buffer = BytesIO()
+        first_frame = Image.new("RGB", (8, 8), (0, 0, 0))
+        second_frame = Image.new("RGB", (8, 8), (255, 255, 255))
+        first_frame.save(
+            animated_buffer, format="GIF", save_all=True, append_images=[second_frame], duration=100, loop=0
+        )
+        animated_gif = author.post(
+            f"/api/v1/social/posts/{post_id}/media",
+            files={"file": ("animacion.gif", animated_buffer.getvalue(), "image/gif")},
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": author_csrf},
+        )
+        assert animated_gif.status_code == 422
+
+        monkeypatch.setattr(settings, "media_max_upload_bytes", 1024)
+        oversized = author.post(
+            f"/api/v1/social/posts/{post_id}/media",
+            files={"file": ("grande.png", b"x" * 1025, "image/png")},
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": author_csrf},
+        )
+        assert oversized.status_code == 413
+        monkeypatch.setattr(settings, "media_max_upload_bytes", 5_242_880)
+
         with Session(engine) as db:
             author_account = db.scalar(
                 select(Account).where(Account.email_normalized == "media-author@example.com")
