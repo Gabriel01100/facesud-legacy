@@ -22,7 +22,8 @@ Piloto inicial en una rama local; expansión conceptual a barrios y estacas y, a
 - Feed cronológico por unidad comunitaria aprobada.
 - Solo miembros aprobados de la misma unidad pueden leer las publicaciones.
 - Solo el autor puede eliminar su publicación.
-- Las imágenes, comentarios y reacciones quedan para etapas posteriores.
+- Comentarios de texto de hasta 1.000 caracteres y una reacción positiva por cuenta/publicación, restringidos a miembros aprobados de la misma unidad.
+- Las imágenes quedan para una etapa posterior.
 
 ## Fuera del MVP
 Marketplace, publicidad, integración con sistemas/directorios institucionales y verificación automática con número de miembro. Grupos y eventos quedan pendientes de especificación. Los detalles funcionales del chat y de los aportes deben especificarse antes de sus respectivas implementaciones.
