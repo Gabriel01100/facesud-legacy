@@ -5,7 +5,7 @@ Modelo conceptual; no es un esquema SQL completo.
 - **Identity:** `Account`, `Credential`, `Session` y proveedor de identidad.
 - **Profiles:** `UserProfile`, asociado uno a uno con una cuenta interna. Contiene únicamente atributos editables del perfil (nombre visible, username único y biografía). No contiene credenciales, correo, estado de cuenta ni membresía.
 - **Community:** `OrganizationUnit` (tipo, parent_id, país, estado), `UnitMembership` (account, unit, estado, fechas, reviewer y nota interna). Las solicitudes aprobadas son vinculaciones administrativas provisionales; no acreditan membresía institucional. La unidad visible del perfil debe derivarse de una vinculación aprobada, nunca de texto ingresado libremente.
-- **Social:** `Post` (implementado para texto y feed por unidad), `PostMedia`, `Comment`, `Reaction`, `FriendshipRequest`, `Friendship` (capacidades futuras).
+- **Social:** `Post` (texto y feed por unidad), `Comment` (texto asociado a publicación) y `Reaction` (una reacción positiva única por cuenta/publicación); `PostMedia`, `FriendshipRequest`, `Friendship` (capacidades futuras).
 - **Trust & Safety:** `UserBlock`, `Report`, `ModerationAction`, `AuditEvent`.
 - **Notifications:** `Notification` (destinatario, tipo, referencia, leído, timestamps).
 
@@ -20,3 +20,9 @@ Definir restricciones únicas y claves foráneas; usar DTOs allowlist, no serial
 
 `Post` pertenece a una cuenta autora y a la unidad que tenía aprobada al publicarlo. El feed consulta solo publicaciones de la unidad aprobada del lector y exige que el autor conserve una vinculación aprobada en esa misma unidad. La cuenta del autor debe permanecer activa. No se exponen correo ni UUID de cuenta del autor. La primera versión admite texto de hasta 2.000 caracteres; las imágenes requieren una etapa específica de almacenamiento y entrega protegidos.
 
+
+
+## Social: interacciones implementadas
+- Comment pertenece a una publicación y a una cuenta autora. Solo puede consultarse o crearse desde una cuenta activa con vinculación aprobada en la misma unidad de la publicación. El autor puede eliminarlo.
+- Reaction vincula una cuenta con una publicación. La restricción única (post_id, account_id) impide reacciones duplicadas. La primera versión solo registra Me gusta; no expone quién reaccionó.
+- Comentarios y reacciones requieren que la publicación siga siendo visible: su autor debe conservar cuenta activa y vinculación aprobada en la unidad original.
