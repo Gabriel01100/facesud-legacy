@@ -53,8 +53,12 @@ class UnitMembership(Base):
     __tablename__ = "community_unit_memberships"
     __table_args__ = (
         Index(
-            "uq_community_pending_account_unit", "account_id", "unit_id", unique=True,
+            "uq_community_pending_account", "account_id", unique=True,
             sqlite_where=text("status = 'pending'"), postgresql_where=text("status = 'pending'"),
+        ),
+        Index(
+            "uq_community_approved_account", "account_id", unique=True,
+            sqlite_where=text("status = 'approved'"), postgresql_where=text("status = 'approved'"),
         ),
         Index("ix_community_membership_account_status", "account_id", "status"),
     )
