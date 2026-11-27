@@ -15,11 +15,12 @@ from app.social.service import SocialRuleError, create_post, delete_own_post, li
 router = APIRouter(prefix="/api/v1/social", tags=["social"])
 
 
-def _post_response(post: Post, profile: UserProfile | None) -> PostResponse:
+def _post_response(post: Post, profile: UserProfile | None, viewer_id: uuid.UUID) -> PostResponse:
     return PostResponse(
         id=post.id,
         body=post.body,
         created_at=post.created_at,
+        is_mine=post.author_account_id == viewer_id,
         author=PostAuthorResponse(
             display_name=profile.display_name if profile and profile.display_name else None,
             username=profile.username if profile and profile.username else None,
@@ -46,7 +47,7 @@ def get_feed(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from None
     has_more = len(rows) > limit
     rows = rows[:limit]
-    items = [_post_response(post, profile) for post, profile in rows]
+    items = [_post_response(post, profile, session.account_id) for post, profile in rows]
     last_item = items[-1] if items else None
     return FeedResponse(
         items=items,
@@ -68,7 +69,7 @@ def add_post(
         post, profile = create_post(db, author_id=session.account_id, body=data.body)
     except SocialRuleError as exc:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from None
-    return _post_response(post, profile)
+    return _post_response(post, profile, session.account_id)
 
 
 @router.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
