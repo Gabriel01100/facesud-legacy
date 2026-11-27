@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { getMyAvatarBlob, getMyProfile } from "./api";
+import { PROFILE_UPDATED_EVENT } from "./events";
 
 type Props = { email: string };
 
@@ -12,25 +13,30 @@ export default function AccountIdentity({ email }: Props) {
     let active = true;
     let objectUrl: string | null = null;
 
-    void (async () => {
+    async function refreshIdentity() {
       try {
         const profile = await getMyProfile();
         if (!active) return;
         setDisplayName(profile.display_name);
 
-        if (profile.avatar_url) {
-          const blob = await getMyAvatarBlob();
-          if (!active || !blob) return;
-          objectUrl = URL.createObjectURL(blob);
-          setAvatarSrc(objectUrl);
-        }
+        const blob = profile.avatar_url ? await getMyAvatarBlob() : null;
+        if (!active) return;
+
+        const nextUrl = blob ? URL.createObjectURL(blob) : null;
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        objectUrl = nextUrl;
+        setAvatarSrc(nextUrl);
       } catch {
         // The account navigation remains usable with its email-based fallback.
       }
-    })();
+    }
+
+    void refreshIdentity();
+    window.addEventListener(PROFILE_UPDATED_EVENT, refreshIdentity);
 
     return () => {
       active = false;
+      window.removeEventListener(PROFILE_UPDATED_EVENT, refreshIdentity);
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, []);
