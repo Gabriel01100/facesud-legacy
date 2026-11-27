@@ -46,6 +46,7 @@ def _visible_post_for_member(db: Session, *, post_id: uuid.UUID, account_id: uui
             Post.unit_id == membership.unit_id,
             Account.status == AccountStatus.ACTIVE,
         )
+        .with_for_update()
     )
     if post is None:
         raise MediaRuleError("Post not found.")
