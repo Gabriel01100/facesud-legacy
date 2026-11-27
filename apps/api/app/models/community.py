@@ -35,13 +35,13 @@ class OrganizationUnit(Base):
     parent_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid(as_uuid=True), ForeignKey("community_organization_units.id", ondelete="RESTRICT"), nullable=True, index=True
     )
-    unit_type: Mapped[UnitType] = mapped_column(Enum(UnitType, native_enum=False, length=16), nullable=False)
+    unit_type: Mapped[UnitType] = mapped_column(Enum(UnitType, native_enum=False, length=16, values_callable=lambda members: [item.value for item in members]), nullable=False)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     country_code: Mapped[str] = mapped_column(String(2), nullable=False)
     administrative_area: Mapped[str | None] = mapped_column(String(120), nullable=True)
     locality: Mapped[str | None] = mapped_column(String(120), nullable=True)
     status: Mapped[UnitStatus] = mapped_column(
-        Enum(UnitStatus, native_enum=False, length=16), nullable=False, default=UnitStatus.ACTIVE
+        Enum(UnitStatus, native_enum=False, length=16, values_callable=lambda members: [item.value for item in members]), nullable=False, default=UnitStatus.ACTIVE
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -71,7 +71,7 @@ class UnitMembership(Base):
         Uuid(as_uuid=True), ForeignKey("community_organization_units.id", ondelete="RESTRICT"), nullable=False
     )
     status: Mapped[MembershipStatus] = mapped_column(
-        Enum(MembershipStatus, native_enum=False, length=16), nullable=False, default=MembershipStatus.PENDING
+        Enum(MembershipStatus, native_enum=False, length=16, values_callable=lambda members: [item.value for item in members]), nullable=False, default=MembershipStatus.PENDING
     )
     requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
