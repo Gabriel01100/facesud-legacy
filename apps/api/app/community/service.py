@@ -91,6 +91,8 @@ def review_membership(
     request = db.scalar(select(UnitMembership).where(UnitMembership.id == request_id).with_for_update())
     if request is None or request.status != MembershipStatus.PENDING:
         raise CommunityRuleError("Pending request not found.")
+    if request.account_id == reviewer_id:
+        raise CommunityRuleError("Reviewers cannot decide their own membership request.")
     account = db.scalar(select(Account).where(Account.id == request.account_id).with_for_update())
     if account is None or account.status != AccountStatus.ACTIVE:
         raise CommunityRuleError("The account is no longer active.")
