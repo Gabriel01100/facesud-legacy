@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     smtp_timeout_seconds: int = 10
     community_reviewer_emails: str = ""
     media_storage_backend: str = "local"
-    media_storage_path: str = "/var/lib/facesud/media"
+    media_storage_path: str = "/tmp/facesud-media"
     media_max_upload_bytes: int = 5_242_880
     media_max_image_pixels: int = 20_000_000
     media_max_post_images: int = 4
