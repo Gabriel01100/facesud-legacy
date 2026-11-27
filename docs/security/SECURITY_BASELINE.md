@@ -16,7 +16,7 @@ No almacenar número de miembro, documentos ni pruebas documentales en el MVP. N
 ## Perfiles
 - Los perfiles son privados por defecto. La cuenta solo puede consultar su propio perfil hasta que exista un procedimiento operativo de aprobación comunitaria.
 - No exponer perfiles por ID, username, listados o búsquedas antes de habilitar expresamente la autorización comunitaria.
-- Las respuestas de perfil deben ser no cacheables y variar por cookie de sesión.
+- Las respuestas de perfil deben ser no cacheables y variar por cookie de sesión.\n- Las fotografías se almacenan fuera del webroot en almacenamiento privado, se normalizan en el servidor y solo se entregan al titular mediante una ruta autenticada; no se publican URLs ni rutas de almacenamiento.
 - Mantener separados identidad de cuenta, atributos de perfil y vinculación comunitaria.
 
 ## API y archivos
