@@ -76,7 +76,7 @@ def _visible_post_for_member(db: Session, *, post_id: uuid.UUID, account_id: uui
         )
     )
     if lock:
-        query = query.with_for_update()
+        query = query.with_for_update(of=Post)
     post = db.scalar(query)
     if post is None:
         raise MediaRuleError("Post not found.")
