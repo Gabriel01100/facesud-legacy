@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { authenticatedFetch, apiUrl } from "../../api/client";
 
 type Unit = {
@@ -76,7 +77,7 @@ export default function CommunityWorkspace() {
     }), "Solicitud enviada. Quedará pendiente hasta que un responsable la revise.");
   }
 
-  function createUnit(event: React.FormEvent<HTMLFormElement>) {
+  function createUnit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     void perform(() => authenticatedFetch(apiUrl("/api/v1/community/units"), {
       method: "POST", headers: { "Content-Type": "application/json" },
