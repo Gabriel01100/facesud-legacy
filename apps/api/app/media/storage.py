@@ -30,8 +30,11 @@ def _validate_key(key: str) -> None:
 class LocalMediaStorage:
     def __init__(self, root: str):
         self.root = Path(root).resolve()
-        self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
-        os.chmod(self.root, 0o700)
+        try:
+            self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
+            os.chmod(self.root, 0o700)
+        except OSError as exc:
+            raise MediaStorageError("Private media directory is not writable.") from exc
 
     def _path(self, key: str) -> Path:
         _validate_key(key)
