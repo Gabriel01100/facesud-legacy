@@ -19,6 +19,16 @@ class Settings(BaseSettings):
     email_from: str | None = None
     smtp_timeout_seconds: int = 10
     community_reviewer_emails: str = ""
+    media_storage_backend: str = "local"
+    media_storage_path: str = "/var/lib/facesud/media"
+    media_max_upload_bytes: int = 5_242_880
+    media_max_image_pixels: int = 20_000_000
+    media_max_post_images: int = 4
+    media_s3_bucket: str | None = None
+    media_s3_region: str = "us-east-1"
+    media_s3_endpoint_url: str | None = None
+    media_s3_access_key_id: str | None = None
+    media_s3_secret_access_key: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -63,6 +73,16 @@ class Settings(BaseSettings):
                 raise ValueError("Production cannot use local Mailpit SMTP settings")
             if not self.smtp_starttls:
                 raise ValueError("Production SMTP must use STARTTLS")
+            if self.media_storage_backend.strip().lower() != "s3":
+                raise ValueError("Production requires private S3-compatible media storage")
+            if not all((self.media_s3_bucket, self.media_s3_access_key_id, self.media_s3_secret_access_key)):
+                raise ValueError("Production media storage requires bucket and credentials")
+            if self.media_s3_endpoint_url and not self.media_s3_endpoint_url.startswith("https://"):
+                raise ValueError("Production custom media storage endpoint must use HTTPS")
+            if self.media_max_upload_bytes > 10_485_760 or self.media_max_upload_bytes < 1024:
+                raise ValueError("MEDIA_MAX_UPLOAD_BYTES must be between 1 KiB and 10 MiB")
+            if self.media_max_image_pixels > 40_000_000 or self.media_max_image_pixels < 1_000_000:
+                raise ValueError("MEDIA_MAX_IMAGE_PIXELS must be between 1 MP and 40 MP")
         return self
 
 
