@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import and_, case, func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import insert as pg_insert\nfrom sqlalchemy.dialects.sqlite import insert as sqlite_insert\nfrom sqlalchemy.orm import Session
 
 from app.models.comment import Comment
 from app.models.community import MembershipStatus, UnitMembership
@@ -189,12 +189,27 @@ def delete_own_comment(db: Session, *, comment_id: uuid.UUID, author_id: uuid.UU
 
 def add_reaction(db: Session, *, post_id: uuid.UUID, account_id: uuid.UUID) -> None:
     _visible_post(db, post_id=post_id, viewer_id=account_id)
-    existing = db.scalar(
-        select(Reaction).where(Reaction.post_id == post_id, Reaction.account_id == account_id).with_for_update()
-    )
-    if existing is None:
-        db.add(Reaction(post_id=post_id, account_id=account_id))
-        db.flush()
+    values = {"post_id": post_id, "account_id": account_id}
+    dialect = db.get_bind().dialect.name
+    if dialect == "postgresql":
+        statement = pg_insert(Reaction).values(**values).on_conflict_do_nothing(
+            index_elements=["post_id", "account_id"]
+        )
+    elif dialect == "sqlite":
+        statement = sqlite_insert(Reaction).values(**values).on_conflict_do_nothing(
+            index_elements=["post_id", "account_id"]
+        )
+    else:
+        existing = db.scalar(
+            select(Reaction).where(
+                Reaction.post_id == post_id, Reaction.account_id == account_id
+            ).with_for_update()
+        )
+        if existing is None:
+            db.add(Reaction(**values))
+            db.flush()
+        return
+    db.execute(statement)
 
 
 def remove_reaction(db: Session, *, post_id: uuid.UUID, account_id: uuid.UUID) -> None:
