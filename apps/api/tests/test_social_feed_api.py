@@ -276,11 +276,12 @@ def test_comments_and_reactions_are_restricted_to_the_post_unit_and_author_contr
         cleanup(clients, engine)
 
 
-def test_post_images_are_normalized_private_and_unit_scoped():
+def test_post_images_are_normalized_private_and_unit_scoped(monkeypatch):
     from io import BytesIO
 
     from PIL import Image
 
+    from app.core.config import settings
     from app.media.storage import get_media_storage
 
     class MemoryStorage:
@@ -343,6 +344,14 @@ def test_post_images_are_normalized_private_and_unit_scoped():
         assert media["height"] == 24
         assert len(storage.objects) == 1
 
+        monkeypatch.setattr(settings, "media_max_post_images", 1)
+        too_many_images = author.post(
+            f"/api/v1/social/posts/{post_id}/media",
+            files={"file": ("imagen.png", image_bytes, "image/png")},
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": author_csrf},
+        )
+        assert too_many_images.status_code == 409
+
         feed = same_unit_member.get("/api/v1/social/feed")
         assert feed.status_code == 200
         assert feed.json()["items"][0]["images"][0]["id"] == media["id"]
@@ -363,6 +372,13 @@ def test_post_images_are_normalized_private_and_unit_scoped():
             headers={"Origin": "http://localhost:5173", "X-CSRF-Token": member_csrf},
         )
         assert cannot_attach.status_code == 404
+
+        missing_csrf = author.post(
+            f"/api/v1/social/posts/{post_id}/media",
+            files={"file": ("imagen.png", image_bytes, "image/png")},
+            headers={"Origin": "http://localhost:5173"},
+        )
+        assert missing_csrf.status_code == 403
 
         invalid_image = author.post(
             f"/api/v1/social/posts/{post_id}/media",
