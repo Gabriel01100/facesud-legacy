@@ -9,6 +9,7 @@ import {
   uploadMyAvatar,
 } from "./api";
 import type { Profile } from "./types";
+import { notifyProfileUpdated } from "./events";
 
 export default function ProfileEditor() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -64,6 +65,7 @@ export default function ProfileEditor() {
       setDisplayName(updated.display_name ?? "");
       setUsername(updated.username ?? "");
       setBio(updated.bio ?? "");
+      notifyProfileUpdated();
       setNotice("Tu perfil se guardó correctamente.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No se pudieron guardar los cambios.");
@@ -85,6 +87,7 @@ export default function ProfileEditor() {
       const blob = await getMyAvatarBlob();
       setAvatarSrc(blob ? URL.createObjectURL(blob) : null);
       setProfile((current) => current ? { ...current, avatar_url: blob ? "/api/v1/profile/me/avatar" : null } : current);
+      notifyProfileUpdated();
       setNotice("Tu fotografía de perfil se guardó correctamente.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No se pudo guardar la fotografía de perfil.");
@@ -101,6 +104,7 @@ export default function ProfileEditor() {
       await deleteMyAvatar();
       setAvatarSrc(null);
       setProfile((current) => current ? { ...current, avatar_url: null } : current);
+      notifyProfileUpdated();
       setNotice("Tu fotografía de perfil se eliminó.");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "No se pudo eliminar la fotografía de perfil.");
