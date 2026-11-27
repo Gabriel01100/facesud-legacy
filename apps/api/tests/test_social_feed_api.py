@@ -274,3 +274,108 @@ def test_comments_and_reactions_are_restricted_to_the_post_unit_and_author_contr
         assert missing_csrf.status_code == 403
     finally:
         cleanup(clients, engine)
+
+
+def test_post_images_are_normalized_private_and_unit_scoped():
+    from io import BytesIO
+
+    from PIL import Image
+
+    from app.media.storage import get_media_storage
+
+    class MemoryStorage:
+        def __init__(self):
+            self.objects = {}
+
+        def put(self, key, content, content_type):
+            self.objects[key] = (content, content_type)
+
+        def get(self, key):
+            return self.objects[key][0]
+
+        def delete(self, key):
+            self.objects.pop(key, None)
+
+    clients, engine = build_clients()
+    author, same_unit_member, other_unit_member = clients
+    storage = MemoryStorage()
+    app.dependency_overrides[get_media_storage] = lambda: storage
+    try:
+        with Session(engine) as db:
+            unit_a = OrganizationUnit(
+                name="Rama Imagen", unit_type=UnitType.BRANCH, country_code="AR", status=UnitStatus.ACTIVE
+            )
+            unit_b = OrganizationUnit(
+                name="Rama Privada", unit_type=UnitType.BRANCH, country_code="AR", status=UnitStatus.ACTIVE
+            )
+            db.add_all([unit_a, unit_b])
+            db.commit()
+            unit_a_id, unit_b_id = unit_a.id, unit_b.id
+
+        seed_account(engine, "media-author@example.com", unit_a_id)
+        seed_account(engine, "media-member@example.com", unit_a_id)
+        seed_account(engine, "media-outsider@example.com", unit_b_id)
+        author_csrf = login(author, "media-author@example.com")
+        member_csrf = login(same_unit_member, "media-member@example.com")
+        login(other_unit_member, "media-outsider@example.com")
+
+        post = author.post(
+            "/api/v1/social/posts",
+            json={"body": "Publicación con imagen"},
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": author_csrf},
+        )
+        assert post.status_code == 201
+        post_id = post.json()["id"]
+
+        image_buffer = BytesIO()
+        Image.new("RGB", (32, 24), (22, 122, 153)).save(image_buffer, format="PNG")
+        image_bytes = image_buffer.getvalue()
+
+        uploaded = author.post(
+            f"/api/v1/social/posts/{post_id}/media",
+            files={"file": ("imagen.png", image_bytes, "image/png")},
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": author_csrf},
+        )
+        assert uploaded.status_code == 201
+        media = uploaded.json()
+        assert media["content_type"] == "image/webp"
+        assert media["width"] == 32
+        assert media["height"] == 24
+        assert len(storage.objects) == 1
+
+        feed = same_unit_member.get("/api/v1/social/feed")
+        assert feed.status_code == 200
+        assert feed.json()["items"][0]["images"][0]["id"] == media["id"]
+
+        visible_image = same_unit_member.get(media["url"])
+        assert visible_image.status_code == 200
+        assert visible_image.headers["content-type"] == "image/webp"
+        assert visible_image.headers["cache-control"] == "private, no-store"
+        assert visible_image.headers["x-content-type-options"] == "nosniff"
+        assert Image.open(BytesIO(visible_image.content)).format == "WEBP"
+
+        hidden_image = other_unit_member.get(media["url"])
+        assert hidden_image.status_code == 404
+
+        cannot_attach = same_unit_member.post(
+            f"/api/v1/social/posts/{post_id}/media",
+            files={"file": ("imagen.png", image_bytes, "image/png")},
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": member_csrf},
+        )
+        assert cannot_attach.status_code == 404
+
+        invalid_image = author.post(
+            f"/api/v1/social/posts/{post_id}/media",
+            files={"file": ("archivo.png", b"not an image", "image/png")},
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": author_csrf},
+        )
+        assert invalid_image.status_code == 422
+
+        deleted = author.delete(
+            f"/api/v1/social/posts/{post_id}",
+            headers={"Origin": "http://localhost:5173", "X-CSRF-Token": author_csrf},
+        )
+        assert deleted.status_code == 204
+        assert storage.objects == {}
+    finally:
+        cleanup(clients, engine)
