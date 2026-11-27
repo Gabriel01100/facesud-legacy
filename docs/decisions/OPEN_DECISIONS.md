@@ -2,8 +2,6 @@
 
 ## Producto
 - Amistad bilateral, seguimiento unilateral o ambos.
-- Visibilidad de publicaciones y alcance del feed.
-- Feed cronológico o ranking.
 - Campos públicos/privados del perfil.
 - Tipos y límites de contenido.
 - Roles, designación y revocación de responsables de unidad.

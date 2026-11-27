@@ -13,6 +13,12 @@
 - Cubrir consulta del perfil propio, actualización allowlist, unicidad de username, normalización, CSRF, respuestas privadas no cacheables y ausencia de rutas de consulta ajena.
 - Ejecutar migraciones de Profiles contra PostgreSQL y verificar que las tablas Identity existentes no sufren regresiones.
 
+## Social
+- Cubrir requisito de vinculación aprobada para lectura y escritura.
+- Verificar aislamiento estricto entre unidades y ocultamiento de autores inactivos o desvinculados.
+- Verificar CSRF, no-cache, paginación estable, normalización y límite de texto.
+- Verificar que solo el autor pueda eliminar una publicación y que la API no exponga correo ni UUID de cuenta.
+
 ## Frontend
 - Build TypeScript/Vite.
 - authenticatedFetch renueva token CSRF y reintenta una vez ante el error específico de CSRF.

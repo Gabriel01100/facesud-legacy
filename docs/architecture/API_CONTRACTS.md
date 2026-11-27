@@ -125,6 +125,21 @@ Solo revisores con sesión y CSRF. Acepta `decision` approved/rejected y nota in
 
 La asignación de revisores se controla por configuración de entorno, nunca por datos enviados por el cliente. En Compose local se configura `COMMUNITY_REVIEWER_EMAILS` con correos de cuentas previamente registradas y verificadas. Mantener la variable vacía por defecto.
 
+## Social
+
+Las rutas sociales aplican `Cache-Control: no-store` y `Vary: Cookie`. La elegibilidad se valida en backend: la cuenta debe estar activa y tener una vinculación comunitaria aprobada.
+
+### GET /api/v1/social/feed
+Requiere sesión y vinculación aprobada. Devuelve publicaciones cronológicas descendentes de la misma unidad aprobada del lector. Query: `limit` (1-50, default 20), `before` y `before_id` (cursor compuesto, ambos obligatorios si se pagina). La consulta excluye autores inactivos o sin vinculación aprobada vigente en esa unidad. La respuesta solo expone UUID de publicación, texto, fecha, nombre visible/username opcionales y `is_mine`; nunca correo ni UUID de cuenta del autor. HTTP 403 cuando no existe vinculación aprobada. Respuesta privada no cacheable.
+
+### POST /api/v1/social/posts
+Requiere sesión, Origin permitido y CSRF. Recibe `{"body":"texto"}`; texto normalizado, no vacío, máximo 2.000 caracteres. La unidad se deriva exclusivamente de la vinculación aprobada del autor en el servidor. HTTP 201. Sin vinculación aprobada: HTTP 403.
+
+### DELETE /api/v1/social/posts/{post_id}
+Requiere sesión, Origin permitido y CSRF. Solo permite eliminar publicaciones propias; publicaciones ajenas e inexistentes responden HTTP 404 para no revelar su existencia. HTTP 204 al eliminar.
+
+La primera entrega no incorpora imágenes, comentarios, reacciones, edición de publicaciones, perfiles ajenos ni búsquedas.
+
 ## Política de sesiones
 - Expiración absoluta: 7 días.
 - Inactividad: 30 minutos.
