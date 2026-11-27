@@ -17,7 +17,10 @@
 - Cubrir requisito de vinculación aprobada para lectura y escritura.
 - Verificar aislamiento estricto entre unidades y ocultamiento de autores inactivos o desvinculados.
 - Verificar CSRF, no-cache, paginación estable, normalización y límite de texto.
-- Verificar que solo el autor pueda eliminar una publicación y que la API no exponga correo ni UUID de cuenta.
+- Verificar que solo el autor pueda eliminar una publicación y comentarios propios.
+- Verificar aislamiento por unidad en lectura/creación de comentarios y reacciones.
+- Verificar idempotencia y unicidad de reacciones, conteos del feed, CSRF y respuestas privadas.
+- Verificar que comentarios y publicaciones no expongan correo ni UUID de cuenta.
 
 ## Frontend
 - Build TypeScript/Vite.
