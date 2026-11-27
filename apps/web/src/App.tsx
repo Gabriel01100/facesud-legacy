@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { authenticatedFetch, getApiHealth, setCsrfToken } from "./api/client";
 import ProfileEditor from "./features/profile/ProfileEditor";
+import AccountIdentity from "./features/profile/AccountIdentity";
 import CommunityWorkspace from "./features/community/CommunityWorkspace";
 import CommunityFeed from "./features/social/CommunityFeed";
 
@@ -253,10 +254,7 @@ export default function App() {
                 <span>Inicio</span>
               </a>
             </nav>
-            <div className="workspace-sidebar-account">
-              <span className="account-avatar" aria-hidden="true">{account.email.charAt(0).toUpperCase()}</span>
-              <span className="account-email" title={account.email}>{account.email}</span>
-            </div>
+            <AccountIdentity email={account.email} />
           </aside>
 
           <div className="workspace-main">

@@ -888,3 +888,15 @@ button:focus:not(:focus-visible), a:focus:not(:focus-visible) {
 .profile-avatar-remove:hover:not(:disabled) {
   border-color: var(--fs-color-danger);
 }
+
+
+.account-avatar-image {
+  display: block;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--fs-color-border);
+  border-radius: 50%;
+  background: var(--fs-color-surface-subtle);
+  object-fit: cover;
+}
