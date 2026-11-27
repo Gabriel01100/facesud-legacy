@@ -26,7 +26,7 @@ def test_cookie_security_is_enabled_outside_development_and_test():
 
 
 def test_production_rejects_redis_without_password():
-    with pytest.raises(ValidationError, match="Redis URL must include a password"):
+    with pytest.raises(ValidationError, match="Production REDIS_URL must include a password"):
         Settings(
             app_env="production",
             redis_url="redis://redis.internal:6379/0",
