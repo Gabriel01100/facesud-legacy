@@ -52,7 +52,7 @@ docker compose down -v
 ```
 El segundo comando es destructivo para los volúmenes locales.
 
-## Variables de entorno
+## Administración inicial de Community\n\nPara habilitar revisión comunitaria en desarrollo, agregá en el archivo `.env` el correo de una cuenta que ya hayas registrado y verificado:\n\n```dotenv\nCOMMUNITY_REVIEWER_EMAILS=responsable@tu-correo.com\n```\n\nReiniciá el servicio API. Solo esa cuenta podrá crear unidades y aprobar/rechazar solicitudes. Dejá la variable vacía si todavía no designaste responsables. No uses una dirección compartida ni un correo que no controles.\n\n## Variables de entorno
 Copiar `.env.example` a `.env` y ajustar los valores para desarrollo. Los valores de ejemplo son exclusivamente locales y deben rechazarse en producción. No subir `.env` al repositorio.
 
 ## Desarrollo sin Compose
