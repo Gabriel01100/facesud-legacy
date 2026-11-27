@@ -54,17 +54,26 @@ def upgrade() -> None:
     )
     op.create_index("ix_community_membership_account_status", "community_unit_memberships", ["account_id", "status"])
     op.create_index(
-        "uq_community_pending_account_unit",
+        "uq_community_pending_account",
         "community_unit_memberships",
-        ["account_id", "unit_id"],
+        ["account_id"],
         unique=True,
         postgresql_where=sa.text("status = 'pending'"),
         sqlite_where=sa.text("status = 'pending'"),
     )
+    op.create_index(
+        "uq_community_approved_account",
+        "community_unit_memberships",
+        ["account_id"],
+        unique=True,
+        postgresql_where=sa.text("status = 'approved'"),
+        sqlite_where=sa.text("status = 'approved'"),
+    )
 
 
 def downgrade() -> None:
-    op.drop_index("uq_community_pending_account_unit", table_name="community_unit_memberships")
+    op.drop_index("uq_community_approved_account", table_name="community_unit_memberships")
+    op.drop_index("uq_community_pending_account", table_name="community_unit_memberships")
     op.drop_index("ix_community_membership_account_status", table_name="community_unit_memberships")
     op.drop_table("community_unit_memberships")
     op.drop_index("ix_community_organization_units_parent_id", table_name="community_organization_units")
