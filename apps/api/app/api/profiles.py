@@ -1,24 +1,37 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies.identity import get_current_session, require_csrf
 from app.api.schemas.profile import ProfileResponse, ProfileUpdateRequest
 from app.core.database import get_db
+from app.models.community import MembershipStatus, OrganizationUnit, UnitMembership
 from app.models.identity import UserSession
 from app.profiles.service import get_profile_for_owner, update_profile_for_owner
 
 router = APIRouter(prefix="/api/v1/profile", tags=["profiles"])
 
 
-def _response(profile, account) -> ProfileResponse:
+def _response(profile, account, db: Session) -> ProfileResponse:
+    approved_unit = db.scalar(
+        select(OrganizationUnit)
+        .join(UnitMembership, UnitMembership.unit_id == OrganizationUnit.id)
+        .where(
+            UnitMembership.account_id == account.id,
+            UnitMembership.status == MembershipStatus.APPROVED,
+        )
+    )
     return ProfileResponse(
         display_name=profile.display_name if profile is not None else None,
         username=profile.username if profile is not None else None,
         bio=profile.bio if profile is not None else None,
         account_created_at=account.created_at,
         avatar_url=None,
-        community_unit=None,
+        community_unit=(
+            {"name": approved_unit.name, "kind": approved_unit.unit_type.value}
+            if approved_unit is not None else None
+        ),
     )
 
 
@@ -34,7 +47,7 @@ def get_my_profile(
         profile, account = get_profile_for_owner(db, session.account_id)
     except LookupError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required") from None
-    return _response(profile, account)
+    return _response(profile, account, db)
 
 
 @router.patch("/me", response_model=ProfileResponse)
@@ -60,4 +73,4 @@ def update_my_profile(
             status_code=status.HTTP_409_CONFLICT,
             detail="That username is unavailable.",
         ) from None
-    return _response(profile, account)
+    return _response(profile, account, db)
