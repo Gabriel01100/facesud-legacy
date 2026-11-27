@@ -18,12 +18,17 @@ class Settings(BaseSettings):
     smtp_starttls: bool = True
     email_from: str | None = None
     smtp_timeout_seconds: int = 10
+    community_reviewer_emails: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
     def allowed_origins(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def community_reviewers(self) -> set[str]:
+        return {email.strip().lower() for email in self.community_reviewer_emails.split(",") if email.strip()}
 
     @property
     def secure_cookies(self) -> bool:
