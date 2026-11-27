@@ -15,7 +15,8 @@ La fotografía de perfil queda pendiente. La vinculación comunitaria disponible
 - Backend: Python 3.12, FastAPI, Pydantic Settings.
 - Persistencia: PostgreSQL 17, SQLAlchemy 2, Alembic.
 - Servicio Redis 7 para infraestructura inicial y comprobación de disponibilidad.
-- Mailpit para capturar correos transaccionales en desarrollo local.\n- Pillow y un adaptador de almacenamiento local/S3 para imágenes privadas.
+- Mailpit para capturar correos transaccionales en desarrollo local.
+- Pillow y un adaptador de almacenamiento local/S3 para imágenes privadas.
 - Frontend: React 19, TypeScript 5, Vite 6.
 - Pruebas backend: Pytest.
 - Entorno local: Docker Compose v2.
@@ -65,9 +66,17 @@ curl http://localhost:8000/api/v1/health/ready
 
 ## Alcance funcional actual
 
-Incluye infraestructura local, identidad y autenticación por correo/contraseña, verificación y recuperación de correo, cambio de contraseña y perfil básico propio.
+Incluye:
+- Registro, autenticación por correo/contraseña, verificación y recuperación de correo.
+- Perfil básico propio.
+- Solicitud de vinculación comunitaria y revisión administrativa provisional.
+- Publicaciones de texto de hasta 2.000 caracteres en feed cronológico por unidad.
+- Comentarios, reacciones y hasta cuatro imágenes por publicación.
+- Imágenes normalizadas a WebP, almacenadas en volumen privado local o bucket S3-compatible privado en producción.
 
-Todavía no incluye perfiles ajenos, publicaciones, feed, comentarios, reacciones, amistades, chat, notificaciones de producto, carga de fotografías, aprobación de unidad comunitaria, aportes/pagos ni integraciones externas. El alcance conceptual del producto se mantiene documentado en `docs/product/PRODUCT_SCOPE.md`; no implica que esas funciones estén implementadas.
+Las publicaciones, comentarios, reacciones e imágenes solo son accesibles para cuentas activas con vinculación aprobada en la misma unidad. La aprobación comunitaria es provisional y no equivale a verificación institucional.
+
+Todavía no incluye fotografía de perfil, perfiles ajenos, directorios, búsquedas, amistades, chat, notificaciones de producto, aportes/pagos ni integraciones externas. El alcance conceptual completo se mantiene en `docs/product/PRODUCT_SCOPE.md`.
 
 ## Documentación
 
