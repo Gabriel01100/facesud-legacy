@@ -7,6 +7,7 @@ type Post = {
   body: string;
   created_at: string;
   author: { display_name: string | null; username: string | null };
+  is_mine: boolean;
 };
 
 type FeedPage = {
@@ -170,7 +171,7 @@ export default function CommunityFeed() {
                   <strong>{post.author.display_name || (post.author.username ? `@${post.author.username}` : "Miembro de la comunidad")}</strong>
                   <time dateTime={post.created_at}>{new Date(post.created_at).toLocaleString("es-AR", { dateStyle: "medium", timeStyle: "short" })}</time>
                 </div>
-                <button className="feed-delete" type="button" onClick={() => void removePost(post.id)} aria-label="Eliminar publicación" title="Eliminar publicación">Eliminar</button>
+                {post.is_mine && <button className="feed-delete" type="button" onClick={() => void removePost(post.id)} aria-label="Eliminar publicación" title="Eliminar publicación">Eliminar</button>}
               </header>
               <p className="feed-post-body">{post.body}</p>
             </article>
