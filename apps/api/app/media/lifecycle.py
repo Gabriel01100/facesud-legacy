@@ -3,7 +3,7 @@ import logging
 from sqlalchemy import event
 from sqlalchemy.orm import Session
 
-from app.media.storage import MediaStorage, MediaStorageError
+from app.media.storage import MediaStorageError
 
 logger = logging.getLogger(__name__)
 
