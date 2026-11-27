@@ -86,7 +86,7 @@ def test_feed_is_scoped_to_approved_members_of_the_same_unit():
             db.commit()
             unit_a_id, unit_b_id = unit_a.id, unit_b.id
 
-        member_id = seed_account(engine, "member@example.com", unit_a_id)
+        seed_account(engine, "member@example.com", unit_a_id)
         seed_account(engine, "same@example.com", unit_a_id)
         seed_account(engine, "other@example.com", unit_b_id)
 
