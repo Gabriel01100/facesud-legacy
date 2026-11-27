@@ -28,7 +28,8 @@ Este registro conserva decisiones anteriores y deja explícitos los cambios apro
 
 | D-023 | Perfiles privados por defecto y acceso condicionado a vinculación comunitaria aprobada | Confirmada por el propietario |
 | D-024 | Publicaciones y feed cronológico restringidos a miembros aprobados de la misma unidad | Confirmada por el propietario |
-| D-025 | Comentarios y reacciones restringidos a miembros aprobados de la unidad de la publicación | Implementada como extensión de D-024 |\n| D-026 | Imágenes de publicaciones en almacenamiento privado, con autorización por unidad y normalización del lado servidor | Implementada; perfiles diferidos |
+| D-025 | Comentarios y reacciones restringidos a miembros aprobados de la unidad de la publicación | Implementada como extensión de D-024 |
+| D-026 | Imágenes de publicaciones en almacenamiento privado, con autorización por unidad y normalización del lado servidor | Implementada; perfiles diferidos |
 
 ## Historial y contexto de cambios
 
