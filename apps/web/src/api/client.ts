@@ -1,6 +1,7 @@
 const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL ?? "http://localhost:8000";
 
 type FetchImplementation = typeof fetch;
+type UnauthorizedHandler = (() => void) | null;
 
 export function apiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
@@ -11,9 +12,22 @@ export function createApiClient(
   fetchImplementation: FetchImplementation = fetch,
 ) {
   let csrfToken: string | null = null;
+  let unauthorizedHandler: UnauthorizedHandler = null;
 
   function setCsrfToken(token: string | null): void {
     csrfToken = token;
+  }
+
+  function setUnauthorizedHandler(handler: UnauthorizedHandler): void {
+    unauthorizedHandler = handler;
+  }
+
+  function handleUnauthorized(response: Response): Response {
+    if (response.status === 401) {
+      csrfToken = null;
+      unauthorizedHandler?.();
+    }
+    return response;
   }
 
   async function refreshCsrfToken(): Promise<string> {
@@ -23,6 +37,7 @@ export function createApiClient(
       headers: { Accept: "application/json" },
     });
     if (!response.ok) {
+      handleUnauthorized(response);
       csrfToken = null;
       throw new Error(`No se pudo renovar el token CSRF (HTTP ${response.status})`);
     }
@@ -43,7 +58,7 @@ export function createApiClient(
       credentials: "include",
       headers,
     });
-    if (response.status !== 403) return response;
+    if (response.status !== 403) return handleUnauthorized(response);
 
     const errorBody = (await response.clone().json().catch(() => null)) as { detail?: string } | null;
     if (errorBody?.detail !== "CSRF validation failed") return response;
@@ -56,7 +71,7 @@ export function createApiClient(
       credentials: "include",
       headers: retryHeaders,
     });
-    return response;
+    return handleUnauthorized(response);
   }
 
   async function getApiHealth(): Promise<{ status: string }> {
@@ -69,11 +84,12 @@ export function createApiClient(
     return response.json() as Promise<{ status: string }>;
   }
 
-  return { authenticatedFetch, getApiHealth, setCsrfToken };
+  return { authenticatedFetch, getApiHealth, setCsrfToken, setUnauthorizedHandler };
 }
 
 const defaultClient = createApiClient(API_BASE_URL);
 
 export const setCsrfToken = defaultClient.setCsrfToken;
+export const setUnauthorizedHandler = defaultClient.setUnauthorizedHandler;
 export const authenticatedFetch = defaultClient.authenticatedFetch;
 export const getApiHealth = defaultClient.getApiHealth;

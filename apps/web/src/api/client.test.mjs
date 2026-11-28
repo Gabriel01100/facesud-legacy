@@ -64,11 +64,14 @@ test("returns 401 unchanged without refreshing CSRF or retrying", async () => {
     Response.json({ detail: "Not authenticated" }, { status: 401 }),
   ]);
   const client = createApiClient("https://api.example.test", fetchImplementation);
+  let unauthorizedCalls = 0;
+  client.setUnauthorizedHandler(() => { unauthorizedCalls += 1; });
 
   const response = await client.authenticatedFetch("/private");
 
   assert.equal(response.status, 401);
   assert.equal(calls.length, 1);
+  assert.equal(unauthorizedCalls, 1);
 });
 
 test("does not loop when the retried request still fails CSRF validation", async () => {
@@ -83,4 +86,40 @@ test("does not loop when the retried request still fails CSRF validation", async
 
   assert.equal(response.status, 403);
   assert.equal(calls.length, 3);
+});
+
+test("notifies the application when the CSRF refresh endpoint reports an expired session", async () => {
+  const { calls, fetchImplementation } = createFetchQueue([
+    Response.json(CSRF_ERROR, { status: 403 }),
+    Response.json({ detail: "Not authenticated" }, { status: 401 }),
+  ]);
+  const client = createApiClient("https://api.example.test", fetchImplementation);
+  let unauthorizedCalls = 0;
+  client.setCsrfToken("csrf-expired");
+  client.setUnauthorizedHandler(() => { unauthorizedCalls += 1; });
+
+  await assert.rejects(
+    client.authenticatedFetch("/private", { method: "POST" }),
+    /No se pudo renovar el token CSRF \(HTTP 401\)/,
+  );
+
+  assert.equal(calls.length, 2);
+  assert.equal(unauthorizedCalls, 1);
+});
+
+test("notifies the application when a CSRF retry returns an expired-session response", async () => {
+  const { calls, fetchImplementation } = createFetchQueue([
+    Response.json(CSRF_ERROR, { status: 403 }),
+    Response.json({ csrf_token: "csrf-refreshed" }),
+    Response.json({ detail: "Not authenticated" }, { status: 401 }),
+  ]);
+  const client = createApiClient("https://api.example.test", fetchImplementation);
+  client.setUnauthorizedHandler(() => { unauthorizedCalls += 1; });
+  let unauthorizedCalls = 0;
+
+  const response = await client.authenticatedFetch("/private", { method: "POST" });
+
+  assert.equal(response.status, 401);
+  assert.equal(calls.length, 3);
+  assert.equal(unauthorizedCalls, 1);
 });

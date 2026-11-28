@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { authenticatedFetch, getApiHealth, setCsrfToken } from "./api/client";
+import { authenticatedFetch, getApiHealth, setCsrfToken, setUnauthorizedHandler } from "./api/client";
 import ProfileEditor from "./features/profile/ProfileEditor";
 import AccountIdentity from "./features/profile/AccountIdentity";
 import CommunityWorkspace from "./features/community/CommunityWorkspace";
@@ -22,6 +22,8 @@ export default function App() {
     return "login";
   });
   const [account, setAccount] = useState<Account | null>(null);
+  const accountRef = useRef<Account | null>(null);
+  accountRef.current = account;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -33,6 +35,22 @@ export default function App() {
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      if (!accountRef.current) return;
+      accountRef.current = null;
+      setAccount(null);
+      setCsrfToken(null);
+      setPassword("");
+      setCurrentPassword("");
+      setNewPassword("");
+      setError("");
+      setNotice("Tu sesión venció. Iniciá sesión nuevamente para continuar.");
+      setMode("login");
+    });
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   useEffect(() => {
     let active = true;
