@@ -11,6 +11,7 @@ import {
 import type { Profile } from "./types";
 import { notifyProfileUpdated } from "./events";
 import { toProfileUpdate } from "./form";
+import { getAvatarFileSizeError } from "./avatar-validation";
 
 export default function ProfileEditor() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -72,8 +73,9 @@ export default function ProfileEditor() {
   }
 
   async function saveAvatar(file: File) {
-    if (file.size > 5 * 1024 * 1024) {
-      setError("La fotografía supera el límite de 5 MiB.");
+    const validationError = getAvatarFileSizeError(file);
+    if (validationError) {
+      setError(validationError);
       return;
     }
     setAvatarBusy(true);
