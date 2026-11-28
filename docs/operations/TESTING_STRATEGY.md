@@ -28,8 +28,8 @@
 ## Frontend
 - Build TypeScript/Vite.
 - Node.js test runner nativo para pruebas unitarias de lógica TypeScript pura, sin dependencias adicionales; Node 22.15 o superior.
-- `npm test` valida la normalización del formulario de perfil y el límite de tamaño de archivo en el cliente (la validación definitiva sigue siendo responsabilidad del servidor).
-- authenticatedFetch renueva token CSRF y reintenta una vez ante el error específico de CSRF.
+- `npm test` valida la normalización del formulario de perfil, el límite de tamaño de archivo en el cliente (la validación definitiva sigue siendo responsabilidad del servidor) y el cliente HTTP autenticado.
+- El cliente HTTP incluye cookies, conserva el token CSRF, renueva y reintenta una sola vez ante el error específico de CSRF; otros 403 y los 401 se devuelven sin reintento. La interfaz debe resolver explícitamente el estado de sesión vencida.
 - Pruebas de componentes, E2E y pruebas multi-pestaña quedan pendientes de seleccionar e incorporar una herramienta de DOM/navegador.
 \n## Infraestructura
 - Validar configuración y build de Docker Compose.
